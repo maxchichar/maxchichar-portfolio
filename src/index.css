@@ -1,10 +1,33 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-void: #020202;
+  --color-purple: #a855f7;
+  --color-purple-dim: #7c3aed;
+  --color-zinc: #71717a;
+  --color-zinc-light: #d4d4d8;
+  --color-white: #fafafa;
+  --color-ghost: #ffffff08;
+
+  --font-display: 'Bebas Neue', 'Impact', display;
+  --font-sans: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-serif: 'Playfair Display', serif;
+
+  --font-size-display-2xl: 7rem;
+  --font-size-display-xl: 5rem;
+  --font-size-display-lg: 3.5rem;
+  --font-size-body-lg: 1.125rem;
+  --font-size-body-sm: 0.875rem;
+  --font-size-mono-sm: 0.75rem;
+}
 
 @layer base {
   body {
-    @apply bg-[#020202] text-[#fafafa] font-sans cursor-none;
+    background-color: var(--color-void);
+    color: var(--color-white);
+    font-family: var(--font-sans);
+    cursor: none;
   }
 }
 
@@ -37,7 +60,7 @@
   top: 0;
   left: 0;
   height: 2px;
-  background: #a855f7;
+  background: var(--color-purple);
   z-index: 10000;
   transform-origin: left;
 }
