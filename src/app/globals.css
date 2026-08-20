@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/*
+ * Portfolio OS design tokens.
+ * Canonical source: Portfolio OS — FINAL LOCKED SPECIFICATION, §D.10.
+ * Token names below are exact — do not rename without updating the spec.
+ */
+:root {
+  --bg: #0a0a0b;
+  --surface: #131316;
+  --border: #232328;
+  --text: #f2f1ed;
+  --text-muted: #8c8b92;
+
+  --accent: #4f7cff;
+  --accent-purple: #8b5cf6;
+  --accent-purple-muted: #6d4ac0;
+
+  --font-heading-family: "Inter Tight Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-body-family: "Newsreader Variable", ui-serif, Georgia, serif;
+  --font-mono-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+}
+
+/*
+ * Tailwind v4 CSS-first theme, aliased onto the tokens above via `@theme inline`
+ * so the exact `--bg` / `--accent` / etc. names stay canonical while still
+ * generating ordinary utilities: bg-bg, text-text-muted, border-accent, font-serif, etc.
+ */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-purple-muted: var(--accent-purple-muted);
+
+  --font-sans: var(--font-heading-family);
+  --font-serif: var(--font-body-family);
+  --font-mono: var(--font-mono-family);
+
+  /* Locked radii scale — §D.10: 2px inputs/badges, 6px cards/buttons, 12px modals/panels */
+  --radius-badge: 2px;
+  --radius-card: 6px;
+  --radius-panel: 12px;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--bg);
+  }
+
+  /* Blue is the sole interaction/focus signal — purple never appears here. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
