@@ -7,18 +7,28 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "seed:admin": "tsx --env-file=.env.local scripts/seed-admin.ts",
+    "verify:neon:db": "tsx scripts/verify-neon-db.ts",
+    "verify:neon:auth": "bash scripts/verify-neon-auth.sh",
+    "verify:neon": "bash scripts/verify-neon.sh"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "@node-rs/argon2": "^2.1.0",
     "drizzle-orm": "^0.45.2",
     "next": "16.3.1",
+    "next-auth": "^5.0.0-beta.32",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1",
+    "ws": "^8.21.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@fontsource-variable/inter-tight": "^5.3.0",
@@ -28,12 +38,14 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.12",
     "typescript": "^5"
   }
 }
