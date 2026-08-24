@@ -13,11 +13,7 @@ export const metadata: Metadata = {
     "AI-Native Engineer & Entrepreneur — I build intelligent systems for real-world problems.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
       <body className="bg-bg text-text min-h-screen font-sans antialiased">
