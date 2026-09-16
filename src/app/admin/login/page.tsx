@@ -29,7 +29,9 @@ export default async function LoginPage({
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <p className="text-accent-purple font-sans text-sm font-medium">Portfolio OS</p>
+        <p className="text-accent-purple font-sans text-sm font-medium">
+          CHIBUEZE MAXWELL
+        </p>
         <h1 className="text-text mt-2 font-sans text-2xl font-semibold">Sign in</h1>
 
         <form action={authenticate} className="mt-8 space-y-5">

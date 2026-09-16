@@ -20,7 +20,7 @@ export function Nav() {
           href="/"
           className="text-accent-purple font-sans text-sm font-semibold tracking-tight"
         >
-          Portfolio OS
+          CHIBUEZE MAXWELL
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-8 md:flex">

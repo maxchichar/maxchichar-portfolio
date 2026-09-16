@@ -17,7 +17,7 @@ export function Footer() {
       <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-accent-purple font-sans text-sm font-semibold">
-            Portfolio OS
+            CHIBUEZE MAXWELL
           </p>
           {/* Positioning statement — pulled from site_settings in Phase 8;
               this is the locked eyebrow copy in the meantime, not placeholder text. */}

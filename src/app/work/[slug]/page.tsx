@@ -18,12 +18,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const item = await getPublicWorkCaseStudy(slug);
   if (!item) {
     return {
-      title: "Project Not Found — Portfolio OS",
+      title: "Project Not Found — CHIBUEZE MAXWELL",
     };
   }
 
   return {
-    title: `${item.published.title} — Portfolio OS`,
+    title: `${item.published.title} — CHIBUEZE MAXWELL`,
     description: item.published.shortDescription,
   };
 }

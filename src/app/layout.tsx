@@ -8,7 +8,7 @@ import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Portfolio OS",
+  title: "CHIBUEZE MAXWELL",
   description:
     "AI-Native Engineer & Entrepreneur — I build intelligent systems for real-world problems.",
 };

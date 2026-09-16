@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Selected Work — Portfolio OS",
+  title: "Selected Work — CHIBUEZE MAXWELL",
   description:
     "AI-Native Engineer & Entrepreneur — Selected projects, intelligent systems, and engineering case studies.",
 };

@@ -7,7 +7,7 @@ export default async function AdminDashboard() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
-      <p className="text-accent-purple font-sans text-sm font-medium">Portfolio OS</p>
+      <p className="text-accent-purple font-sans text-sm font-medium">CHIBUEZE MAXWELL</p>
       <h1 className="text-text mt-2 font-sans text-2xl font-semibold">Admin</h1>
 
       <div className="rounded-panel border-border bg-surface mt-8 border p-6">
