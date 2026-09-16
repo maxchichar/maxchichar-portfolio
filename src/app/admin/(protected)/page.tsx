@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { auth, signOut } from "@/lib/auth/config";
 
 export default async function AdminDashboard() {
@@ -32,12 +34,24 @@ export default async function AdminDashboard() {
         </form>
       </div>
 
+      <Link
+        href="/admin/projects"
+        className="rounded-panel border-border bg-surface hover:border-accent/40 mt-6 flex items-center justify-between border p-6 transition-colors"
+      >
+        <div>
+          <h2 className="text-text font-sans text-sm font-medium">Projects</h2>
+          <p className="text-text-muted mt-1 font-serif text-sm">
+            Create, version, publish, and roll back projects.
+          </p>
+        </div>
+        <span className="text-accent font-sans text-sm">→</span>
+      </Link>
+
       <div className="rounded-panel border-border bg-surface mt-6 border p-6">
-        <h2 className="text-text font-sans text-sm font-medium">Phase 2 status</h2>
+        <h2 className="text-text font-sans text-sm font-medium">Phase 3 status</h2>
         <p className="text-text-muted mt-2 font-serif text-sm">
-          Database, authentication, and route protection are live. Project, research, and
-          article editors, the media library, and everything else content-facing begin in
-          later phases.
+          Project version lifecycle, evidence, and tags are live. Research/article
+          editors, the media upload pipeline, and public pages begin in later phases.
         </p>
       </div>
     </main>

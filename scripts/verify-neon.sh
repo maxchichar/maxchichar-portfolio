@@ -11,6 +11,14 @@
 # swaps drivers, never mocks Neon.
 set -uo pipefail
 
+# Load local environment for standalone verification scripts.
+if [ -f ".env.local" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source ".env.local"
+  set +a
+fi
+
 if [ -z "${DATABASE_URL:-}" ]; then
   echo "BLOCKED DATABASE_URL is not set. See .env.example — this script will not"
   echo "        substitute a local database or any other fallback."

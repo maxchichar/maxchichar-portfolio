@@ -43,7 +43,9 @@ async function main() {
       .update(schema.users)
       .set({ passwordHash, failedLoginCount: 0, lockedUntil: null })
       .where(eq(schema.users.id, existing.id));
-    console.log(`Admin user ${normalizedEmail} updated with current ADMIN_PASSWORD.`);
+    console.log(
+      `Admin user already exists for ${normalizedEmail} — updated password and reset lockout.`,
+    );
     await pool.end();
     process.exit(0);
   }

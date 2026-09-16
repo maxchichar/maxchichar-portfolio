@@ -81,6 +81,25 @@ function blockedExit(reason: string): never {
   process.exit(2);
 }
 
+function describeError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (err && typeof err === "object") {
+    const obj = err as Record<string, unknown>;
+    if (typeof obj.message === "string") return obj.message;
+    if (obj.error instanceof Error) return obj.error.message;
+    if (typeof obj.reason === "string") return obj.reason;
+    if (typeof obj.code === "string" || typeof obj.code === "number") {
+      return `error code ${obj.code}${typeof obj.type === "string" ? ` (${obj.type})` : ""}`;
+    }
+    try {
+      return JSON.stringify(obj);
+    } catch {
+      return String(err);
+    }
+  }
+  return String(err);
+}
+
 async function main() {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
@@ -97,7 +116,7 @@ async function main() {
     await pool.query("SELECT 1");
     pass("connection (real neon-serverless driver)");
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = describeError(err);
     await pool.end().catch(() => {});
     blockedExit(`could not connect via @neondatabase/serverless — ${message}`);
   }

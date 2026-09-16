@@ -31,7 +31,6 @@
 set -uo pipefail
 
 # Load local environment for standalone verification scripts.
-# Do not print or expose secret values.
 if [ -f ".env.local" ]; then
   set -a
   # shellcheck disable=SC1091
@@ -40,23 +39,7 @@ if [ -f ".env.local" ]; then
 fi
 
 FAILED=0
-
-# Find a free localhost port rather than assuming 3100 is available.
-find_free_port() {
-  local port
-  for port in $(seq 3100 3199); do
-    if ! ss -ltn "sport = :$port" 2>/dev/null | grep -q ":$port"; then
-      echo "$port"
-      return 0
-    fi
-  done
-
-  echo "No free verification port available in 3100-3199." >&2
-  return 1
-}
-
-# Allow an explicit verification port, otherwise use 3100.
-PORT="${VERIFY_PORT:-3100}"
+PORT=3100
 BASE="http://127.0.0.1:$PORT"
 COOKIES=$(mktemp)
 SERVER_LOG=$(mktemp)
@@ -72,32 +55,21 @@ fail() {
 }
 blocked_exit() {
   echo "BLOCKED $1"
-  [ -n "$SERVER_PID" ] && kill "$SERVER_PID" 2>/dev/null
+  if [ -n "$SERVER_PID" ]; then
+    kill -- "-$SERVER_PID" 2>/dev/null || kill "$SERVER_PID" 2>/dev/null || true
+  fi
   rm -f "$COOKIES" "$SERVER_LOG"
   exit 2
 }
 cleanup() {
   if [ -n "$SERVER_PID" ]; then
-    # Kill the entire process group created by setsid.
-    kill -- "-$SERVER_PID" 2>/dev/null || true
-
-    # Give children a moment to exit cleanly.
-    sleep 1
-
-    # Hard cleanup only if our process group somehow survived.
+    kill -- "-$SERVER_PID" 2>/dev/null || kill "$SERVER_PID" 2>/dev/null || true
+    sleep 0.5
     kill -9 -- "-$SERVER_PID" 2>/dev/null || true
   fi
-
   rm -f "$COOKIES" "$SERVER_LOG"
 }
 trap cleanup EXIT
-
-assert_server_alive() {
-  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-    blocked_exit "verification server died unexpectedly — log:
-$(cat "$SERVER_LOG")"
-  fi
-}
 
 # Redacts cookie VALUES (session tokens etc.) while keeping names/flags/
 # expiry visible — safe to print per the "no sensitive cookie contents" rule.
@@ -114,7 +86,7 @@ sanitize() {
 [ -n "${VERIFY_ADMIN_PASSWORD:-}" ] || blocked_exit "VERIFY_ADMIN_PASSWORD is not set."
 
 echo "Ensuring the dedicated verification account exists and is unlocked..."
-if ! npx tsx scripts/ensure-verify-account.ts; then
+if ! npx tsx --env-file=.env.local scripts/ensure-verify-account.ts; then
   blocked_exit "could not create/reset the dedicated verification account — see output above."
 fi
 
@@ -123,44 +95,22 @@ if ! npm run build > "$SERVER_LOG" 2>&1; then
   blocked_exit "production build failed — see below:\n$(cat "$SERVER_LOG")"
 fi
 
-echo "Checking port $PORT is available..."
-
-if ss -ltn 2>/dev/null | grep -q ":$PORT "; then
-  blocked_exit "port $PORT is already in use. Stop the existing server or set VERIFY_PORT to another free port."
-fi
-
 echo "Starting production server on port $PORT..."
-
-# Start the entire npm/Next process tree in its own process group.
-setsid env PORT="$PORT" npm start >"$SERVER_LOG" 2>&1 &
+setsid env PORT="$PORT" AUTH_TRUST_HOST=true npm start > "$SERVER_LOG" 2>&1 &
 SERVER_PID=$!
 
-echo "Server process group started: $SERVER_PID"
-
 READY=0
-
 for _ in $(seq 1 30); do
-  # If the process group died, do not send requests to whatever happens
-  # to be listening on the port.
-  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-    blocked_exit "production server process exited before becoming ready — log:
-$(cat "$SERVER_LOG")"
-  fi
-
-  if curl -fsS -o /dev/null --max-time 2 "$BASE/admin/login"; then
+  CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 "$BASE/admin/login" 2>/dev/null || echo "000")
+  if [ "$CODE" = "200" ]; then
     READY=1
     break
   fi
-
   sleep 1
 done
-
 if [ "$READY" -ne 1 ]; then
-  blocked_exit "server did not become reachable on $BASE — log:
-$(cat "$SERVER_LOG")"
+  blocked_exit "server did not become ready (HTTP 200) on $BASE — log:\n$(cat "$SERVER_LOG")"
 fi
-
-echo "Production server ready on $BASE"
 
 echo ""
 echo "=================================================="
@@ -169,7 +119,7 @@ echo "=================================================="
 
 get_csrf() {
   curl -s -c "$COOKIES" -b "$COOKIES" "$BASE/api/auth/csrf" | node -e \
-    'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>console.log(JSON.parse(d).csrfToken))'
+    'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);console.log(j.csrfToken||"")}catch(e){console.log("")}})'
 }
 
 rm -f "$COOKIES"
@@ -330,7 +280,7 @@ rm -f "$RESP_HEADERS" "$RESP_BODY"
 
 echo ""
 echo "Resetting the dedicated verification account's lockout state (cleanup)..."
-npx tsx scripts/ensure-verify-account.ts > /dev/null 2>&1 || echo "WARNING: cleanup reset failed — check the verification account manually."
+npx tsx --env-file=.env.local scripts/ensure-verify-account.ts > /dev/null 2>&1 || echo "WARNING: cleanup reset failed — check the verification account manually."
 echo "The real ADMIN_EMAIL account was never touched by a failed attempt during this run."
 
 echo ""

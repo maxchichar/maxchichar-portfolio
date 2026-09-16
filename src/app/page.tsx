@@ -30,9 +30,9 @@ export default function Home() {
           </h1>
 
           <p className="text-text-muted mt-6 max-w-xl font-serif text-lg">
-            This is the Phase&nbsp;1 foundation of Portfolio&nbsp;OS — the design system,
-            typography, and information architecture are wired and rendering. Content, the
-            admin, and everything CMS-driven begin in Phase&nbsp;2.
+            AI-native engineer and entrepreneur focused on AI systems, software
+            engineering, emerging technology, and problems at the intersection of
+            technology and society.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
