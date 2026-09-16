@@ -8,6 +8,7 @@ import type {
   ProjectDraftUpdateInput,
 } from "@/lib/validation/project";
 
+import { publicUrlFor } from "@/lib/storage/r2";
 import * as evidenceRepo from "../repositories/evidence";
 import * as mediaRepo from "../repositories/media";
 import * as projectsRepo from "../repositories/projects";
@@ -330,4 +331,54 @@ export async function listProjectsOverview() {
       };
     }),
   );
+}
+
+export async function listPublicWorkOverview() {
+  const rows = await projectsRepo.listPublishedActiveProjects(db);
+  return Promise.all(
+    rows.map(async ({ project, published }) => {
+      const [tags, coverMedia] = await Promise.all([
+        tagsRepo.getProjectTags(db, project.id),
+        published.coverMediaId ? mediaRepo.findById(db, published.coverMediaId) : null,
+      ]);
+
+      const coverUrl =
+        coverMedia && coverMedia.status === "READY"
+          ? publicUrlFor(coverMedia.storageKey)
+          : null;
+
+      return {
+        project,
+        published,
+        tags,
+        coverUrl,
+      };
+    }),
+  );
+}
+
+export async function getPublicWorkCaseStudy(slug: string) {
+  const row = await projectsRepo.getPublishedActiveProjectBySlug(db, slug);
+  if (!row) return null;
+
+  const { project, published } = row;
+
+  const [evidence, tags, coverMedia] = await Promise.all([
+    evidenceRepo.listEvidenceForProject(db, project.id),
+    tagsRepo.getProjectTags(db, project.id),
+    published.coverMediaId ? mediaRepo.findById(db, published.coverMediaId) : null,
+  ]);
+
+  const coverUrl =
+    coverMedia && coverMedia.status === "READY"
+      ? publicUrlFor(coverMedia.storageKey)
+      : null;
+
+  return {
+    project,
+    published,
+    evidence,
+    tags,
+    coverUrl,
+  };
 }

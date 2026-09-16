@@ -35,6 +35,43 @@ export async function listProjects(tx: Tx) {
   return tx.select().from(schema.projects).orderBy(desc(schema.projects.createdAt));
 }
 
+export async function listPublishedActiveProjects(tx: Tx) {
+  return tx
+    .select({
+      project: schema.projects,
+      published: schema.projectVersions,
+    })
+    .from(schema.projects)
+    .innerJoin(
+      schema.projectVersions,
+      and(
+        eq(schema.projectVersions.projectId, schema.projects.id),
+        eq(schema.projectVersions.status, "PUBLISHED"),
+      ),
+    )
+    .where(eq(schema.projects.status, "ACTIVE"))
+    .orderBy(desc(schema.projectVersions.publishedAt));
+}
+
+export async function getPublishedActiveProjectBySlug(tx: Tx, slug: string) {
+  const [row] = await tx
+    .select({
+      project: schema.projects,
+      published: schema.projectVersions,
+    })
+    .from(schema.projects)
+    .innerJoin(
+      schema.projectVersions,
+      and(
+        eq(schema.projectVersions.projectId, schema.projects.id),
+        eq(schema.projectVersions.status, "PUBLISHED"),
+      ),
+    )
+    .where(and(eq(schema.projects.slug, slug), eq(schema.projects.status, "ACTIVE")))
+    .limit(1);
+  return row ?? null;
+}
+
 export async function insertProject(tx: Tx, input: { slug: string; createdBy: string }) {
   const [row] = await tx.insert(schema.projects).values(input).returning();
   if (!row) throw new Error("insertProject: insert returned no row");

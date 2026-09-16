@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 
@@ -36,12 +37,12 @@ export default function Home() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
-            <a
+            <Link
               href="/work"
               className="rounded-card bg-accent text-bg px-5 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90"
             >
               Explore my work
-            </a>
+            </Link>
             <a
               href="/research"
               className="rounded-card border-border text-text hover:border-accent hover:text-accent border px-5 py-2.5 font-sans text-sm font-medium transition-colors"
