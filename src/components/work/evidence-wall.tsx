@@ -2,17 +2,23 @@ import type { schema } from "@/lib/db";
 
 type EvidenceRow = typeof schema.evidence.$inferSelect;
 
-export function EvidenceWall({ items }: { items: EvidenceRow[] }) {
+export function EvidenceWall({
+  items,
+  title = "Evidence Wall",
+  description = "Verifiable benchmarks, code repositories, datasets, and empirical artifacts.",
+}: {
+  items: EvidenceRow[];
+  title?: string;
+  description?: string;
+}) {
   if (items.length === 0) return null;
 
   return (
     <section className="mt-16">
       <h2 className="text-accent-purple font-sans text-xs font-semibold tracking-wider uppercase">
-        Evidence Wall
+        {title}
       </h2>
-      <p className="text-text-muted mt-1 font-serif text-sm">
-        Verifiable benchmarks, code repositories, datasets, and empirical artifacts.
-      </p>
+      <p className="text-text-muted mt-1 font-serif text-sm">{description}</p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {items.map((item) => (

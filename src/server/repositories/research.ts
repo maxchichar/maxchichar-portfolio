@@ -13,10 +13,11 @@ export type ResearchVersionInsert = typeof schema.researchVersions.$inferInsert;
 export type ResearchVersionRow = typeof schema.researchVersions.$inferSelect;
 export type ResearchRow = typeof schema.research.$inferSelect;
 
-// Level 5.1 (data layer + admin list/create) added find/insert/list.
-// Level 5.2 (editor + lifecycle) adds the rest below, mirroring
-// repositories/projects.ts function-for-function. Tags/evidence/cover-media
-// linkage repository functions are still not here — 5.3 scope.
+// Level 5.1 added find/insert/list. Level 5.2 added the draft/publish/
+// rollback/archive lifecycle. Level 5.3 wired tags/evidence/media via the
+// shared repositories (not here). Level 5.4 adds the public
+// listPublishedActiveResearch/getPublishedActiveResearchBySlug queries
+// below, mirroring repositories/projects.ts function-for-function.
 
 export async function findResearchBySlug(tx: Tx, slug: string) {
   const [row] = await tx
@@ -38,6 +39,43 @@ export async function findResearchById(tx: Tx, id: string) {
 
 export async function listResearch(tx: Tx) {
   return tx.select().from(schema.research).orderBy(desc(schema.research.createdAt));
+}
+
+export async function listPublishedActiveResearch(tx: Tx) {
+  return tx
+    .select({
+      research: schema.research,
+      published: schema.researchVersions,
+    })
+    .from(schema.research)
+    .innerJoin(
+      schema.researchVersions,
+      and(
+        eq(schema.researchVersions.researchId, schema.research.id),
+        eq(schema.researchVersions.status, "PUBLISHED"),
+      ),
+    )
+    .where(eq(schema.research.status, "ACTIVE"))
+    .orderBy(desc(schema.researchVersions.publishedAt));
+}
+
+export async function getPublishedActiveResearchBySlug(tx: Tx, slug: string) {
+  const [row] = await tx
+    .select({
+      research: schema.research,
+      published: schema.researchVersions,
+    })
+    .from(schema.research)
+    .innerJoin(
+      schema.researchVersions,
+      and(
+        eq(schema.researchVersions.researchId, schema.research.id),
+        eq(schema.researchVersions.status, "PUBLISHED"),
+      ),
+    )
+    .where(and(eq(schema.research.slug, slug), eq(schema.research.status, "ACTIVE")))
+    .limit(1);
+  return row ?? null;
 }
 
 export async function insertResearch(tx: Tx, input: { slug: string; createdBy: string }) {

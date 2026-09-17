@@ -8,6 +8,7 @@ import type {
   ResearchDraftUpdateInput,
 } from "@/lib/validation/research";
 
+import { publicUrlFor } from "@/lib/storage/r2";
 import * as evidenceRepo from "../repositories/evidence";
 import * as mediaRepo from "../repositories/media";
 import * as researchRepo from "../repositories/research";
@@ -21,10 +22,10 @@ interface Actor {
 }
 
 // Level 5.1 added createResearch and listResearchOverview. Level 5.2 added
-// the draft/publish/rollback/archive lifecycle. Level 5.3 wires research
-// into the shared tags/evidence/media infrastructure below — same tables,
-// same repositories, no second system. Mirrors services/projects.ts
-// function-for-function throughout.
+// the draft/publish/rollback/archive lifecycle. Level 5.3 wired research
+// into the shared tags/evidence/media infrastructure. Level 5.4 adds the
+// public listPublicResearchOverview/getPublicResearchDetail queries below,
+// mirroring services/projects.ts function-for-function throughout.
 
 /** Creates a new research item + its first DRAFT version, in one transaction. */
 export async function createResearch(input: ResearchCreateInput, actor: Actor) {
@@ -318,4 +319,54 @@ export async function getResearchFullState(researchId: string) {
   const draft = versions.find((v) => v.status === "DRAFT") ?? null;
   const published = versions.find((v) => v.status === "PUBLISHED") ?? null;
   return { research, versions, evidence, tags, draft, published };
+}
+
+export async function listPublicResearchOverview() {
+  const rows = await researchRepo.listPublishedActiveResearch(db);
+  return Promise.all(
+    rows.map(async ({ research, published }) => {
+      const [tags, coverMedia] = await Promise.all([
+        tagsRepo.getResearchTags(db, research.id),
+        published.coverMediaId ? mediaRepo.findById(db, published.coverMediaId) : null,
+      ]);
+
+      const coverUrl =
+        coverMedia && coverMedia.status === "READY"
+          ? publicUrlFor(coverMedia.storageKey)
+          : null;
+
+      return {
+        research,
+        published,
+        tags,
+        coverUrl,
+      };
+    }),
+  );
+}
+
+export async function getPublicResearchDetail(slug: string) {
+  const row = await researchRepo.getPublishedActiveResearchBySlug(db, slug);
+  if (!row) return null;
+
+  const { research, published } = row;
+
+  const [evidence, tags, coverMedia] = await Promise.all([
+    evidenceRepo.listEvidenceForResearch(db, research.id),
+    tagsRepo.getResearchTags(db, research.id),
+    published.coverMediaId ? mediaRepo.findById(db, published.coverMediaId) : null,
+  ]);
+
+  const coverUrl =
+    coverMedia && coverMedia.status === "READY"
+      ? publicUrlFor(coverMedia.storageKey)
+      : null;
+
+  return {
+    research,
+    published,
+    evidence,
+    tags,
+    coverUrl,
+  };
 }

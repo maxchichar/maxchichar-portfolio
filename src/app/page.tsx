@@ -43,12 +43,12 @@ export default function Home() {
             >
               Explore my work
             </Link>
-            <a
+            <Link
               href="/research"
               className="rounded-card border-border text-text hover:border-accent hover:text-accent border px-5 py-2.5 font-sans text-sm font-medium transition-colors"
             >
               Read my research
-            </a>
+            </Link>
           </div>
         </section>
 
