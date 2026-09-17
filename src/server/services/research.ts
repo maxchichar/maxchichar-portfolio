@@ -2,12 +2,16 @@ import "server-only";
 
 import { db } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
+import type { EvidenceCreateInput } from "@/lib/validation/evidence";
 import type {
   ResearchCreateInput,
   ResearchDraftUpdateInput,
 } from "@/lib/validation/research";
 
+import * as evidenceRepo from "../repositories/evidence";
+import * as mediaRepo from "../repositories/media";
 import * as researchRepo from "../repositories/research";
+import * as tagsRepo from "../repositories/tags";
 
 export class ResearchServiceError extends Error {}
 
@@ -16,11 +20,11 @@ interface Actor {
   type: "HUMAN" | "AI";
 }
 
-// Level 5.1 added createResearch and listResearchOverview. Level 5.2 adds
-// the rest of the lifecycle below, mirroring services/projects.ts
-// function-for-function. Evidence and tags (addEvidence/removeEvidence,
-// ensureTags/setResearchTags) and cover-media handling in saveDraft are
-// still not here — 5.3 scope.
+// Level 5.1 added createResearch and listResearchOverview. Level 5.2 added
+// the draft/publish/rollback/archive lifecycle. Level 5.3 wires research
+// into the shared tags/evidence/media infrastructure below — same tables,
+// same repositories, no second system. Mirrors services/projects.ts
+// function-for-function throughout.
 
 /** Creates a new research item + its first DRAFT version, in one transaction. */
 export async function createResearch(input: ResearchCreateInput, actor: Actor) {
@@ -139,13 +143,35 @@ export async function saveDraft(
       );
     }
 
-    return researchRepo.updateDraftVersion(tx, draft.id, {
+    // A client-supplied coverMediaId is untrusted input, not proof of a
+    // real, validated upload — verify the row actually exists and passed
+    // the confirm-stage byte validation (status=READY) before accepting
+    // it. Never trust that a submitted id was legitimately obtained from
+    // the upload flow just because it's a well-formed UUID.
+    let coverMediaId: string | null = null;
+    if (patch.coverMediaId) {
+      const media = await mediaRepo.findById(tx, patch.coverMediaId);
+      if (!media || media.status !== "READY") {
+        throw new ResearchServiceError(
+          "That cover image hasn't finished uploading and validating yet.",
+        );
+      }
+      coverMediaId = media.id;
+    }
+
+    const updated = await researchRepo.updateDraftVersion(tx, draft.id, {
       title: patch.title,
       type: patch.type,
       abstract: patch.abstract,
       category: patch.category ?? null,
       sections: patch.sections,
+      ...(patch.coverMediaId !== undefined ? { coverMediaId } : {}),
     });
+
+    const tagIds = await tagsRepo.ensureTags(tx, patch.tags);
+    await tagsRepo.setResearchTags(tx, researchId, tagIds);
+
+    return updated;
   });
 }
 
@@ -254,11 +280,42 @@ export async function unarchiveResearch(researchId: string, actor: Actor) {
   });
 }
 
+export async function addEvidence(researchId: string, input: EvidenceCreateInput) {
+  return db.transaction(async (tx) => {
+    return evidenceRepo.insertEvidenceForResearch(tx, researchId, {
+      type: input.type,
+      label: input.label,
+      description: input.description ?? null,
+      url: input.url && input.url.length > 0 ? input.url : null,
+      data: "data" in input ? (input.data ?? null) : null,
+    });
+  });
+}
+
+export async function removeEvidence(researchId: string, evidenceId: string) {
+  const deleted = await db.transaction((tx) =>
+    evidenceRepo.deleteEvidenceForResearch(tx, researchId, evidenceId),
+  );
+  if (!deleted) {
+    throw new ResearchServiceError(
+      "Evidence not found for this research item — it may belong to a different item, or was already removed.",
+    );
+  }
+}
+
+export async function getMediaById(mediaId: string) {
+  return mediaRepo.findById(db, mediaId);
+}
+
 export async function getResearchFullState(researchId: string) {
   const research = await researchRepo.findResearchById(db, researchId);
   if (!research) return null;
-  const versions = await researchRepo.listVersions(db, researchId);
+  const [versions, evidence, tags] = await Promise.all([
+    researchRepo.listVersions(db, researchId),
+    evidenceRepo.listEvidenceForResearch(db, researchId),
+    tagsRepo.getResearchTags(db, researchId),
+  ]);
   const draft = versions.find((v) => v.status === "DRAFT") ?? null;
   const published = versions.find((v) => v.status === "PUBLISHED") ?? null;
-  return { research, versions, draft, published };
+  return { research, versions, evidence, tags, draft, published };
 }

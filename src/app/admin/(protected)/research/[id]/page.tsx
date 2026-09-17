@@ -12,6 +12,8 @@ import {
   unarchiveResearchForm,
   tiptapDocToPlainText,
 } from "../actions";
+import { EvidencePanel } from "./evidence-panel";
+import { CoverImageUploader } from "./cover-image-uploader";
 
 const SECTION_LABELS: Record<(typeof RESEARCH_SECTION_KEYS)[number], string> = {
   research_question: "Research Question",
@@ -29,16 +31,23 @@ const SECTION_LABELS: Record<(typeof RESEARCH_SECTION_KEYS)[number], string> = {
 
 export default async function ResearchEditPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ evidenceError?: string }>;
 }) {
   const { id } = await params;
+  const { evidenceError } = await searchParams;
   const state = await researchService.getResearchFullState(id);
   if (!state) notFound();
 
-  const { research, draft, published, versions } = state;
+  const { research, draft, published, versions, evidence, tags } = state;
   const current = draft ?? published;
   if (!current) notFound();
+
+  const currentCoverMedia = draft?.coverMediaId
+    ? await researchService.getMediaById(draft.coverMediaId)
+    : null;
 
   const sectionText = (key: string) => {
     const section = (draft?.sections as { key: string; content: unknown }[] | null)?.find(
@@ -132,6 +141,22 @@ export default async function ResearchEditPage({
             />
           </div>
 
+          <CoverImageUploader
+            initialMediaId={draft.coverMediaId}
+            initialUrl={currentCoverMedia?.storageUrl ?? null}
+          />
+
+          <div>
+            <label className="text-text-muted block font-sans text-sm">
+              Tags (comma-separated)
+            </label>
+            <input
+              name="tags"
+              defaultValue={tags.map((t) => t.name).join(", ")}
+              className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
+            />
+          </div>
+
           <fieldset className="border-border space-y-4 border-t pt-5">
             <legend className="text-text font-sans text-sm font-medium">
               Research sections — leave blank to omit
@@ -178,6 +203,8 @@ export default async function ResearchEditPage({
           </button>
         </form>
       )}
+
+      <EvidencePanel researchId={research.id} evidence={evidence} error={evidenceError} />
 
       <section className="border-border mt-10 border-t pt-6">
         <h2 className="text-text font-sans text-sm font-medium">Version history</h2>

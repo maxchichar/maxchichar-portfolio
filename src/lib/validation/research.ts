@@ -63,5 +63,7 @@ export const researchDraftUpdateSchema = z.object({
   abstract: z.string().min(1).max(600),
   category: z.string().max(80).optional().nullable(),
   sections: z.array(researchSectionSchema).max(RESEARCH_SECTION_KEYS.length),
+  tags: z.array(z.string().min(1).max(40)).max(20).default([]),
+  coverMediaId: z.uuid().optional().nullable(),
 });
 export type ResearchDraftUpdateInput = z.infer<typeof researchDraftUpdateSchema>;
