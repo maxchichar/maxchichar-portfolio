@@ -8,6 +8,7 @@ import type {
   ArticleDraftUpdateInput,
 } from "@/lib/validation/article";
 
+import { publicUrlFor } from "@/lib/storage/r2";
 import * as articlesRepo from "../repositories/articles";
 import * as mediaRepo from "../repositories/media";
 import * as tagsRepo from "../repositories/tags";
@@ -20,9 +21,11 @@ interface Actor {
 }
 
 // Level 6.1 added createArticle and listArticlesOverview. Level 6.2 added
-// the draft/publish/rollback/archive lifecycle. Level 6.3 wires articles
-// into the shared tags/media infrastructure below — same tables, same
-// repositories, no second system. Articles don't get evidence
+// the draft/publish/rollback/archive lifecycle. Level 6.3 wired articles
+// into the shared tags/media infrastructure. Level 6.4 adds the public
+// listPublicArticlesOverview/getPublicArticleDetail queries below,
+// mirroring services/research.ts's 5.4 additions function-for-function.
+// Articles don't get evidence
 // (docs/SPECIFICATION.md), so there's no addEvidence/removeEvidence here.
 
 const WORDS_PER_MINUTE = 200;
@@ -303,4 +306,52 @@ export async function getArticleFullState(articleId: string) {
   const draft = versions.find((v) => v.status === "DRAFT") ?? null;
   const published = versions.find((v) => v.status === "PUBLISHED") ?? null;
   return { article, versions, tags, draft, published };
+}
+
+export async function listPublicArticlesOverview() {
+  const rows = await articlesRepo.listPublishedActiveArticles(db);
+  return Promise.all(
+    rows.map(async ({ article, published }) => {
+      const [tags, coverMedia] = await Promise.all([
+        tagsRepo.getArticleTags(db, article.id),
+        published.coverMediaId ? mediaRepo.findById(db, published.coverMediaId) : null,
+      ]);
+
+      const coverUrl =
+        coverMedia && coverMedia.status === "READY"
+          ? publicUrlFor(coverMedia.storageKey)
+          : null;
+
+      return {
+        article,
+        published,
+        tags,
+        coverUrl,
+      };
+    }),
+  );
+}
+
+export async function getPublicArticleDetail(slug: string) {
+  const row = await articlesRepo.getPublishedActiveArticleBySlug(db, slug);
+  if (!row) return null;
+
+  const { article, published } = row;
+
+  const [tags, coverMedia] = await Promise.all([
+    tagsRepo.getArticleTags(db, article.id),
+    published.coverMediaId ? mediaRepo.findById(db, published.coverMediaId) : null,
+  ]);
+
+  const coverUrl =
+    coverMedia && coverMedia.status === "READY"
+      ? publicUrlFor(coverMedia.storageKey)
+      : null;
+
+  return {
+    article,
+    published,
+    tags,
+    coverUrl,
+  };
 }

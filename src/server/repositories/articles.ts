@@ -13,10 +13,12 @@ export type ArticleVersionInsert = typeof schema.articleVersions.$inferInsert;
 export type ArticleVersionRow = typeof schema.articleVersions.$inferSelect;
 export type ArticleRow = typeof schema.articles.$inferSelect;
 
-// Level 6.1 added find/insert/list. Level 6.2 adds the rest below,
-// mirroring repositories/research.ts's 5.2 additions function-for-function.
-// Tags/evidence/cover-media linkage repository functions are still not
-// here — articles don't get evidence (spec), tags/cover-media are 6.3.
+// Level 6.1 added find/insert/list. Level 6.2 added the draft/publish/
+// rollback/archive lifecycle. Level 6.3 wired tags/cover-media via the
+// shared repositories (not here). Level 6.4 adds the public
+// listPublishedActiveArticles/getPublishedActiveArticleBySlug queries
+// below, mirroring repositories/research.ts's 5.4 additions
+// function-for-function.
 
 export async function findArticleBySlug(tx: Tx, slug: string) {
   const [row] = await tx
@@ -179,4 +181,41 @@ export async function setItemStatus(
     .update(schema.articles)
     .set({ status, updatedAt: new Date() })
     .where(eq(schema.articles.id, articleId));
+}
+
+export async function listPublishedActiveArticles(tx: Tx) {
+  return tx
+    .select({
+      article: schema.articles,
+      published: schema.articleVersions,
+    })
+    .from(schema.articles)
+    .innerJoin(
+      schema.articleVersions,
+      and(
+        eq(schema.articleVersions.articleId, schema.articles.id),
+        eq(schema.articleVersions.status, "PUBLISHED"),
+      ),
+    )
+    .where(eq(schema.articles.status, "ACTIVE"))
+    .orderBy(desc(schema.articleVersions.publishedAt));
+}
+
+export async function getPublishedActiveArticleBySlug(tx: Tx, slug: string) {
+  const [row] = await tx
+    .select({
+      article: schema.articles,
+      published: schema.articleVersions,
+    })
+    .from(schema.articles)
+    .innerJoin(
+      schema.articleVersions,
+      and(
+        eq(schema.articleVersions.articleId, schema.articles.id),
+        eq(schema.articleVersions.status, "PUBLISHED"),
+      ),
+    )
+    .where(and(eq(schema.articles.slug, slug), eq(schema.articles.status, "ACTIVE")))
+    .limit(1);
+  return row ?? null;
 }
