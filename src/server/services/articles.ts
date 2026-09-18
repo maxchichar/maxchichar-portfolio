@@ -2,8 +2,11 @@ import "server-only";
 
 import { db } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
-import { plainTextToTiptapDoc } from "@/lib/validation/project";
-import type { ArticleCreateInput } from "@/lib/validation/article";
+import { plainTextToTiptapDoc, tiptapDocToPlainText } from "@/lib/validation/project";
+import type {
+  ArticleCreateInput,
+  ArticleDraftUpdateInput,
+} from "@/lib/validation/article";
 
 import * as articlesRepo from "../repositories/articles";
 
@@ -14,10 +17,19 @@ interface Actor {
   type: "HUMAN" | "AI";
 }
 
-// Level 6.1 (data layer + admin list/create) only — createArticle and
-// listArticlesOverview. saveDraft, publishArticle, rollbackArticle,
-// archiveArticle, tags, and cover-media mirror the equivalent functions
-// in services/research.ts and land in 6.2/6.3.
+// Level 6.1 added createArticle and listArticlesOverview. Level 6.2 adds
+// the rest of the lifecycle below, mirroring services/research.ts's 5.2
+// additions function-for-function. Tags and cover-media are 6.3 scope;
+// articles don't get evidence (docs/SPECIFICATION.md).
+
+const WORDS_PER_MINUTE = 200;
+
+/** Word count / 200wpm, rounded up, minimum 1 — computed from actual content. */
+function estimateReadingTime(content: unknown): number {
+  const text = tiptapDocToPlainText(content);
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / WORDS_PER_MINUTE));
+}
 
 /** Creates a new article + its first DRAFT version, in one transaction. */
 export async function createArticle(input: ArticleCreateInput, actor: Actor) {
@@ -41,6 +53,7 @@ export async function createArticle(input: ArticleCreateInput, actor: Actor) {
       excerpt: input.excerpt,
       // Empty Tiptap doc — content is written from Level 6.2's editor.
       content: plainTextToTiptapDoc(""),
+      readingTime: estimateReadingTime(plainTextToTiptapDoc("")),
       createdByType: actor.type,
       createdById: actor.id,
       generationMode: actor.type === "HUMAN" ? "HUMAN_CREATED" : "AI_GENERATED",
@@ -70,4 +83,192 @@ export async function listArticlesOverview() {
       };
     }),
   );
+}
+
+/**
+ * Returns the article's current open draft, creating one by cloning the
+ * published version if none exists yet (restore-forward pattern — the
+ * published row is never mutated). Idempotent.
+ */
+export async function ensureDraft(articleId: string, actor: Actor) {
+  return db.transaction(async (tx) => {
+    const existingDraft = await articlesRepo.getDraftVersion(tx, articleId);
+    if (existingDraft) return existingDraft;
+
+    const published = await articlesRepo.getPublishedVersion(tx, articleId);
+    if (!published) {
+      throw new ArticleServiceError(
+        "No draft and no published version exist for this article — data integrity issue.",
+      );
+    }
+
+    const nextNumber = await articlesRepo.nextVersionNumber(tx, articleId);
+    const draft = await articlesRepo.insertVersion(tx, {
+      articleId,
+      versionNumber: nextNumber,
+      status: "DRAFT",
+      basedOnVersionId: published.id,
+      title: published.title,
+      excerpt: published.excerpt,
+      content: published.content,
+      readingTime: published.readingTime,
+      category: published.category,
+      coverMediaId: published.coverMediaId,
+      seo: published.seo,
+      createdByType: actor.type,
+      createdById: actor.id,
+      generationMode: actor.type === "HUMAN" ? "HUMAN_EDITED" : "AI_ASSISTED",
+    });
+
+    await logAudit({
+      userId: actor.id,
+      action: "article.version.created",
+      resourceType: "article",
+      resourceId: articleId,
+      metadata: { versionId: draft.id, basedOnVersionId: published.id },
+    });
+
+    return draft;
+  });
+}
+
+/** Mutates the current DRAFT version in place. Never touches PUBLISHED rows. */
+// `actor` isn't used yet — kept in the signature for when AUTHOR-scoped
+// ownership checks are added, matching services/research.ts's saveDraft.
+export async function saveDraft(
+  articleId: string,
+  patch: ArticleDraftUpdateInput,
+  _actor: Actor,
+) {
+  void _actor;
+  return db.transaction(async (tx) => {
+    const draft = await articlesRepo.getDraftVersion(tx, articleId);
+    if (!draft) {
+      throw new ArticleServiceError(
+        "No open draft for this article — call ensureDraft first.",
+      );
+    }
+
+    return articlesRepo.updateDraftVersion(tx, draft.id, {
+      title: patch.title,
+      excerpt: patch.excerpt,
+      category: patch.category ?? null,
+      content: patch.content,
+      readingTime: estimateReadingTime(patch.content),
+    });
+  });
+}
+
+/** DRAFT -> PUBLISHED; any existing PUBLISHED version -> SUPERSEDED. Atomic. */
+export async function publishArticle(articleId: string, actor: Actor) {
+  return db.transaction(async (tx) => {
+    const draft = await articlesRepo.getDraftVersion(tx, articleId);
+    if (!draft) {
+      throw new ArticleServiceError("No open draft to publish.");
+    }
+
+    const currentPublished = await articlesRepo.getPublishedVersion(tx, articleId);
+    if (currentPublished) {
+      await articlesRepo.markSuperseded(tx, currentPublished.id);
+    }
+    const published = await articlesRepo.markPublished(tx, draft.id);
+
+    await logAudit({
+      userId: actor.id,
+      action: "article.version.published",
+      resourceType: "article",
+      resourceId: articleId,
+      metadata: { versionId: published.id, versionNumber: published.versionNumber },
+    });
+
+    return published;
+  });
+}
+
+/**
+ * Restore-forward rollback: clones the target (any prior) version's
+ * content into a fresh version and publishes it immediately. The target
+ * row itself is never resurrected or mutated — history stays append-only.
+ */
+export async function rollbackArticle(
+  articleId: string,
+  targetVersionId: string,
+  actor: Actor,
+) {
+  return db.transaction(async (tx) => {
+    const target = await articlesRepo.getVersionById(tx, targetVersionId);
+    if (!target || target.articleId !== articleId) {
+      throw new ArticleServiceError("Target version not found for this article.");
+    }
+
+    const existingDraft = await articlesRepo.getDraftVersion(tx, articleId);
+    if (existingDraft) {
+      throw new ArticleServiceError(
+        "An open draft already exists — publish or discard it before rolling back.",
+      );
+    }
+
+    const nextNumber = await articlesRepo.nextVersionNumber(tx, articleId);
+    const restored = await articlesRepo.insertVersion(tx, {
+      articleId,
+      versionNumber: nextNumber,
+      status: "DRAFT",
+      basedOnVersionId: target.id,
+      title: target.title,
+      excerpt: target.excerpt,
+      content: target.content,
+      readingTime: target.readingTime,
+      category: target.category,
+      coverMediaId: target.coverMediaId,
+      seo: target.seo,
+      createdByType: actor.type,
+      createdById: actor.id,
+      generationMode: "HUMAN_EDITED",
+    });
+
+    const currentPublished = await articlesRepo.getPublishedVersion(tx, articleId);
+    if (currentPublished) {
+      await articlesRepo.markSuperseded(tx, currentPublished.id);
+    }
+    const published = await articlesRepo.markPublished(tx, restored.id);
+
+    await logAudit({
+      userId: actor.id,
+      action: "article.version.rollback",
+      resourceType: "article",
+      resourceId: articleId,
+      metadata: { restoredFromVersionId: target.id, newVersionId: published.id },
+    });
+
+    return published;
+  });
+}
+
+export async function archiveArticle(articleId: string, actor: Actor) {
+  await articlesRepo.setItemStatus(db, articleId, "ARCHIVED");
+  await logAudit({
+    userId: actor.id,
+    action: "article.archived",
+    resourceType: "article",
+    resourceId: articleId,
+  });
+}
+
+export async function unarchiveArticle(articleId: string, actor: Actor) {
+  await articlesRepo.setItemStatus(db, articleId, "ACTIVE");
+  await logAudit({
+    userId: actor.id,
+    action: "article.unarchived",
+    resourceType: "article",
+    resourceId: articleId,
+  });
+}
+
+export async function getArticleFullState(articleId: string) {
+  const article = await articlesRepo.findArticleById(db, articleId);
+  if (!article) return null;
+  const versions = await articlesRepo.listVersions(db, articleId);
+  const draft = versions.find((v) => v.status === "DRAFT") ?? null;
+  const published = versions.find((v) => v.status === "PUBLISHED") ?? null;
+  return { article, versions, draft, published };
 }

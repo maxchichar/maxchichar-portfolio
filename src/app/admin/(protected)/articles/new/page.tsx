@@ -27,20 +27,20 @@ export default async function NewArticlePage({
       );
     }
 
+    let articleId: string;
     try {
-      await articlesService.createArticle(parsed.data, {
+      const { article } = await articlesService.createArticle(parsed.data, {
         id: session.user.id,
         type: "HUMAN",
       });
+      articleId = article.id;
     } catch (err) {
       if (err instanceof articlesService.ArticleServiceError) {
         redirect(`/admin/articles/new?error=${encodeURIComponent(err.message)}`);
       }
       throw err;
     }
-    // No editor route exists yet (/admin/articles/[id] is Level 6.2), so
-    // land back on the list — mirrors the same 5.1 precedent for Research.
-    redirect("/admin/articles");
+    redirect(`/admin/articles/${articleId}`);
   }
 
   return (

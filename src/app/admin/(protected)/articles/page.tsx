@@ -42,11 +42,10 @@ export default async function ArticlesListPage() {
           <p className="text-text-muted font-serif text-sm">No articles yet.</p>
         ) : (
           overview.map(({ article, draft, published }) => (
-            // Not linked to an editor yet — /admin/articles/[id] lands in
-            // Level 6.2, mirroring the same 5.1→5.2 precedent for Research.
-            <div
+            <Link
               key={article.id}
-              className="rounded-panel border-border bg-surface flex items-center justify-between border p-4"
+              href={`/admin/articles/${article.id}`}
+              className="rounded-panel border-border bg-surface hover:border-accent/40 flex items-center justify-between border p-4 transition-colors"
             >
               <div>
                 <p className="text-text font-sans text-sm font-medium">
@@ -61,7 +60,7 @@ export default async function ArticlesListPage() {
                 {published && <StatusBadge label="PUBLISHED" tone="published" />}
                 {draft && <StatusBadge label="DRAFT" tone="draft" />}
               </div>
-            </div>
+            </Link>
           ))
         )}
       </div>
