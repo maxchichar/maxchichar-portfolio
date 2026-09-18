@@ -41,11 +41,29 @@ export async function saveDraftForm(formData: FormData): Promise<void> {
 
   const contentText = String(formData.get("content") ?? "");
 
+  const tags = String(formData.get("tags") ?? "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  // Tri-state: field absent -> undefined (don't touch existing cover);
+  // present but empty -> null (explicit clear); present with a value ->
+  // that value (set/keep, verified server-side in the service layer).
+  const coverMediaIdRaw = formData.get("coverMediaId");
+  const coverMediaId =
+    coverMediaIdRaw === null
+      ? undefined
+      : coverMediaIdRaw === ""
+        ? null
+        : String(coverMediaIdRaw);
+
   const parsed = articleDraftUpdateSchema.safeParse({
     title: formData.get("title"),
     excerpt: formData.get("excerpt"),
     category: formData.get("category") || null,
     content: plainTextToTiptapDoc(contentText),
+    tags,
+    coverMediaId,
   });
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid input.");

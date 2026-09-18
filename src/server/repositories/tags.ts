@@ -76,3 +76,21 @@ export async function getResearchTags(tx: Tx, researchId: string) {
     .where(eq(schema.researchTags.researchId, researchId))
     .then((rows) => rows.map((r) => r.tag));
 }
+
+export async function setArticleTags(tx: Tx, articleId: string, tagIds: string[]) {
+  await tx.delete(schema.articleTags).where(eq(schema.articleTags.articleId, articleId));
+  if (tagIds.length > 0) {
+    await tx
+      .insert(schema.articleTags)
+      .values(tagIds.map((tagId) => ({ articleId, tagId })));
+  }
+}
+
+export async function getArticleTags(tx: Tx, articleId: string) {
+  return tx
+    .select({ tag: schema.tags })
+    .from(schema.articleTags)
+    .innerJoin(schema.tags, eq(schema.articleTags.tagId, schema.tags.id))
+    .where(eq(schema.articleTags.articleId, articleId))
+    .then((rows) => rows.map((r) => r.tag));
+}

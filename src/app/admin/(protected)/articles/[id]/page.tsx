@@ -11,6 +11,7 @@ import {
   unarchiveArticleForm,
   tiptapDocToPlainText,
 } from "../actions";
+import { CoverImageUploader } from "./cover-image-uploader";
 
 export default async function ArticleEditPage({
   params,
@@ -21,11 +22,15 @@ export default async function ArticleEditPage({
   const state = await articlesService.getArticleFullState(id);
   if (!state) notFound();
 
-  const { article, draft, published, versions } = state;
+  const { article, draft, published, versions, tags } = state;
   const current = draft ?? published;
   if (!current) notFound();
 
   const contentText = draft ? tiptapDocToPlainText(draft.content) : "";
+
+  const currentCoverMedia = draft?.coverMediaId
+    ? await articlesService.getMediaById(draft.coverMediaId)
+    : null;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
@@ -92,6 +97,22 @@ export default async function ArticleEditPage({
               required
               rows={3}
               className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm outline-none"
+            />
+          </div>
+
+          <CoverImageUploader
+            initialMediaId={draft.coverMediaId}
+            initialUrl={currentCoverMedia?.storageUrl ?? null}
+          />
+
+          <div>
+            <label className="text-text-muted block font-sans text-sm">
+              Tags (comma-separated)
+            </label>
+            <input
+              name="tags"
+              defaultValue={tags.map((t) => t.name).join(", ")}
+              className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
             />
           </div>
 

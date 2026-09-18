@@ -26,5 +26,7 @@ export const articleDraftUpdateSchema = z.object({
   excerpt: z.string().min(1).max(300),
   category: z.string().max(80).optional().nullable(),
   content: tiptapDocSchema,
+  tags: z.array(z.string().min(1).max(40)).max(20).default([]),
+  coverMediaId: z.uuid().optional().nullable(),
 });
 export type ArticleDraftUpdateInput = z.infer<typeof articleDraftUpdateSchema>;

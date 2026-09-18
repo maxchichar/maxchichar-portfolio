@@ -9,6 +9,8 @@ import type {
 } from "@/lib/validation/article";
 
 import * as articlesRepo from "../repositories/articles";
+import * as mediaRepo from "../repositories/media";
+import * as tagsRepo from "../repositories/tags";
 
 export class ArticleServiceError extends Error {}
 
@@ -17,10 +19,11 @@ interface Actor {
   type: "HUMAN" | "AI";
 }
 
-// Level 6.1 added createArticle and listArticlesOverview. Level 6.2 adds
-// the rest of the lifecycle below, mirroring services/research.ts's 5.2
-// additions function-for-function. Tags and cover-media are 6.3 scope;
-// articles don't get evidence (docs/SPECIFICATION.md).
+// Level 6.1 added createArticle and listArticlesOverview. Level 6.2 added
+// the draft/publish/rollback/archive lifecycle. Level 6.3 wires articles
+// into the shared tags/media infrastructure below — same tables, same
+// repositories, no second system. Articles don't get evidence
+// (docs/SPECIFICATION.md), so there's no addEvidence/removeEvidence here.
 
 const WORDS_PER_MINUTE = 200;
 
@@ -149,13 +152,35 @@ export async function saveDraft(
       );
     }
 
-    return articlesRepo.updateDraftVersion(tx, draft.id, {
+    // A client-supplied coverMediaId is untrusted input, not proof of a
+    // real, validated upload — verify the row actually exists and passed
+    // the confirm-stage byte validation (status=READY) before accepting
+    // it. Never trust that a submitted id was legitimately obtained from
+    // the upload flow just because it's a well-formed UUID.
+    let coverMediaId: string | null = null;
+    if (patch.coverMediaId) {
+      const media = await mediaRepo.findById(tx, patch.coverMediaId);
+      if (!media || media.status !== "READY") {
+        throw new ArticleServiceError(
+          "That cover image hasn't finished uploading and validating yet.",
+        );
+      }
+      coverMediaId = media.id;
+    }
+
+    const updated = await articlesRepo.updateDraftVersion(tx, draft.id, {
       title: patch.title,
       excerpt: patch.excerpt,
       category: patch.category ?? null,
       content: patch.content,
       readingTime: estimateReadingTime(patch.content),
+      ...(patch.coverMediaId !== undefined ? { coverMediaId } : {}),
     });
+
+    const tagIds = await tagsRepo.ensureTags(tx, patch.tags);
+    await tagsRepo.setArticleTags(tx, articleId, tagIds);
+
+    return updated;
   });
 }
 
@@ -264,11 +289,18 @@ export async function unarchiveArticle(articleId: string, actor: Actor) {
   });
 }
 
+export async function getMediaById(mediaId: string) {
+  return mediaRepo.findById(db, mediaId);
+}
+
 export async function getArticleFullState(articleId: string) {
   const article = await articlesRepo.findArticleById(db, articleId);
   if (!article) return null;
-  const versions = await articlesRepo.listVersions(db, articleId);
+  const [versions, tags] = await Promise.all([
+    articlesRepo.listVersions(db, articleId),
+    tagsRepo.getArticleTags(db, articleId),
+  ]);
   const draft = versions.find((v) => v.status === "DRAFT") ?? null;
   const published = versions.find((v) => v.status === "PUBLISHED") ?? null;
-  return { article, versions, draft, published };
+  return { article, versions, tags, draft, published };
 }
