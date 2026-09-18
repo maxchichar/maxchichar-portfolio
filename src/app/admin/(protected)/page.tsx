@@ -7,7 +7,7 @@ export default async function AdminDashboard() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
-      <p className="text-accent-purple font-sans text-sm font-medium">CHIBUEZE MAXWELL</p>
+      <p className="text-accent-purple font-sans text-sm font-medium">Portfolio OS</p>
       <h1 className="text-text mt-2 font-sans text-2xl font-semibold">Admin</h1>
 
       <div className="rounded-panel border-border bg-surface mt-8 border p-6">
@@ -42,6 +42,32 @@ export default async function AdminDashboard() {
           <h2 className="text-text font-sans text-sm font-medium">Projects</h2>
           <p className="text-text-muted mt-1 font-serif text-sm">
             Create, version, publish, and roll back projects.
+          </p>
+        </div>
+        <span className="text-accent font-sans text-sm">→</span>
+      </Link>
+
+      <Link
+        href="/admin/research"
+        className="rounded-panel border-border bg-surface hover:border-accent/40 mt-3 flex items-center justify-between border p-6 transition-colors"
+      >
+        <div>
+          <h2 className="text-text font-sans text-sm font-medium">Research</h2>
+          <p className="text-text-muted mt-1 font-serif text-sm">
+            Create research drafts. Editing and publishing land in a later level.
+          </p>
+        </div>
+        <span className="text-accent font-sans text-sm">→</span>
+      </Link>
+
+      <Link
+        href="/admin/articles"
+        className="rounded-panel border-border bg-surface hover:border-accent/40 mt-3 flex items-center justify-between border p-6 transition-colors"
+      >
+        <div>
+          <h2 className="text-text font-sans text-sm font-medium">Writing</h2>
+          <p className="text-text-muted mt-1 font-serif text-sm">
+            Create article drafts. Editing and publishing land in a later level.
           </p>
         </div>
         <span className="text-accent font-sans text-sm">→</span>
