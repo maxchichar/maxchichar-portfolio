@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 
 import { MAX_UPLOAD_BYTES } from "@/lib/validation/media";
+import { MediaPicker, type MediaPickerItem } from "@/components/admin/media-picker";
 
 // Presigned direct-to-R2 upload is inherently a JS-driven flow — the
 // client must PUT the file bytes straight to object storage, which a
@@ -12,12 +13,21 @@ import { MAX_UPLOAD_BYTES } from "@/lib/validation/media";
 // is the one genuine, spec-mandated exception, isolated to this single
 // small component rather than pulling the whole page into client-side
 // rendering.
+//
+// Level 7.3 adds a second way to set the same coverMediaId hidden field:
+// picking an existing READY item from the library instead of uploading a
+// new one. Both paths converge on the same setMediaId/setPreviewUrl state
+// and the same hidden field, so the save-path's existing server-side
+// coverMediaId validation (exists + status=READY) applies identically
+// either way — nothing about that validation needed to change.
 export function CoverImageUploader({
   initialMediaId,
   initialUrl,
+  libraryMedia,
 }: {
   initialMediaId: string | null;
   initialUrl: string | null;
+  libraryMedia: MediaPickerItem[];
 }) {
   const [mediaId, setMediaId] = useState<string | null>(initialMediaId);
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialUrl);
@@ -25,6 +35,7 @@ export function CoverImageUploader({
     "idle",
   );
   const [error, setError] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -82,6 +93,14 @@ export function CoverImageUploader({
     }
   }
 
+  function handlePick(item: MediaPickerItem) {
+    setMediaId(item.id);
+    setPreviewUrl(item.storageUrl);
+    setError(null);
+    setStatus("idle");
+    setPickerOpen(false);
+  }
+
   function handleRemove() {
     setMediaId(null);
     setPreviewUrl(null);
@@ -104,7 +123,7 @@ export function CoverImageUploader({
         />
       )}
 
-      <div className="mt-2 flex items-center gap-3">
+      <div className="mt-2 flex flex-wrap items-center gap-3">
         <input
           ref={fileInputRef}
           type="file"
@@ -113,6 +132,13 @@ export function CoverImageUploader({
           disabled={status === "uploading" || status === "validating"}
           className="text-text-muted file:rounded-card file:border-border file:bg-surface file:text-text font-sans text-sm file:mr-3 file:border file:px-3 file:py-1.5 file:font-sans file:text-sm"
         />
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="rounded-card border-border text-text-muted hover:border-accent hover:text-text border px-3 py-1.5 font-sans text-xs transition-colors"
+        >
+          Browse library
+        </button>
         {mediaId && (
           <button
             type="button"
@@ -134,6 +160,15 @@ export function CoverImageUploader({
         <p className="rounded-card border-border bg-surface text-text mt-1 border px-3 py-2 font-sans text-sm">
           {error}
         </p>
+      )}
+
+      {pickerOpen && (
+        <MediaPicker
+          media={libraryMedia}
+          currentMediaId={mediaId}
+          onSelect={handlePick}
+          onClose={() => setPickerOpen(false)}
+        />
       )}
     </div>
   );

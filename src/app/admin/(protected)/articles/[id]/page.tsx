@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import * as articlesService from "@/server/services/articles";
+import * as mediaService from "@/server/services/media";
 
 import {
   archiveArticleForm,
@@ -31,6 +32,11 @@ export default async function ArticleEditPage({
   const currentCoverMedia = draft?.coverMediaId
     ? await articlesService.getMediaById(draft.coverMediaId)
     : null;
+
+  // Same existing service /admin/media itself uses — no new query.
+  const libraryMedia = draft
+    ? await mediaService.listMediaLibrary({ status: "READY" })
+    : [];
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
@@ -103,6 +109,13 @@ export default async function ArticleEditPage({
           <CoverImageUploader
             initialMediaId={draft.coverMediaId}
             initialUrl={currentCoverMedia?.storageUrl ?? null}
+            libraryMedia={libraryMedia.map((m) => ({
+              id: m.id,
+              filename: m.filename,
+              storageUrl: m.storageUrl,
+              width: m.width,
+              height: m.height,
+            }))}
           />
 
           <div>

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { PROJECT_SECTION_KEYS } from "@/lib/validation/project";
 import * as projectService from "@/server/services/projects";
+import * as mediaService from "@/server/services/media";
 
 import {
   archiveProjectForm,
@@ -51,6 +52,11 @@ export default async function ProjectEditPage({
   const currentCoverMedia = draft?.coverMediaId
     ? await projectService.getMediaById(draft.coverMediaId)
     : null;
+
+  // Same existing service /admin/media itself uses — no new query.
+  const libraryMedia = draft
+    ? await mediaService.listMediaLibrary({ status: "READY" })
+    : [];
 
   const sectionText = (key: string) => {
     const section = (draft?.sections as { key: string; content: unknown }[] | null)?.find(
@@ -122,6 +128,13 @@ export default async function ProjectEditPage({
           <CoverImageUploader
             initialMediaId={draft.coverMediaId}
             initialUrl={currentCoverMedia?.storageUrl ?? null}
+            libraryMedia={libraryMedia.map((m) => ({
+              id: m.id,
+              filename: m.filename,
+              storageUrl: m.storageUrl,
+              width: m.width,
+              height: m.height,
+            }))}
           />
 
           <div className="grid grid-cols-2 gap-4">

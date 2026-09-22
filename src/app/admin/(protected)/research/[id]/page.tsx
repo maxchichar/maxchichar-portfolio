@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { RESEARCH_SECTION_KEYS, RESEARCH_TYPES } from "@/lib/validation/research";
 import * as researchService from "@/server/services/research";
+import * as mediaService from "@/server/services/media";
 
 import {
   archiveResearchForm,
@@ -48,6 +49,11 @@ export default async function ResearchEditPage({
   const currentCoverMedia = draft?.coverMediaId
     ? await researchService.getMediaById(draft.coverMediaId)
     : null;
+
+  // Same existing service /admin/media itself uses — no new query.
+  const libraryMedia = draft
+    ? await mediaService.listMediaLibrary({ status: "READY" })
+    : [];
 
   const sectionText = (key: string) => {
     const section = (draft?.sections as { key: string; content: unknown }[] | null)?.find(
@@ -144,6 +150,13 @@ export default async function ResearchEditPage({
           <CoverImageUploader
             initialMediaId={draft.coverMediaId}
             initialUrl={currentCoverMedia?.storageUrl ?? null}
+            libraryMedia={libraryMedia.map((m) => ({
+              id: m.id,
+              filename: m.filename,
+              storageUrl: m.storageUrl,
+              width: m.width,
+              height: m.height,
+            }))}
           />
 
           <div>
