@@ -154,3 +154,10 @@ export async function confirmUpload(mediaId: string) {
 
   return updated;
 }
+
+/** Level 7.1: read-only library listing. Defaults to READY-only — only
+ * validated media is fit to browse/copy a public URL from. No business
+ * logic beyond the default: filtering/ordering live in the repository. */
+export async function listMediaLibrary(status: mediaRepo.MediaStatus = "READY") {
+  return mediaRepo.listMedia(db, { status });
+}

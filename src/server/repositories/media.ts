@@ -1,6 +1,6 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type { NeonDatabase } from "drizzle-orm/neon-serverless";
 
 import { schema } from "@/lib/db";
@@ -11,6 +11,7 @@ type Tx =
 
 export type MediaInsert = typeof schema.media.$inferInsert;
 export type MediaRow = typeof schema.media.$inferSelect;
+export type MediaStatus = "PENDING" | "READY" | "REJECTED";
 
 export async function insertPendingMedia(tx: Tx, input: MediaInsert): Promise<MediaRow> {
   const [row] = await tx.insert(schema.media).values(input).returning();
@@ -25,6 +26,18 @@ export async function findById(tx: Tx, id: string): Promise<MediaRow | null> {
     .where(eq(schema.media.id, id))
     .limit(1);
   return row ?? null;
+}
+
+/** Newest-first, optionally filtered by status. Uses the existing media_status_idx. */
+export async function listMedia(
+  tx: Tx,
+  options?: { status?: MediaStatus },
+): Promise<MediaRow[]> {
+  return tx
+    .select()
+    .from(schema.media)
+    .where(options?.status ? eq(schema.media.status, options.status) : undefined)
+    .orderBy(desc(schema.media.createdAt));
 }
 
 export async function markReady(
