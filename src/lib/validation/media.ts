@@ -24,3 +24,8 @@ export const uploadRequestSchema = z.object({
     .max(MAX_UPLOAD_BYTES, `File exceeds the ${MAX_UPLOAD_BYTES / 1024 / 1024}MB limit.`),
 });
 export type UploadRequestInput = z.infer<typeof uploadRequestSchema>;
+
+export const altTextUpdateSchema = z.object({
+  altText: z.string().trim().max(300).optional().nullable(),
+});
+export type AltTextUpdateInput = z.infer<typeof altTextUpdateSchema>;

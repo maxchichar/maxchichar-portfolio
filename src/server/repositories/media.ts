@@ -1,6 +1,6 @@
 import "server-only";
 
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, ilike } from "drizzle-orm";
 import type { NeonDatabase } from "drizzle-orm/neon-serverless";
 
 import { schema } from "@/lib/db";
@@ -28,16 +28,41 @@ export async function findById(tx: Tx, id: string): Promise<MediaRow | null> {
   return row ?? null;
 }
 
-/** Newest-first, optionally filtered by status. Uses the existing media_status_idx. */
+/**
+ * Newest-first, optionally filtered by status and/or a filename substring
+ * (case-insensitive, via Postgres ILIKE — no external search dependency).
+ * Uses the existing media_status_idx for the status filter.
+ */
 export async function listMedia(
   tx: Tx,
-  options?: { status?: MediaStatus },
+  options?: { status?: MediaStatus; filenameQuery?: string },
 ): Promise<MediaRow[]> {
+  const conditions = [
+    options?.status ? eq(schema.media.status, options.status) : undefined,
+    options?.filenameQuery
+      ? ilike(schema.media.filename, `%${options.filenameQuery}%`)
+      : undefined,
+  ].filter((c) => c !== undefined);
+
   return tx
     .select()
     .from(schema.media)
-    .where(options?.status ? eq(schema.media.status, options.status) : undefined)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(schema.media.createdAt));
+}
+
+export async function updateAltText(
+  tx: Tx,
+  id: string,
+  altText: string | null,
+): Promise<MediaRow> {
+  const [row] = await tx
+    .update(schema.media)
+    .set({ altText })
+    .where(eq(schema.media.id, id))
+    .returning();
+  if (!row) throw new Error("updateAltText: no row updated");
+  return row;
 }
 
 export async function markReady(

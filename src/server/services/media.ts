@@ -155,9 +155,40 @@ export async function confirmUpload(mediaId: string) {
   return updated;
 }
 
-/** Level 7.1: read-only library listing. Defaults to READY-only — only
- * validated media is fit to browse/copy a public URL from. No business
- * logic beyond the default: filtering/ordering live in the repository. */
-export async function listMediaLibrary(status: mediaRepo.MediaStatus = "READY") {
-  return mediaRepo.listMedia(db, { status });
+/**
+ * Level 7.1 added read-only library listing. Level 7.2 extends it with an
+ * optional filename search and an "ALL" status option, and adds
+ * getMediaById + updateAltText for the detail page. Still defaults to
+ * READY-only when no status is given — only validated media is fit to
+ * browse/copy a public URL from. No business logic beyond that default:
+ * filtering/ordering live in the repository.
+ */
+export async function listMediaLibrary(options?: {
+  status?: mediaRepo.MediaStatus | "ALL";
+  filenameQuery?: string;
+}) {
+  const status = options?.status ?? "READY";
+  return mediaRepo.listMedia(db, {
+    status: status === "ALL" ? undefined : status,
+    filenameQuery: options?.filenameQuery,
+  });
+}
+
+export async function getMediaById(mediaId: string) {
+  return mediaRepo.findById(db, mediaId);
+}
+
+export async function updateAltText(
+  mediaId: string,
+  altText: string | null,
+  actor: Actor,
+) {
+  const updated = await mediaRepo.updateAltText(db, mediaId, altText);
+  await logAudit({
+    userId: actor.id,
+    action: "media.alt_text_updated",
+    resourceType: "media",
+    resourceId: mediaId,
+  });
+  return updated;
 }
