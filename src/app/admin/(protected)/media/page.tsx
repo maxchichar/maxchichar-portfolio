@@ -23,9 +23,9 @@ function parseStatus(value: string | undefined): StatusOption {
 export default async function MediaLibraryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; deleted?: string }>;
 }) {
-  const { q, status: rawStatus } = await searchParams;
+  const { q, status: rawStatus, deleted } = await searchParams;
   const status = parseStatus(rawStatus);
   const filenameQuery = q?.trim() || undefined;
 
@@ -38,6 +38,9 @@ export default async function MediaLibraryPage({
       <p className="text-text-muted mt-1 font-serif text-sm">
         {media.length} {media.length === 1 ? "file" : "files"}
       </p>
+      {deleted ? (
+        <p className="text-accent mt-2 font-sans text-sm">Media deleted.</p>
+      ) : null}
 
       <form
         action="/admin/media"

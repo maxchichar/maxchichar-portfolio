@@ -192,3 +192,95 @@ export async function updateAltText(
   });
   return updated;
 }
+
+/** Which content type(s), if any, currently reference this media — for
+ * the detail page to explain why deletion is blocked, before the admin
+ * even attempts it. */
+export async function getMediaReferences(mediaId: string) {
+  return mediaRepo.checkReferences(db, mediaId);
+}
+
+/**
+ * Deletes a media row and its R2 object, but only if nothing references
+ * it (Project/Research/Article cover, Evidence, or Site Settings — see
+ * repositories/media.ts's checkReferences for the full, schema-verified
+ * list). Blocked deletions never touch the DB row or the R2 object.
+ *
+ * Ordering, deliberately: the DB row is deleted first, inside the same
+ * transaction as the reference re-check (closing the race window between
+ * an admin loading the page and submitting the delete). The R2 object is
+ * deleted afterward, best-effort. This order is the only one where a
+ * partial failure stays harmless — if the R2 delete fails, the DB row is
+ * already gone, so nothing can still display or link to the now-missing
+ * object; it's just a leftover object costing a little storage. The
+ * reverse order (R2 first) would risk the opposite: a DB row surviving
+ * with a dead storageUrl, i.e. exactly the "broken content page" this
+ * level exists to prevent — so it's never used, even though it's the more
+ * intuitive order to reach for.
+ *
+ * Status is not special-cased. PENDING/REJECTED media is never exposed to
+ * any picker or cover-selection UI, so its reference check is always
+ * empty by construction — no separate code path needed. And R2's
+ * deleteObject is a no-op on an already-missing key (confirmed against
+ * the existing rejection-cleanup call sites, which already call it
+ * best-effort after REJECTED transitions), so calling it unconditionally
+ * here is safe for every status, including a REJECTED row whose object
+ * may already be gone.
+ */
+export async function deleteMedia(mediaId: string, actor: Actor) {
+  const media = await db.transaction(async (tx) => {
+    const existing = await mediaRepo.findById(tx, mediaId);
+    if (!existing) {
+      throw new MediaServiceError("Media not found.");
+    }
+
+    const refs = await mediaRepo.checkReferences(tx, mediaId);
+    const referencedBy = (Object.keys(refs) as (keyof typeof refs)[]).filter(
+      (key) => refs[key],
+    );
+    if (referencedBy.length > 0) {
+      throw new MediaServiceError(
+        `Cannot delete — still referenced by: ${referencedBy.join(", ")}.`,
+      );
+    }
+
+    try {
+      return await mediaRepo.deleteById(tx, mediaId);
+    } catch (err) {
+      // Defense in depth: every reference column is a plain FK with no
+      // onDelete action, so Postgres itself would reject this DELETE if
+      // something slipped in as a reference between the check above and
+      // here (e.g. a concurrent admin action in another tab). Translate
+      // that into the same clear error rather than a raw DB exception.
+      const code = (err as { code?: string })?.code;
+      if (code === "23503") {
+        throw new MediaServiceError(
+          "Cannot delete — this media was just referenced by other content.",
+        );
+      }
+      throw err;
+    }
+  });
+
+  try {
+    await deleteObject(media.storageKey);
+  } catch (err) {
+    // The DB row is already gone and nothing referenced it (verified
+    // above), so a failed R2 cleanup here is an orphaned object, not a
+    // broken page. Logged loudly so it's discoverable; not re-thrown,
+    // since failing the whole operation at this point would just leave
+    // the admin confused about whether the deletion "worked."
+    console.error(
+      `deleteMedia: DB row ${mediaId} deleted, but R2 object ${media.storageKey} could not be removed:`,
+      err,
+    );
+  }
+
+  await logAudit({
+    userId: actor.id,
+    action: "media.deleted",
+    resourceType: "media",
+    resourceId: mediaId,
+    metadata: { filename: media.filename, storageKey: media.storageKey, status: media.status },
+  });
+}

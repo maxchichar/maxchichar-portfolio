@@ -4,6 +4,7 @@ import * as mediaService from "@/server/services/media";
 
 import { updateAltTextForm } from "../actions";
 import { CopyUrlButton } from "../copy-url-button";
+import { DeleteMediaButton } from "./delete-media-button";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -18,17 +19,30 @@ const STATUS_TONE: Record<string, string> = {
   REJECTED: "border-border text-text-muted opacity-60",
 };
 
+const REFERENCE_LABELS = {
+  projects: "a Project cover",
+  research: "a Research cover",
+  articles: "an Article cover",
+  evidence: "an Evidence item",
+  siteSettings: "Site Settings (logo, favicon, or default OG image)",
+} as const;
+
 export default async function MediaDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<{ saved?: string; deleteError?: string }>;
 }) {
   const { id } = await params;
-  const { saved } = await searchParams;
+  const { saved, deleteError } = await searchParams;
   const media = await mediaService.getMediaById(id);
   if (!media) notFound();
+
+  const references = await mediaService.getMediaReferences(id);
+  const referencedBy = (Object.keys(references) as (keyof typeof references)[]).filter(
+    (key) => references[key],
+  );
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
@@ -114,6 +128,32 @@ export default async function MediaDetailPage({
             ) : null}
           </div>
         </form>
+      </section>
+
+      <section className="border-border mt-10 border-t pt-6">
+        <h2 className="text-text font-sans text-sm font-medium">Delete</h2>
+
+        {referencedBy.length > 0 ? (
+          <div className="rounded-panel border-border bg-surface mt-3 border p-4">
+            <p className="text-text-muted font-serif text-sm">
+              This media can&apos;t be deleted — it&apos;s still used by{" "}
+              {referencedBy.map((key, i) => (
+                <span key={key}>
+                  {i > 0 ? (i === referencedBy.length - 1 ? " and " : ", ") : ""}
+                  {REFERENCE_LABELS[key]}
+                </span>
+              ))}
+              . Remove it from there first.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-3">
+            <DeleteMediaButton mediaId={media.id} filename={media.filename} />
+            {deleteError ? (
+              <p className="text-text-muted mt-2 font-mono text-xs">{deleteError}</p>
+            ) : null}
+          </div>
+        )}
       </section>
     </main>
   );

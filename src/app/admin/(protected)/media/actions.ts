@@ -41,3 +41,20 @@ export async function updateAltTextForm(formData: FormData): Promise<void> {
   revalidatePath(`/admin/media/${mediaId}`);
   redirect(`/admin/media/${mediaId}?saved=1`);
 }
+
+export async function deleteMediaForm(formData: FormData): Promise<void> {
+  const actor = await requireActor();
+  const mediaId = requireField(formData, "mediaId");
+
+  try {
+    await mediaService.deleteMedia(mediaId, actor);
+  } catch (err) {
+    if (err instanceof mediaService.MediaServiceError) {
+      redirect(`/admin/media/${mediaId}?deleteError=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath("/admin/media");
+  redirect("/admin/media?deleted=1");
+}
