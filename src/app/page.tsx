@@ -1,20 +1,46 @@
 import Link from "next/link";
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
+import { listPublicWorkOverview } from "@/server/services/projects";
+import { listPublicResearchOverview } from "@/server/services/research";
+import { listPublicArticlesOverview } from "@/server/services/articles";
 
-// Phase 1 scope only: this proves the design tokens, typography, and IA
-// shell render correctly. No CMS data fetching happens until Phase 2+ —
-// FINAL LOCKED SPECIFICATION §E. Empty-state sections below are the
-// locked behavior for zero real content (§D.13 / original spec §38),
-// not placeholder copy standing in for something else.
+// Homepage sections reuse the same public overview services /work, /research,
+// and /writing already call — no new database queries. Selection criteria
+// per original spec §7: Work and Research are "featured" only, ordered by
+// sort_order (not publication date, per §59); Writing is "latest", ordered
+// by publish date. A section with nothing to show keeps its own empty
+// state rather than inventing fallback content — §D.13 / original spec §38.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-const EMPTY_STATES = [
-  { title: "Selected Work", body: "Work is being documented." },
-  { title: "Research", body: "Research is being documented." },
-  { title: "Writing", body: "Writing is being documented." },
-] as const;
+const HOMEPAGE_SECTION_LIMIT = 3;
 
-export default function Home() {
+export default async function Home() {
+  const [workOverview, researchOverview, articlesOverview] = await Promise.all([
+    listPublicWorkOverview(),
+    listPublicResearchOverview(),
+    listPublicArticlesOverview(),
+  ]);
+
+  const featuredWork = workOverview
+    .filter(({ project }) => project.featured)
+    .sort((a, b) => a.project.sortOrder - b.project.sortOrder)
+    .slice(0, HOMEPAGE_SECTION_LIMIT);
+
+  const featuredResearch = researchOverview
+    .filter(({ research }) => research.featured)
+    .sort((a, b) => a.research.sortOrder - b.research.sortOrder)
+    .slice(0, HOMEPAGE_SECTION_LIMIT);
+
+  const latestWriting = [...articlesOverview]
+    .sort((a, b) => {
+      const aTime = a.published.publishedAt ? new Date(a.published.publishedAt).getTime() : 0;
+      const bTime = b.published.publishedAt ? new Date(b.published.publishedAt).getTime() : 0;
+      return bTime - aTime;
+    })
+    .slice(0, HOMEPAGE_SECTION_LIMIT);
+
   return (
     <>
       <Nav />
@@ -52,22 +78,108 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-6 pb-24">
-          <div className="grid gap-4 md:grid-cols-3">
-            {EMPTY_STATES.map((item) => (
-              <div
-                key={item.title}
-                className="rounded-panel border-border bg-surface border p-6"
-              >
-                <h2 className="text-text font-sans text-sm font-medium">{item.title}</h2>
-                <p className="text-text-muted mt-2 font-serif text-sm">{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        <HomeSection
+          title="Selected Work"
+          emptyBody="Work is being documented."
+          viewAllHref="/work"
+          viewAllLabel="View all work"
+        >
+          {featuredWork.map(({ project, published }) => (
+            <HomeCard
+              key={project.id}
+              href={`/work/${project.slug}`}
+              title={published.title}
+              body={published.shortDescription}
+            />
+          ))}
+        </HomeSection>
+
+        <HomeSection
+          title="Research"
+          emptyBody="Research is being documented."
+          viewAllHref="/research"
+          viewAllLabel="View all research"
+        >
+          {featuredResearch.map(({ research, published }) => (
+            <HomeCard
+              key={research.id}
+              href={`/research/${research.slug}`}
+              title={published.title}
+              body={published.abstract}
+            />
+          ))}
+        </HomeSection>
+
+        <HomeSection
+          title="Writing"
+          emptyBody="Writing is being documented."
+          viewAllHref="/writing"
+          viewAllLabel="View all writing"
+        >
+          {latestWriting.map(({ article, published }) => (
+            <HomeCard
+              key={article.id}
+              href={`/writing/${article.slug}`}
+              title={published.title}
+              body={published.excerpt}
+            />
+          ))}
+        </HomeSection>
       </main>
 
       <Footer />
     </>
+  );
+}
+
+function HomeSection({
+  title,
+  emptyBody,
+  viewAllHref,
+  viewAllLabel,
+  children,
+}: {
+  title: string;
+  emptyBody: string;
+  viewAllHref: string;
+  viewAllLabel: string;
+  children: React.ReactNode;
+}) {
+  const hasItems = Array.isArray(children) ? children.length > 0 : Boolean(children);
+
+  return (
+    <section className="mx-auto max-w-5xl px-6 pb-16">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-text font-sans text-sm font-medium">{title}</h2>
+        {hasItems ? (
+          <Link
+            href={viewAllHref}
+            className="text-accent font-sans text-xs font-medium hover:underline"
+          >
+            {viewAllLabel} &rarr;
+          </Link>
+        ) : null}
+      </div>
+
+      {hasItems ? (
+        <div className="grid gap-4 md:grid-cols-3">{children}</div>
+      ) : (
+        <div className="rounded-panel border-border bg-surface border p-6">
+          <p className="text-text-muted font-serif text-sm">{emptyBody}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function HomeCard({ href, title, body }: { href: string; title: string; body: string }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-panel border-border bg-surface hover:border-accent/40 block border p-6 transition-colors"
+    >
+      <h3 className="text-text font-sans text-sm font-medium">{title}</h3>
+      <p className="text-text-muted mt-2 line-clamp-3 font-serif text-sm">{body}</p>
+    </Link>
   );
 }

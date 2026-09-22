@@ -18,7 +18,7 @@ import { CoverImageUploader } from "./cover-image-uploader";
 const SECTION_LABELS: Record<(typeof PROJECT_SECTION_KEYS)[number], string> = {
   problem: "The Problem",
   context: "Context",
-  why_it_matters: "Why It Matters",
+  why_it_matters: "Why This Approach",
   hypothesis: "Hypothesis",
   approach: "Approach",
   architecture: "Architecture",
