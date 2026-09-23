@@ -14,6 +14,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "seed:admin": "tsx --env-file=.env.local scripts/seed-admin.ts",
+    "seed:pages": "tsx --env-file=.env.local scripts/seed-pages.ts",
     "verify:neon:db": "tsx --env-file=.env.local scripts/verify-neon-db.ts",
     "verify:neon:auth": "bash scripts/verify-neon-auth.sh",
     "verify:neon": "bash scripts/verify-neon.sh"
