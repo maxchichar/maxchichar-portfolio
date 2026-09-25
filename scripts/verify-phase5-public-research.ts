@@ -171,7 +171,9 @@ async function main() {
           {
             key: "findings",
             heading: "Findings",
-            content: plainTextToTiptapDoc("Structured, sourced evidence increased trust."),
+            content: plainTextToTiptapDoc(
+              "Structured, sourced evidence increased trust.",
+            ),
           },
         ],
       })
@@ -295,9 +297,13 @@ async function main() {
     console.log("PASS /research listing excludes archived research.");
 
     const archivedSlugRes = await fetch(`${baseUrl}/research/${slug}`);
-    console.log(`/research/${slug} for ARCHIVED research status: ${archivedSlugRes.status}`);
+    console.log(
+      `/research/${slug} for ARCHIVED research status: ${archivedSlugRes.status}`,
+    );
     if (archivedSlugRes.status !== 404) {
-      throw new Error(`Expected 404 for archived research, got ${archivedSlugRes.status}`);
+      throw new Error(
+        `Expected 404 for archived research, got ${archivedSlugRes.status}`,
+      );
     }
     console.log("PASS /research/[slug] returns 404 for archived research.");
 

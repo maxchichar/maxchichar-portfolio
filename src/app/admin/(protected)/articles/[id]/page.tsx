@@ -144,8 +144,7 @@ export default async function ArticleEditPage({
               className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm leading-relaxed outline-none"
             />
             <p className="text-text-muted mt-1 font-mono text-xs">
-              Paragraphs separated by a blank line become separate Tiptap paragraph
-              nodes.
+              Paragraphs separated by a blank line become separate Tiptap paragraph nodes.
             </p>
           </div>
 

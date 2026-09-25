@@ -177,7 +177,9 @@ async function main() {
       .returning();
     if (tag) {
       tagId = tag.id;
-      await db.insert(schema.articleTags).values({ articleId: article.id, tagId: tag.id });
+      await db
+        .insert(schema.articleTags)
+        .values({ articleId: article.id, tagId: tag.id });
     }
 
     const listPublishedRes = await fetch(`${baseUrl}/writing`);
@@ -261,7 +263,9 @@ async function main() {
     console.log("PASS /writing listing excludes archived article.");
 
     const archivedSlugRes = await fetch(`${baseUrl}/writing/${slug}`);
-    console.log(`/writing/${slug} for ARCHIVED article status: ${archivedSlugRes.status}`);
+    console.log(
+      `/writing/${slug} for ARCHIVED article status: ${archivedSlugRes.status}`,
+    );
     if (archivedSlugRes.status !== 404) {
       throw new Error(`Expected 404 for archived article, got ${archivedSlugRes.status}`);
     }

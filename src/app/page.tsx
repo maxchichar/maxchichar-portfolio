@@ -35,8 +35,12 @@ export default async function Home() {
 
   const latestWriting = [...articlesOverview]
     .sort((a, b) => {
-      const aTime = a.published.publishedAt ? new Date(a.published.publishedAt).getTime() : 0;
-      const bTime = b.published.publishedAt ? new Date(b.published.publishedAt).getTime() : 0;
+      const aTime = a.published.publishedAt
+        ? new Date(a.published.publishedAt).getTime()
+        : 0;
+      const bTime = b.published.publishedAt
+        ? new Date(b.published.publishedAt).getTime()
+        : 0;
       return bTime - aTime;
     })
     .slice(0, HOMEPAGE_SECTION_LIMIT);

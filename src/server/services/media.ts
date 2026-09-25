@@ -281,6 +281,10 @@ export async function deleteMedia(mediaId: string, actor: Actor) {
     action: "media.deleted",
     resourceType: "media",
     resourceId: mediaId,
-    metadata: { filename: media.filename, storageKey: media.storageKey, status: media.status },
+    metadata: {
+      filename: media.filename,
+      storageKey: media.storageKey,
+      status: media.status,
+    },
   });
 }

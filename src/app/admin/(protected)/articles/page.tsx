@@ -51,7 +51,9 @@ export default async function ArticlesListPage() {
                 <p className="text-text font-sans text-sm font-medium">
                   {published?.title ?? draft?.title ?? article.slug}
                 </p>
-                <p className="text-text-muted mt-0.5 font-mono text-xs">/{article.slug}</p>
+                <p className="text-text-muted mt-0.5 font-mono text-xs">
+                  /{article.slug}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 {article.status === "ARCHIVED" && (

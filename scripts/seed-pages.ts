@@ -78,10 +78,7 @@ async function main() {
       .limit(1);
 
     const page =
-      existingPage ??
-      (
-        await db.insert(schema.pages).values({ slug }).returning()
-      )[0];
+      existingPage ?? (await db.insert(schema.pages).values({ slug }).returning())[0];
 
     if (!page) throw new Error(`Failed to find or create page row for slug "${slug}"`);
 

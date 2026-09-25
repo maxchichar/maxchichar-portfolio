@@ -31,8 +31,8 @@ export default async function ResearchListingPage() {
             Investigations, technical notes, and experiments.
           </h1>
           <p className="text-text-muted mt-4 max-w-2xl font-serif text-base">
-            Evidence over claims. Every item states its research question,
-            methodology, and findings, with sources and counterarguments included.
+            Evidence over claims. Every item states its research question, methodology,
+            and findings, with sources and counterarguments included.
           </p>
         </section>
 

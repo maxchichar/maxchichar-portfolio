@@ -114,7 +114,10 @@ export interface MediaReferenceCheck {
  * a real reference the database enforces, even though it's no longer the
  * "active" one.
  */
-export async function checkReferences(tx: Tx, mediaId: string): Promise<MediaReferenceCheck> {
+export async function checkReferences(
+  tx: Tx,
+  mediaId: string,
+): Promise<MediaReferenceCheck> {
   const [[projectRow], [researchRow], [articleRow], [evidenceRow], [settingsRow]] =
     await Promise.all([
       tx

@@ -81,7 +81,7 @@ export function MediaPicker({
                   key={item.id}
                   type="button"
                   onClick={() => onSelect(item)}
-                  className={`rounded-card border overflow-hidden text-left transition-colors ${
+                  className={`rounded-card overflow-hidden border text-left transition-colors ${
                     item.id === currentMediaId
                       ? "border-accent"
                       : "border-border hover:border-accent/40"

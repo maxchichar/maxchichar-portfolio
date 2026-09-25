@@ -123,9 +123,7 @@ export default async function MediaDetailPage({
             >
               Save alt text
             </button>
-            {saved ? (
-              <span className="text-accent font-sans text-xs">Saved.</span>
-            ) : null}
+            {saved ? <span className="text-accent font-sans text-xs">Saved.</span> : null}
           </div>
         </form>
       </section>
