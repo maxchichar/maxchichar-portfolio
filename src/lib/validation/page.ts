@@ -8,6 +8,19 @@ import { z } from "zod";
 export const PAGE_SLUGS = ["home", "about", "now"] as const;
 export type PageSlug = (typeof PAGE_SLUGS)[number];
 
+// CTA links are rendered publicly as hrefs (Level 8.3), so they're
+// restricted at write time to a site-relative path ("/work") or an
+// http(s) URL — nothing else (no javascript:, data:, or protocol-relative
+// "//host" forms).
+const ctaHrefSchema = z
+  .string()
+  .min(1)
+  .max(200)
+  .regex(
+    /^(\/(?!\/)|https?:\/\/)\S*$/,
+    "Must be a site path starting with / or an http(s) URL.",
+  );
+
 // Decision 2 is explicit: three distinct shapes, not a generic sections
 // array. Each schema below is deliberately separate — no shared "content
 // fields" abstraction between them, since they don't actually share
@@ -20,9 +33,9 @@ export const homePageContentSchema = z.object({
   heroHeadline: z.string().min(1).max(200),
   heroBody: z.string().min(1).max(500),
   heroPrimaryCtaLabel: z.string().min(1).max(60),
-  heroPrimaryCtaHref: z.string().min(1).max(200),
+  heroPrimaryCtaHref: ctaHrefSchema,
   heroSecondaryCtaLabel: z.string().min(1).max(60),
-  heroSecondaryCtaHref: z.string().min(1).max(200),
+  heroSecondaryCtaHref: ctaHrefSchema,
   currentFocusSummary: z.string().min(1).max(500),
 });
 export type HomePageContent = z.infer<typeof homePageContentSchema>;

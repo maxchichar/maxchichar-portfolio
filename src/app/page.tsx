@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
+import { Paragraphs } from "@/components/pages/paragraphs";
 import { listPublicWorkOverview } from "@/server/services/projects";
 import { listPublicResearchOverview } from "@/server/services/research";
 import { listPublicArticlesOverview } from "@/server/services/articles";
+import { getPublishedHomePage } from "@/server/services/pages";
 
 // Homepage sections reuse the same public overview services /work, /research,
 // and /writing already call — no new database queries. Selection criteria
@@ -11,18 +13,61 @@ import { listPublicArticlesOverview } from "@/server/services/articles";
 // sort_order (not publication date, per §59); Writing is "latest", ordered
 // by publish date. A section with nothing to show keeps its own empty
 // state rather than inventing fallback content — §D.13 / original spec §38.
+//
+// Hero copy and the "Currently" section come from the published `home`
+// page (Pages CMS) once one exists. Pages are seeded as DRAFTs, so until
+// an admin publishes `home` there is nothing published to read — the hero
+// then keeps the copy that was already live before Level 8.3 (identical to
+// what the seed migrates into the CMS), and no "Currently" section is
+// shown, rather than the site regressing or showing seed placeholder text.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const HOMEPAGE_SECTION_LIMIT = 3;
 
+const DEFAULT_HERO = {
+  eyebrow: "AI-Native Engineer & Entrepreneur",
+  headline: "I build intelligent systems for real-world problems.",
+  body: "AI-native engineer and entrepreneur focused on AI systems, software engineering, emerging technology, and problems at the intersection of technology and society.",
+  primaryCta: { label: "Explore my work", href: "/work" },
+  secondaryCta: { label: "Read my research", href: "/research" },
+} as const;
+
+// The design accents the word "intelligent" in the headline. The CMS
+// headline is plain text, so the accent is applied wherever that word
+// appears — same look for the fallback and for CMS copy that keeps it.
+const HEADLINE_ACCENT = "intelligent";
+
+function Headline({ text }: { text: string }) {
+  const idx = text.indexOf(HEADLINE_ACCENT);
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <span className="text-accent-purple">{HEADLINE_ACCENT}</span>
+      {text.slice(idx + HEADLINE_ACCENT.length)}
+    </>
+  );
+}
+
 export default async function Home() {
-  const [workOverview, researchOverview, articlesOverview] = await Promise.all([
+  const [workOverview, researchOverview, articlesOverview, homePage] = await Promise.all([
     listPublicWorkOverview(),
     listPublicResearchOverview(),
     listPublicArticlesOverview(),
+    getPublishedHomePage(),
   ]);
 
+  const home = homePage?.content ?? null;
+  const hero = home
+    ? {
+        eyebrow: home.heroEyebrow,
+        headline: home.heroHeadline,
+        body: home.heroBody,
+        primaryCta: { label: home.heroPrimaryCtaLabel, href: home.heroPrimaryCtaHref },
+        secondaryCta: { label: home.heroSecondaryCtaLabel, href: home.heroSecondaryCtaHref },
+      }
+    : DEFAULT_HERO;
   const featuredWork = workOverview
     .filter(({ project }) => project.featured)
     .sort((a, b) => a.project.sortOrder - b.project.sortOrder)
@@ -35,12 +80,8 @@ export default async function Home() {
 
   const latestWriting = [...articlesOverview]
     .sort((a, b) => {
-      const aTime = a.published.publishedAt
-        ? new Date(a.published.publishedAt).getTime()
-        : 0;
-      const bTime = b.published.publishedAt
-        ? new Date(b.published.publishedAt).getTime()
-        : 0;
+      const aTime = a.published.publishedAt ? new Date(a.published.publishedAt).getTime() : 0;
+      const bTime = b.published.publishedAt ? new Date(b.published.publishedAt).getTime() : 0;
       return bTime - aTime;
     })
     .slice(0, HOMEPAGE_SECTION_LIMIT);
@@ -52,32 +93,27 @@ export default async function Home() {
       <main>
         <section className="mx-auto max-w-5xl px-6 py-24 md:py-32">
           <p className="text-accent-purple font-sans text-sm font-medium tracking-wide">
-            AI-Native Engineer &amp; Entrepreneur
+            {hero.eyebrow}
           </p>
 
           <h1 className="text-text mt-4 max-w-3xl font-sans text-4xl font-semibold tracking-tight md:text-5xl">
-            I build <span className="text-accent-purple">intelligent</span> systems for
-            real-world problems.
+            <Headline text={hero.headline} />
           </h1>
 
-          <p className="text-text-muted mt-6 max-w-xl font-serif text-lg">
-            AI-native engineer and entrepreneur focused on AI systems, software
-            engineering, emerging technology, and problems at the intersection of
-            technology and society.
-          </p>
+          <p className="text-text-muted mt-6 max-w-xl font-serif text-lg">{hero.body}</p>
 
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
-              href="/work"
+              href={hero.primaryCta.href}
               className="rounded-card bg-accent text-bg px-5 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90"
             >
-              Explore my work
+              {hero.primaryCta.label}
             </Link>
             <Link
-              href="/research"
+              href={hero.secondaryCta.href}
               className="rounded-card border-border text-text hover:border-accent hover:text-accent border px-5 py-2.5 font-sans text-sm font-medium transition-colors"
             >
-              Read my research
+              {hero.secondaryCta.label}
             </Link>
           </div>
         </section>
@@ -113,6 +149,18 @@ export default async function Home() {
             />
           ))}
         </HomeSection>
+
+        {home ? (
+          <section className="mx-auto max-w-5xl px-6 pb-16">
+            <h2 className="text-text font-sans text-sm font-medium">Currently</h2>
+            <div className="rounded-panel border-border bg-surface mt-4 border p-6">
+              <Paragraphs
+                text={home.currentFocusSummary}
+                className="text-text-muted space-y-3 font-serif text-sm"
+              />
+            </div>
+          </section>
+        ) : null}
 
         <HomeSection
           title="Writing"

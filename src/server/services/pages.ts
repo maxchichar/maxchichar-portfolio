@@ -1,8 +1,16 @@
 import "server-only";
 
+import type { z } from "zod";
+
 import { db } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
-import type { PageContent } from "@/lib/validation/page";
+import {
+  aboutPageContentSchema,
+  homePageContentSchema,
+  nowPageContentSchema,
+  type PageContent,
+  type PageSlug,
+} from "@/lib/validation/page";
 
 import * as pagesRepo from "../repositories/pages";
 
@@ -105,7 +113,9 @@ export async function saveDraft(pageId: string, content: PageContent, actor: Act
 
     const draft = await pagesRepo.getDraftVersion(tx, pageId);
     if (!draft) {
-      throw new PageServiceError("No open draft for this page — call ensureDraft first.");
+      throw new PageServiceError(
+        "No open draft for this page — call ensureDraft first.",
+      );
     }
 
     return pagesRepo.updateDraftVersion(tx, draft.id, { content });
@@ -143,11 +153,7 @@ export async function publishPage(pageId: string, actor: Actor) {
  * content into a fresh version and publishes it immediately. The target
  * row itself is never resurrected or mutated — history stays append-only.
  */
-export async function rollbackPage(
-  pageId: string,
-  targetVersionId: string,
-  actor: Actor,
-) {
+export async function rollbackPage(pageId: string, targetVersionId: string, actor: Actor) {
   return db.transaction(async (tx) => {
     const target = await pagesRepo.getVersionById(tx, targetVersionId);
     if (!target || target.pageId !== pageId) {
@@ -202,4 +208,49 @@ export async function getPageFullState(pageId: string) {
 
 export async function getPageBySlug(slug: string) {
   return pagesRepo.findPageBySlug(db, slug);
+}
+
+// ---- Public reads (Level 8.3) ----
+//
+// The pages item table has no status column (nothing to archive), so the
+// entire publication boundary is: a page is publicly readable only via
+// its PUBLISHED version. Drafts and superseded versions are never
+// returned here — getPublishedVersion filters on status at the query
+// level, same boundary Projects/Research/Articles enforce.
+//
+// Stored content is re-validated against the per-slug schema on the way
+// out rather than trusted as untyped jsonb. If a published row somehow
+// fails validation (it can't through the editor — every write is
+// validated first), this fails closed: logs and returns null, so the
+// public route 404s / the homepage falls back, and unvalidated content
+// is never rendered.
+async function loadPublished<T extends z.ZodType>(slug: PageSlug, schema: T) {
+  const page = await pagesRepo.findPageBySlug(db, slug);
+  if (!page) return null;
+
+  const published = await pagesRepo.getPublishedVersion(db, page.id);
+  if (!published) return null;
+
+  const parsed = schema.safeParse(published.content);
+  if (!parsed.success) {
+    console.error(
+      `getPublished("${slug}"): published version ${published.id} failed content validation — treating page as unpublished.`,
+      parsed.error.issues,
+    );
+    return null;
+  }
+
+  return { page, published, content: parsed.data };
+}
+
+export function getPublishedHomePage() {
+  return loadPublished("home", homePageContentSchema);
+}
+
+export function getPublishedAboutPage() {
+  return loadPublished("about", aboutPageContentSchema);
+}
+
+export function getPublishedNowPage() {
+  return loadPublished("now", nowPageContentSchema);
 }
