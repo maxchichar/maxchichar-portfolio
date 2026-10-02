@@ -31,10 +31,10 @@ neonConfig.webSocketConstructor = ws;
 // used for every about/now field below.
 const SEED_CONTENT: Record<PageSlug, Record<string, string>> = {
   home: {
-    heroEyebrow: "AI-Native Engineer & Entrepreneur",
+    heroEyebrow: "Super Intelligence Engineer & Entrepreneur",
     heroHeadline: "I build intelligent systems for real-world problems.",
     heroBody:
-      "AI-native engineer and entrepreneur focused on AI systems, software engineering, emerging technology, and problems at the intersection of technology and society.",
+      "Super Intelligence engineer and entrepreneur focused on intelligent systems, software engineering, emerging technology, and problems at the intersection of technology and society.",
     heroPrimaryCtaLabel: "Explore my work",
     heroPrimaryCtaHref: "/work",
     heroSecondaryCtaLabel: "Read my research",

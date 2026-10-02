@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { NowView } from "@/components/pages/now-view";
+import { constructPageMetadata } from "@/lib/metadata";
 import { getPublishedNowPage } from "@/server/services/pages";
 
 export const dynamic = "force-dynamic";
@@ -12,13 +13,17 @@ export const revalidate = 0;
 export async function generateMetadata(): Promise<Metadata> {
   const now = await getPublishedNowPage();
   if (!now) {
-    return { title: "Page Not Found — Portfolio OS" };
+    return constructPageMetadata({
+      title: "Page Not Found",
+      path: "/now",
+    });
   }
 
-  return {
-    title: "Now — Portfolio OS",
+  return constructPageMetadata({
+    title: "Now",
     description: "What I'm currently building, researching, and learning.",
-  };
+    path: "/now",
+  });
 }
 
 export default async function NowPage() {

@@ -9,6 +9,7 @@ import * as schema from "./schema";
 // Node.js runtime needs a WebSocket polyfill for the pooled/transaction-
 // capable Neon driver (native WebSocket only exists in edge runtimes).
 neonConfig.webSocketConstructor = ws;
+neonConfig.poolQueryViaFetch = true;
 
 type Database = ReturnType<typeof drizzle<typeof schema>>;
 
@@ -31,6 +32,10 @@ function createDb(): Database {
   }
 
   const pool = new Pool({ connectionString });
+  pool.on("error", (err: Error) => {
+    // Gracefully absorb idle socket resets in serverless environments
+    console.warn("Neon pool idle connection drop:", err.message);
+  });
   return drizzle(pool, { schema });
 }
 

@@ -17,7 +17,13 @@
     "seed:pages": "tsx --env-file=.env.local scripts/seed-pages.ts",
     "verify:neon:db": "tsx --env-file=.env.local scripts/verify-neon-db.ts",
     "verify:neon:auth": "bash scripts/verify-neon-auth.sh",
-    "verify:neon": "bash scripts/verify-neon.sh"
+    "verify:neon": "bash scripts/verify-neon.sh",
+    "verify:phase9": "tsx --env-file=.env.local scripts/verify-phase9.ts",
+    "verify:phase10:preflight": "tsx scripts/verify-phase10-preflight.ts",
+    "verify:phase10:config": "tsx --env-file=.env.local scripts/verify-phase10-vercel-config.ts",
+    "verify:phase10:production": "tsx scripts/verify-phase10-production.ts",
+    "verify:phase10:r2-e2e": "tsx --conditions=react-server --env-file=.env.local scripts/verify-phase10-r2-e2e.ts",
+    "verify:phase10": "tsx --env-file=.env.local scripts/verify-phase10.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1120.0",

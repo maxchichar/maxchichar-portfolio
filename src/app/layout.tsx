@@ -7,11 +7,16 @@ import "@fontsource-variable/newsreader";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "CHIBUEZE MAXWELL",
-  description:
-    "AI-Native Engineer & Entrepreneur — I build intelligent systems for real-world problems.",
-};
+import { constructBaseMetadata } from "@/lib/metadata";
+import { getPublicSiteSettings } from "@/server/services/settings";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getPublicSiteSettings();
+  return constructBaseMetadata({
+    siteName: settings.siteName,
+    siteDescription: settings.siteDescription,
+  });
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

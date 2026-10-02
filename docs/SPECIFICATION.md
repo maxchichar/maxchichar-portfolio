@@ -99,20 +99,20 @@ all 14+ narrative sections and to the Evidence Wall itself.
 
 ## Implementation phases
 
-| Phase | Scope                                       | Status                                      |
-| ----- | ------------------------------------------- | ------------------------------------------- |
-| 0     | Architecture                                | Done                                        |
-| 1     | Foundation                                  | Done                                        |
-| 2     | Database + Auth                             | Done                                        |
-| **3** | **Projects CMS + Evidence + minimal media** | **In progress**                             |
-| 4     | Public Work pages                           | Not started                                 |
-| 5     | Research CMS + public pages                 | Not started                                 |
-| 6     | Writing (Articles) CMS + public pages       | Not started                                 |
-| 7     | Full media library                          | Not started                                 |
-| 8     | Settings & static Pages                     | Not started                                 |
-| 9     | SEO/Performance/Security/Testing            | Not started                                 |
-| 10    | Deployment                                  | Not started                                 |
-| 11    | AI integration (Content API)                | Not started, only when explicitly requested |
+| Phase | Scope                                   | Status                                      |
+| ----- | --------------------------------------- | ------------------------------------------- |
+| 0     | Architecture                            | Done                                        |
+| 1     | Foundation                              | Done                                        |
+| 2     | Database + Auth                         | Done                                        |
+| 3     | Projects CMS + Evidence + minimal media | Done                                        |
+| 4     | Public Work pages                       | Done                                        |
+| 5     | Research CMS + public pages             | Done                                        |
+| 6     | Writing (Articles) CMS + public pages   | Done                                        |
+| 7     | Full media library                      | Done                                        |
+| 8     | Settings & static Pages                 | Done                                        |
+| 9     | SEO/Performance/Security/Testing        | Done                                        |
+| 10    | Deployment                              | Done                                        |
+| 11    | AI integration (Content API)            | Not started, only when explicitly requested |
 
 ### Phase 3 scope, precisely
 

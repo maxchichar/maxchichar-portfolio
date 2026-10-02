@@ -3,16 +3,18 @@ import Link from "next/link";
 
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
+import { constructPageMetadata } from "@/lib/metadata";
 import { listPublicWorkOverview } from "@/server/services/projects";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata: Metadata = {
-  title: "Selected Work — CHIBUEZE MAXWELL",
+export const metadata: Metadata = constructPageMetadata({
+  title: "Selected Work",
   description:
-    "AI-Native Engineer & Entrepreneur — Selected projects, intelligent systems, and engineering case studies.",
-};
+    "Super Intelligence Engineer & Entrepreneur — Selected projects, intelligent systems, and engineering case studies.",
+  path: "/work",
+});
 
 export default async function WorkListingPage() {
   const items = await listPublicWorkOverview();

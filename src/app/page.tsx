@@ -6,6 +6,13 @@ import { listPublicWorkOverview } from "@/server/services/projects";
 import { listPublicResearchOverview } from "@/server/services/research";
 import { listPublicArticlesOverview } from "@/server/services/articles";
 import { getPublishedHomePage } from "@/server/services/pages";
+import { getPublicSiteSettings } from "@/server/services/settings";
+import {
+  buildJsonLdGraph,
+  buildPersonJsonLd,
+  buildWebSiteJsonLd,
+  JsonLdScript,
+} from "@/lib/structured-data";
 
 // Homepage sections reuse the same public overview services /work, /research,
 // and /writing already call — no new database queries. Selection criteria
@@ -26,9 +33,9 @@ export const revalidate = 0;
 const HOMEPAGE_SECTION_LIMIT = 3;
 
 const DEFAULT_HERO = {
-  eyebrow: "AI-Native Engineer & Entrepreneur",
+  eyebrow: "Super Intelligence Engineer & Entrepreneur",
   headline: "I build intelligent systems for real-world problems.",
-  body: "AI-native engineer and entrepreneur focused on AI systems, software engineering, emerging technology, and problems at the intersection of technology and society.",
+  body: "Super Intelligence engineer and entrepreneur focused on intelligent systems, software engineering, emerging technology, and problems at the intersection of technology and society.",
   primaryCta: { label: "Explore my work", href: "/work" },
   secondaryCta: { label: "Read my research", href: "/research" },
 } as const;
@@ -51,12 +58,33 @@ function Headline({ text }: { text: string }) {
 }
 
 export default async function Home() {
-  const [workOverview, researchOverview, articlesOverview, homePage] = await Promise.all([
-    listPublicWorkOverview(),
-    listPublicResearchOverview(),
-    listPublicArticlesOverview(),
-    getPublishedHomePage(),
-  ]);
+  const [workOverview, researchOverview, articlesOverview, homePage, siteSettings] =
+    await Promise.all([
+      listPublicWorkOverview(),
+      listPublicResearchOverview(),
+      listPublicArticlesOverview(),
+      getPublishedHomePage(),
+      getPublicSiteSettings(),
+    ]);
+
+  const socialLinks = [
+    siteSettings.socialGithub,
+    siteSettings.socialX,
+    siteSettings.socialLinkedin,
+    siteSettings.socialYoutube,
+    siteSettings.socialInstagram,
+    siteSettings.socialTiktok,
+  ].filter((url): url is string => Boolean(url && url.trim().length > 0));
+
+  const websiteJsonLd = buildWebSiteJsonLd({
+    siteName: siteSettings.siteName,
+    siteDescription: siteSettings.siteDescription,
+  });
+  const personJsonLd = buildPersonJsonLd({
+    name: siteSettings.siteName,
+    socialLinks,
+  });
+  const homepageJsonLd = buildJsonLdGraph([websiteJsonLd, personJsonLd]);
 
   const home = homePage?.content ?? null;
   const hero = home
@@ -65,7 +93,10 @@ export default async function Home() {
         headline: home.heroHeadline,
         body: home.heroBody,
         primaryCta: { label: home.heroPrimaryCtaLabel, href: home.heroPrimaryCtaHref },
-        secondaryCta: { label: home.heroSecondaryCtaLabel, href: home.heroSecondaryCtaHref },
+        secondaryCta: {
+          label: home.heroSecondaryCtaLabel,
+          href: home.heroSecondaryCtaHref,
+        },
       }
     : DEFAULT_HERO;
   const featuredWork = workOverview
@@ -80,14 +111,19 @@ export default async function Home() {
 
   const latestWriting = [...articlesOverview]
     .sort((a, b) => {
-      const aTime = a.published.publishedAt ? new Date(a.published.publishedAt).getTime() : 0;
-      const bTime = b.published.publishedAt ? new Date(b.published.publishedAt).getTime() : 0;
+      const aTime = a.published.publishedAt
+        ? new Date(a.published.publishedAt).getTime()
+        : 0;
+      const bTime = b.published.publishedAt
+        ? new Date(b.published.publishedAt).getTime()
+        : 0;
       return bTime - aTime;
     })
     .slice(0, HOMEPAGE_SECTION_LIMIT);
 
   return (
     <>
+      <JsonLdScript data={homepageJsonLd} />
       <Nav />
 
       <main>

@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { getPublicSiteSettings } from "@/server/services/settings";
+
 // Primary IA — FINAL LOCKED SPECIFICATION §D.8. Contact is a persistent CTA,
 // not a nav "read" item; search is an icon-triggered overlay, not a nav item.
 const NAV_LINKS = [
@@ -10,7 +12,9 @@ const NAV_LINKS = [
   { href: "/about", label: "About" },
 ] as const;
 
-export function Nav() {
+export async function Nav() {
+  const settings = await getPublicSiteSettings();
+
   return (
     <header className="border-border border-b">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
@@ -20,7 +24,7 @@ export function Nav() {
           href="/"
           className="text-accent-purple font-sans text-sm font-semibold tracking-tight"
         >
-          CHIBUEZE MAXWELL
+          {settings.siteName}
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-8 md:flex">

@@ -3,16 +3,18 @@ import Link from "next/link";
 
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
+import { constructPageMetadata } from "@/lib/metadata";
 import { listPublicArticlesOverview } from "@/server/services/articles";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata: Metadata = {
-  title: "Writing — Portfolio OS",
+export const metadata: Metadata = constructPageMetadata({
+  title: "Writing",
   description:
-    "AI-Native Engineer & Entrepreneur — Essays and notes on building intelligent systems.",
-};
+    "Super Intelligence Engineer & Entrepreneur — Essays and notes on building intelligent systems.",
+  path: "/writing",
+});
 
 export default async function WritingListingPage() {
   const items = await listPublicArticlesOverview();

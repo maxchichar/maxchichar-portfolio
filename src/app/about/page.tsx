@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { AboutView } from "@/components/pages/about-view";
+import { constructPageMetadata } from "@/lib/metadata";
 import { getPublishedAboutPage } from "@/server/services/pages";
 
 export const dynamic = "force-dynamic";
@@ -20,13 +21,17 @@ function toDescription(text: string): string {
 export async function generateMetadata(): Promise<Metadata> {
   const about = await getPublishedAboutPage();
   if (!about) {
-    return { title: "Page Not Found — Portfolio OS" };
+    return constructPageMetadata({
+      title: "Page Not Found",
+      path: "/about",
+    });
   }
 
-  return {
-    title: "About — Portfolio OS",
+  return constructPageMetadata({
+    title: "About",
     description: toDescription(about.content.intro),
-  };
+    path: "/about",
+  });
 }
 
 export default async function AboutPage() {

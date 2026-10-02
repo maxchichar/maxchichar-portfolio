@@ -113,9 +113,7 @@ export async function saveDraft(pageId: string, content: PageContent, actor: Act
 
     const draft = await pagesRepo.getDraftVersion(tx, pageId);
     if (!draft) {
-      throw new PageServiceError(
-        "No open draft for this page — call ensureDraft first.",
-      );
+      throw new PageServiceError("No open draft for this page — call ensureDraft first.");
     }
 
     return pagesRepo.updateDraftVersion(tx, draft.id, { content });
@@ -153,7 +151,11 @@ export async function publishPage(pageId: string, actor: Actor) {
  * content into a fresh version and publishes it immediately. The target
  * row itself is never resurrected or mutated — history stays append-only.
  */
-export async function rollbackPage(pageId: string, targetVersionId: string, actor: Actor) {
+export async function rollbackPage(
+  pageId: string,
+  targetVersionId: string,
+  actor: Actor,
+) {
   return db.transaction(async (tx) => {
     const target = await pagesRepo.getVersionById(tx, targetVersionId);
     if (!target || target.pageId !== pageId) {

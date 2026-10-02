@@ -4,7 +4,15 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { CaseStudyView } from "@/components/work/case-study-view";
+import { constructPageMetadata } from "@/lib/metadata";
+import {
+  buildBreadcrumbJsonLd,
+  buildJsonLdGraph,
+  buildWorkJsonLd,
+  JsonLdScript,
+} from "@/lib/structured-data";
 import { getPublicWorkCaseStudy } from "@/server/services/projects";
+import { getPublicSiteSettings } from "@/server/services/settings";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -18,14 +26,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const item = await getPublicWorkCaseStudy(slug);
   if (!item) {
     return {
-      title: "Project Not Found — CHIBUEZE MAXWELL",
+      title: "Project Not Found",
     };
   }
 
-  return {
-    title: `${item.published.title} — CHIBUEZE MAXWELL`,
+  return constructPageMetadata({
+    title: item.published.title,
     description: item.published.shortDescription,
-  };
+    path: `/work/${slug}`,
+    image: item.coverUrl,
+    type: "website",
+  });
 }
 
 export default async function WorkCaseStudyPage({ params }: PageProps) {
@@ -36,8 +47,29 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
     notFound();
   }
 
+  const settings = await getPublicSiteSettings();
+  const workJsonLd = buildWorkJsonLd({
+    title: item.published.title,
+    description: item.published.shortDescription,
+    slug,
+    category: item.published.category,
+    coverUrl: item.coverUrl,
+    publishedAt: item.published.publishedAt,
+    updatedAt: item.project.updatedAt,
+    authorName: settings.siteName,
+  });
+
+  const breadcrumbsJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", url: "/" },
+    { name: "Work", url: "/work" },
+    { name: item.published.title, url: `/work/${slug}` },
+  ]);
+
+  const pageJsonLd = buildJsonLdGraph([workJsonLd, breadcrumbsJsonLd]);
+
   return (
     <>
+      <JsonLdScript data={pageJsonLd} />
       <Nav />
       <main>
         <CaseStudyView

@@ -3,16 +3,18 @@ import Link from "next/link";
 
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
+import { constructPageMetadata } from "@/lib/metadata";
 import { listPublicResearchOverview } from "@/server/services/research";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata: Metadata = {
-  title: "Research — Portfolio OS",
+export const metadata: Metadata = constructPageMetadata({
+  title: "Research",
   description:
-    "AI-Native Engineer & Entrepreneur — Investigations, technical notes, and experiments, documented with verifiable evidence.",
-};
+    "Super Intelligence Engineer & Entrepreneur — Investigations, technical notes, and experiments, documented with verifiable evidence.",
+  path: "/research",
+});
 
 export default async function ResearchListingPage() {
   const items = await listPublicResearchOverview();

@@ -99,6 +99,19 @@ export default async function AdminDashboard() {
         <span className="text-accent font-sans text-sm">→</span>
       </Link>
 
+      <Link
+        href="/admin/settings"
+        className="rounded-panel border-border bg-surface hover:border-accent/40 mt-3 flex items-center justify-between border p-6 transition-colors"
+      >
+        <div>
+          <h2 className="text-text font-sans text-sm font-medium">Settings</h2>
+          <p className="text-text-muted mt-1 font-serif text-sm">
+            Manage site name, description, social links, and footer.
+          </p>
+        </div>
+        <span className="text-accent font-sans text-sm">→</span>
+      </Link>
+
       <div className="rounded-panel border-border bg-surface mt-6 border p-6">
         <h2 className="text-text font-sans text-sm font-medium">Phase 3 status</h2>
         <p className="text-text-muted mt-2 font-serif text-sm">
