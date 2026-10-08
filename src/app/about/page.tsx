@@ -6,6 +6,7 @@ import { Nav } from "@/components/layout/nav";
 import { AboutView } from "@/components/pages/about-view";
 import { constructPageMetadata } from "@/lib/metadata";
 import { getPublishedAboutPage } from "@/server/services/pages";
+import { getPublicSiteSettings } from "@/server/services/settings";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -35,14 +36,21 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
-  const about = await getPublishedAboutPage();
+  const [about, settings] = await Promise.all([
+    getPublishedAboutPage(),
+    getPublicSiteSettings(),
+  ]);
   if (!about) notFound();
 
   return (
     <>
       <Nav />
       <main>
-        <AboutView content={about.content} />
+        <AboutView
+          content={about.content}
+          image={settings.aboutImage}
+          name={settings.siteName}
+        />
       </main>
       <Footer />
     </>

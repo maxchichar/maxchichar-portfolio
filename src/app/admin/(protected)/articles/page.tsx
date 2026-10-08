@@ -26,9 +26,11 @@ export default async function ArticlesListPage() {
   const overview = await articlesService.listArticlesOverview();
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
+    <main className="mx-auto w-full max-w-4xl px-6 py-10 md:px-10 md:py-12">
       <div className="flex items-center justify-between">
-        <h1 className="text-text font-sans text-2xl font-semibold">Writing</h1>
+        <h1 className="text-text font-sans text-3xl font-semibold tracking-tight">
+          Writing
+        </h1>
         <Link
           href="/admin/articles/new"
           className="rounded-card bg-accent text-bg px-4 py-2 font-sans text-sm font-medium transition-opacity hover:opacity-90"

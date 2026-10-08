@@ -148,6 +148,8 @@ export async function checkReferences(
             eq(schema.siteSettings.logoMediaId, mediaId),
             eq(schema.siteSettings.faviconMediaId, mediaId),
             eq(schema.siteSettings.ogDefaultMediaId, mediaId),
+            eq(schema.siteSettings.heroMediaId, mediaId),
+            eq(schema.siteSettings.aboutMediaId, mediaId),
           ),
         )
         .limit(1),

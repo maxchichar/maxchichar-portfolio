@@ -1,4 +1,6 @@
 import Link from "next/link";
+
+import { Hero } from "@/components/home/hero";
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { Paragraphs } from "@/components/pages/paragraphs";
@@ -39,23 +41,6 @@ const DEFAULT_HERO = {
   primaryCta: { label: "Explore my work", href: "/work" },
   secondaryCta: { label: "Read my research", href: "/research" },
 } as const;
-
-// The design accents the word "intelligent" in the headline. The CMS
-// headline is plain text, so the accent is applied wherever that word
-// appears — same look for the fallback and for CMS copy that keeps it.
-const HEADLINE_ACCENT = "intelligent";
-
-function Headline({ text }: { text: string }) {
-  const idx = text.indexOf(HEADLINE_ACCENT);
-  if (idx === -1) return <>{text}</>;
-  return (
-    <>
-      {text.slice(0, idx)}
-      <span className="text-accent-purple">{HEADLINE_ACCENT}</span>
-      {text.slice(idx + HEADLINE_ACCENT.length)}
-    </>
-  );
-}
 
 export default async function Home() {
   const [workOverview, researchOverview, articlesOverview, homePage, siteSettings] =
@@ -121,97 +106,114 @@ export default async function Home() {
     })
     .slice(0, HOMEPAGE_SECTION_LIMIT);
 
+  // Section index markers (01, 02, …) — "Currently" only exists once the
+  // home page is published, so the numbering is derived, not hard-coded.
+  const sections = ["work", "research", ...(home ? ["currently"] : []), "writing"];
+  const indexOf = (key: string) => String(sections.indexOf(key) + 1).padStart(2, "0");
+
   return (
     <>
       <JsonLdScript data={homepageJsonLd} />
-      <Nav />
+      <Nav overlay />
 
       <main>
-        <section className="mx-auto max-w-5xl px-6 py-24 md:py-32">
-          <p className="text-accent-purple font-sans text-sm font-medium tracking-wide">
-            {hero.eyebrow}
-          </p>
+        <Hero hero={hero} image={siteSettings.heroImage} name={siteSettings.siteName} />
 
-          <h1 className="text-text mt-4 max-w-3xl font-sans text-4xl font-semibold tracking-tight md:text-5xl">
-            <Headline text={hero.headline} />
-          </h1>
-
-          <p className="text-text-muted mt-6 max-w-xl font-serif text-lg">{hero.body}</p>
-
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link
-              href={hero.primaryCta.href}
-              className="rounded-card bg-accent text-bg px-5 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90"
-            >
-              {hero.primaryCta.label}
-            </Link>
-            <Link
-              href={hero.secondaryCta.href}
-              className="rounded-card border-border text-text hover:border-accent hover:text-accent border px-5 py-2.5 font-sans text-sm font-medium transition-colors"
-            >
-              {hero.secondaryCta.label}
-            </Link>
-          </div>
-        </section>
+        <div id="main-content" className="scroll-mt-16" />
 
         <HomeSection
-          title="Selected Work"
+          index={indexOf("work")}
+          eyebrow="Selected Work"
+          title="Systems built, shipped, and measured."
           emptyBody="Work is being documented."
           viewAllHref="/work"
-          viewAllLabel="View all work"
+          viewAllLabel="All work"
+          hasItems={featuredWork.length > 0}
         >
-          {featuredWork.map(({ project, published }) => (
-            <HomeCard
-              key={project.id}
-              href={`/work/${project.slug}`}
-              title={published.title}
-              body={published.shortDescription}
-            />
-          ))}
+          <div className="grid gap-x-6 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+            {featuredWork.map(({ project, published, coverUrl }, i) => (
+              <WorkCard
+                key={project.id}
+                href={`/work/${project.slug}`}
+                title={published.title}
+                body={published.shortDescription}
+                coverUrl={coverUrl}
+                meta={[
+                  published.category,
+                  published.year ? String(published.year) : null,
+                ]}
+                number={i + 1}
+              />
+            ))}
+          </div>
         </HomeSection>
 
         <HomeSection
-          title="Research"
+          index={indexOf("research")}
+          eyebrow="Research"
+          title="Questions worth answering properly."
           emptyBody="Research is being documented."
           viewAllHref="/research"
-          viewAllLabel="View all research"
+          viewAllLabel="All research"
+          hasItems={featuredResearch.length > 0}
         >
-          {featuredResearch.map(({ research, published }) => (
-            <HomeCard
-              key={research.id}
-              href={`/research/${research.slug}`}
-              title={published.title}
-              body={published.abstract}
-            />
-          ))}
+          <ul className="border-border border-t">
+            {featuredResearch.map(({ research, published }) => (
+              <IndexRow
+                key={research.id}
+                href={`/research/${research.slug}`}
+                title={published.title}
+                body={published.abstract}
+              />
+            ))}
+          </ul>
         </HomeSection>
 
         {home ? (
-          <section className="mx-auto max-w-5xl px-6 pb-16">
-            <h2 className="text-text font-sans text-sm font-medium">Currently</h2>
-            <div className="rounded-panel border-border bg-surface mt-4 border p-6">
-              <Paragraphs
-                text={home.currentFocusSummary}
-                className="text-text-muted space-y-3 font-serif text-sm"
-              />
+          <section className="container-site py-20 md:py-28">
+            <div className="reveal rounded-panel border-border bg-surface relative overflow-hidden border p-8 md:p-14">
+              <div aria-hidden="true" className="hero-wash absolute inset-0 opacity-60" />
+              <div className="relative grid gap-8 md:grid-cols-12">
+                <p className="index-label md:col-span-3">
+                  <span>{indexOf("currently")}</span>
+                  <span>Currently</span>
+                </p>
+                <Paragraphs
+                  text={home.currentFocusSummary}
+                  className="text-text space-y-4 font-serif text-2xl leading-snug md:col-span-9 md:text-3xl"
+                />
+              </div>
             </div>
           </section>
         ) : null}
 
         <HomeSection
-          title="Writing"
+          index={indexOf("writing")}
+          eyebrow="Writing"
+          title="Notes from the work."
           emptyBody="Writing is being documented."
           viewAllHref="/writing"
-          viewAllLabel="View all writing"
+          viewAllLabel="All writing"
+          hasItems={latestWriting.length > 0}
         >
-          {latestWriting.map(({ article, published }) => (
-            <HomeCard
-              key={article.id}
-              href={`/writing/${article.slug}`}
-              title={published.title}
-              body={published.excerpt}
-            />
-          ))}
+          <ul className="border-border border-t">
+            {latestWriting.map(({ article, published }) => (
+              <IndexRow
+                key={article.id}
+                href={`/writing/${article.slug}`}
+                title={published.title}
+                body={published.excerpt}
+                aside={
+                  published.publishedAt
+                    ? new Date(published.publishedAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : null
+                }
+              />
+            ))}
+          </ul>
         </HomeSection>
       </main>
 
@@ -221,53 +223,147 @@ export default async function Home() {
 }
 
 function HomeSection({
+  index,
+  eyebrow,
   title,
   emptyBody,
   viewAllHref,
   viewAllLabel,
+  hasItems,
   children,
 }: {
+  index: string;
+  eyebrow: string;
   title: string;
   emptyBody: string;
   viewAllHref: string;
   viewAllLabel: string;
+  hasItems: boolean;
   children: React.ReactNode;
 }) {
-  const hasItems = Array.isArray(children) ? children.length > 0 : Boolean(children);
-
   return (
-    <section className="mx-auto max-w-5xl px-6 pb-16">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-text font-sans text-sm font-medium">{title}</h2>
+    <section className="container-site py-20 md:py-28">
+      <div className="reveal mb-12 grid gap-6 md:grid-cols-12 md:items-end">
+        <p className="index-label md:col-span-3 md:self-start md:pt-3">
+          <span>{index}</span>
+          <span>{eyebrow}</span>
+        </p>
+        <h2 className="text-text font-sans text-3xl leading-[1.05] font-semibold tracking-tight md:col-span-7 md:text-5xl">
+          {title}
+        </h2>
         {hasItems ? (
           <Link
             href={viewAllHref}
-            className="text-accent font-sans text-xs font-medium hover:underline"
+            className="group text-text hover:text-accent inline-flex items-center gap-2 font-sans text-sm transition-colors md:col-span-2 md:justify-self-end"
           >
-            {viewAllLabel} &rarr;
+            {viewAllLabel}
+            <span
+              aria-hidden="true"
+              className="transition-transform group-hover:translate-x-0.5"
+            >
+              →
+            </span>
           </Link>
         ) : null}
       </div>
 
       {hasItems ? (
-        <div className="grid gap-4 md:grid-cols-3">{children}</div>
+        children
       ) : (
-        <div className="rounded-panel border-border bg-surface border p-6">
-          <p className="text-text-muted font-serif text-sm">{emptyBody}</p>
+        <div className="rounded-panel border-border border border-dashed p-10 text-center">
+          <p className="text-text-muted font-serif text-base">{emptyBody}</p>
         </div>
       )}
     </section>
   );
 }
 
-function HomeCard({ href, title, body }: { href: string; title: string; body: string }) {
+function WorkCard({
+  href,
+  title,
+  body,
+  coverUrl,
+  meta,
+  number,
+}: {
+  href: string;
+  title: string;
+  body: string;
+  coverUrl: string | null;
+  meta: (string | null)[];
+  number: number;
+}) {
+  const metaItems = meta.filter((m): m is string => Boolean(m));
   return (
-    <Link
-      href={href}
-      className="rounded-panel border-border bg-surface hover:border-accent/40 block border p-6 transition-colors"
-    >
-      <h3 className="text-text font-sans text-sm font-medium">{title}</h3>
-      <p className="text-text-muted mt-2 line-clamp-3 font-serif text-sm">{body}</p>
+    <Link href={href} className="group reveal block">
+      <div className="rounded-panel border-border bg-surface relative aspect-[4/3] overflow-hidden border">
+        {coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={coverUrl}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+          />
+        ) : (
+          <div aria-hidden="true" className="hero-wash flex h-full w-full items-end p-6">
+            <span className="text-text/15 font-sans text-8xl font-semibold tracking-tighter">
+              {String(number).padStart(2, "0")}
+            </span>
+          </div>
+        )}
+        <span className="bg-bg/70 text-text absolute top-4 right-4 flex h-9 w-9 translate-y-1 items-center justify-center rounded-full opacity-0 backdrop-blur transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+          ↗
+        </span>
+      </div>
+      {metaItems.length > 0 ? (
+        <p className="text-text-muted mt-5 font-mono text-[11px] tracking-wider uppercase">
+          {metaItems.join(" · ")}
+        </p>
+      ) : null}
+      <h3 className="text-text group-hover:text-accent mt-2 font-sans text-xl font-semibold tracking-tight transition-colors">
+        {title}
+      </h3>
+      <p className="text-text-muted mt-2 line-clamp-2 font-serif text-base">{body}</p>
     </Link>
+  );
+}
+
+function IndexRow({
+  href,
+  title,
+  body,
+  aside,
+}: {
+  href: string;
+  title: string;
+  body: string;
+  aside?: string | null;
+}) {
+  return (
+    <li className="border-border reveal border-b">
+      <Link
+        href={href}
+        className="group grid gap-3 py-8 md:grid-cols-12 md:items-baseline md:gap-6"
+      >
+        <span className="text-text-muted font-mono text-xs md:col-span-3">
+          {aside ?? ""}
+        </span>
+        <span className="md:col-span-8">
+          <span className="text-text group-hover:text-accent block font-sans text-2xl font-semibold tracking-tight transition-colors md:text-3xl">
+            {title}
+          </span>
+          <span className="text-text-muted mt-3 line-clamp-2 block max-w-2xl font-serif text-base">
+            {body}
+          </span>
+        </span>
+        <span
+          aria-hidden="true"
+          className="text-text-muted group-hover:text-accent hidden text-2xl transition-all group-hover:translate-x-1 md:col-span-1 md:block md:justify-self-end"
+        >
+          →
+        </span>
+      </Link>
+    </li>
   );
 }

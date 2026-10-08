@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
+import { PageIntro } from "@/components/layout/page-intro";
 import { constructPageMetadata } from "@/lib/metadata";
 import { listPublicWorkOverview } from "@/server/services/projects";
 
@@ -23,20 +24,14 @@ export default async function WorkListingPage() {
     <>
       <Nav />
 
-      <main className="mx-auto max-w-5xl px-6 py-16 md:py-24">
-        {/* Page Eyebrow & Title */}
-        <section className="mb-16">
-          <p className="text-accent-purple font-sans text-sm font-medium tracking-wide">
-            Selected Work
-          </p>
-          <h1 className="text-text mt-2 font-sans text-3xl font-semibold tracking-tight md:text-4xl">
-            Case studies, production systems, and verifiable engineering proof.
-          </h1>
-          <p className="text-text-muted mt-4 max-w-2xl font-serif text-base">
-            Evidence over claims. Every project details problem formulation, architecture,
-            empirical results, and explicit post-mortems of what failed.
-          </p>
-        </section>
+      <main className="container-site pt-16 md:pt-24">
+        <PageIntro
+          eyebrow="Selected Work"
+          title="Case studies, production systems, and verifiable engineering proof."
+        >
+          Evidence over claims. Every project details problem formulation, architecture,
+          empirical results, and explicit post-mortems of what failed.
+        </PageIntro>
 
         {/* Projects Grid or Locked Empty State */}
         {items.length > 0 ? (
@@ -44,7 +39,7 @@ export default async function WorkListingPage() {
             {items.map(({ project, published, coverUrl }) => (
               <article
                 key={project.id}
-                className="rounded-panel border-border bg-surface hover:border-border/80 flex flex-col justify-between overflow-hidden border transition-colors"
+                className="rounded-panel border-border bg-surface hover:border-text/20 flex flex-col justify-between overflow-hidden border transition-colors"
               >
                 <div>
                   {coverUrl ? (

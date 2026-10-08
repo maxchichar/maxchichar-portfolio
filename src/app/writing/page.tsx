@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
+import { PageIntro } from "@/components/layout/page-intro";
 import { constructPageMetadata } from "@/lib/metadata";
 import { listPublicArticlesOverview } from "@/server/services/articles";
 
@@ -23,16 +24,11 @@ export default async function WritingListingPage() {
     <>
       <Nav />
 
-      <main className="mx-auto max-w-5xl px-6 py-16 md:py-24">
-        {/* Page Eyebrow & Title */}
-        <section className="mb-16">
-          <p className="text-accent-purple font-sans text-sm font-medium tracking-wide">
-            Writing
-          </p>
-          <h1 className="text-text mt-2 font-sans text-3xl font-semibold tracking-tight md:text-4xl">
-            Essays and notes on building intelligent systems.
-          </h1>
-        </section>
+      <main className="container-site pt-16 md:pt-24">
+        <PageIntro
+          eyebrow="Writing"
+          title="Essays and notes on building intelligent systems."
+        />
 
         {/* Articles Grid or Locked Empty State */}
         {items.length > 0 ? (
@@ -40,7 +36,7 @@ export default async function WritingListingPage() {
             {items.map(({ article, published, tags, coverUrl }) => (
               <article
                 key={article.id}
-                className="rounded-panel border-border bg-surface hover:border-border/80 flex flex-col justify-between overflow-hidden border transition-colors"
+                className="rounded-panel border-border bg-surface hover:border-text/20 flex flex-col justify-between overflow-hidden border transition-colors"
               >
                 <div>
                   {coverUrl ? (

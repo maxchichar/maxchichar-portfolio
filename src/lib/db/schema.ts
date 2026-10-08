@@ -570,6 +570,10 @@ export const siteSettings = pgTable(
     ogDefaultMediaId: uuid("og_default_media_id").references(() => media.id),
     analyticsId: text("analytics_id"),
     footerText: text("footer_text"),
+    // Landscape photo behind the homepage hero, and the portrait shown on
+    // /about. Both are admin-managed via the media library (READY only).
+    heroMediaId: uuid("hero_media_id").references(() => media.id),
+    aboutMediaId: uuid("about_media_id").references(() => media.id),
     updatedBy: uuid("updated_by").references(() => users.id),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

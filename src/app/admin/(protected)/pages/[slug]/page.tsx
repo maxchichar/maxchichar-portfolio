@@ -49,10 +49,10 @@ export default async function PageEditPage({
   const fields = draftContent?.success ? draftContent.data : null;
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-16">
+    <main className="mx-auto w-full max-w-3xl px-6 py-10 md:px-10 md:py-12">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-text font-sans text-2xl font-semibold">
+          <h1 className="text-text font-sans text-3xl font-semibold tracking-tight">
             {PAGE_LABELS[slug]}
           </h1>
           <p className="text-text-muted mt-1 font-mono text-xs">/{page.slug}</p>

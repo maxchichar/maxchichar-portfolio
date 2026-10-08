@@ -30,6 +30,8 @@ export async function saveSettingsForm(
     socialInstagram: formData.get("socialInstagram"),
     socialTiktok: formData.get("socialTiktok"),
     footerText: formData.get("footerText"),
+    heroMediaId: formData.get("heroMediaId"),
+    aboutMediaId: formData.get("aboutMediaId"),
   };
 
   const result = await updateSiteSettings(raw, {

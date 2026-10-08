@@ -1,22 +1,32 @@
+import { AdminPageHeader } from "@/components/admin/page-header";
+import { listMediaLibrary } from "@/server/services/media";
 import { getPublicSiteSettings } from "@/server/services/settings";
 
 import { SettingsForm } from "./settings-form";
 
 export default async function AdminSettingsPage() {
-  const settings = await getPublicSiteSettings();
+  const [settings, libraryMedia] = await Promise.all([
+    getPublicSiteSettings(),
+    listMediaLibrary({ status: "READY" }),
+  ]);
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <div className="mb-8">
-        <p className="text-accent-purple font-sans text-sm font-medium">Portfolio OS</p>
-        <h1 className="text-text mt-2 font-sans text-2xl font-semibold">Settings</h1>
-        <p className="text-text-muted mt-1 font-serif text-sm">
-          Site branding, positioning statement, social profile links, and footer
-          configuration.
-        </p>
-      </div>
+    <main className="mx-auto max-w-4xl px-6 py-12 md:py-16">
+      <AdminPageHeader
+        title="Settings"
+        description="Site branding, imagery, social profile links, and footer configuration."
+      />
 
-      <SettingsForm initialSettings={settings} />
+      <SettingsForm
+        initialSettings={settings}
+        libraryMedia={libraryMedia.map((m) => ({
+          id: m.id,
+          filename: m.filename,
+          storageUrl: m.storageUrl,
+          width: m.width,
+          height: m.height,
+        }))}
+      />
     </main>
   );
 }
