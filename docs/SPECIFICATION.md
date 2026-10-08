@@ -84,6 +84,21 @@ labels only) — self-hosted via Fontsource, not `next/font/google` (no
 runtime dependency on a third-party font CDN). Radii: 2px badges/inputs,
 6px cards/buttons, 12px modals/panels.
 
+### UI refresh (site imagery + wordmark)
+
+- Typography is unchanged (same three locked faces); Newsreader's italic
+  axis is loaded for editorial emphasis only (hero accent word, footer line).
+- `site_settings.hero_media_id` / `about_media_id` (migration
+  `0001_site_images`): admin-managed homepage hero landscape photo and About
+  portrait, set from Settings → Imagery. READY media only, re-validated on
+  save, and counted by the media reference check so they can't be deleted
+  while in use. Without them the pages fall back to a purple/blue wash.
+- Footer ends with an edge-to-edge "MAXCHICHAR" wordmark (decorative,
+  `aria-hidden`).
+- The non-functional search placeholder icon was removed from the nav until
+  the search overlay is actually built.
+- Admin uses a shared sidebar shell (`(protected)/layout.tsx`).
+
 ## Project & research proof architecture
 
 Project case study section order: Hero → Problem → Context → Why This

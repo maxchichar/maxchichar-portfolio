@@ -24,8 +24,8 @@ export default async function PagesListPage() {
   const overview = await pagesService.listPagesOverview();
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="text-text font-sans text-2xl font-semibold">Pages</h1>
+    <main className="mx-auto w-full max-w-4xl px-6 py-10 md:px-10 md:py-12">
+      <h1 className="text-text font-sans text-3xl font-semibold tracking-tight">Pages</h1>
       <p className="text-text-muted mt-1 font-serif text-sm">
         Home, About, and Now — fixed pages, always present.
       </p>

@@ -45,9 +45,9 @@ export default async function MediaDetailPage({
   );
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-16">
+    <main className="mx-auto w-full max-w-3xl px-6 py-10 md:px-10 md:py-12">
       <div className="flex items-center justify-between">
-        <h1 className="text-text truncate font-sans text-2xl font-semibold">
+        <h1 className="text-text truncate font-sans text-3xl font-semibold tracking-tight">
           {media.filename}
         </h1>
         <span

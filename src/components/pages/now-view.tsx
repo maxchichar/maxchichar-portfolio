@@ -3,8 +3,9 @@ import type { NowPageContent } from "@/lib/validation/page";
 import { Paragraphs } from "./paragraphs";
 
 const sectionHeadingClass =
-  "text-accent-purple font-sans text-xs font-semibold tracking-wider uppercase";
-const bodyClass = "text-text mt-3 space-y-4 font-serif text-base leading-relaxed";
+  "text-accent-purple font-mono text-[11px] font-medium tracking-[0.18em] uppercase";
+const bodyClass =
+  "text-text mt-4 space-y-5 font-serif text-lg leading-relaxed md:text-xl";
 
 export function NowView({
   content,
@@ -15,11 +16,12 @@ export function NowView({
 }) {
   return (
     <article className="mx-auto max-w-3xl px-6 py-16 md:py-24">
-      <header className="border-border border-b pb-12">
-        <p className="text-accent-purple font-sans text-sm font-medium tracking-wide">
-          Now
+      <header className="border-border border-b pb-14">
+        <p className="animate-rise index-label">
+          <span>—</span>
+          <span>Now</span>
         </p>
-        <h1 className="text-text mt-2 font-sans text-3xl font-semibold tracking-tight md:text-4xl">
+        <h1 className="animate-rise text-text mt-6 font-sans text-[clamp(2.5rem,5.5vw,4.5rem)] leading-[0.98] font-semibold tracking-[-0.03em]">
           What I&apos;m focused on right now.
         </h1>
         {/* "Last updated" isn't a stored field — it's the published
@@ -36,32 +38,32 @@ export function NowView({
         ) : null}
       </header>
 
-      <section className="mt-12">
+      <section className="reveal mt-16">
         <h2 className={sectionHeadingClass}>Currently building</h2>
         <Paragraphs text={content.currentlyBuilding} className={bodyClass} />
       </section>
 
-      <section className="mt-12">
+      <section className="reveal mt-16">
         <h2 className={sectionHeadingClass}>Currently researching</h2>
         <Paragraphs text={content.researching} className={bodyClass} />
       </section>
 
-      <section className="mt-12">
+      <section className="reveal mt-16">
         <h2 className={sectionHeadingClass}>Currently learning</h2>
         <Paragraphs text={content.learning} className={bodyClass} />
       </section>
 
-      <section className="mt-12">
+      <section className="reveal mt-16">
         <h2 className={sectionHeadingClass}>Current interests</h2>
         <Paragraphs text={content.interests} className={bodyClass} />
       </section>
 
-      <section className="mt-12">
+      <section className="reveal mt-16">
         <h2 className={sectionHeadingClass}>Current thesis</h2>
         <Paragraphs text={content.thesis} className={bodyClass} />
       </section>
 
-      <section className="mt-12">
+      <section className="reveal mt-16">
         <h2 className={sectionHeadingClass}>Recent changes</h2>
         <Paragraphs text={content.recentChanges} className={bodyClass} />
       </section>

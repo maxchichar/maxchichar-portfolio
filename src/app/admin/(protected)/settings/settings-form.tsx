@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 
+import { ImageField } from "@/components/admin/image-field";
+import type { MediaPickerItem } from "@/components/admin/media-picker";
 import type { PublicSiteSettings } from "@/lib/validation/settings";
 
 import { saveSettingsForm, type SettingsFormState } from "./actions";
@@ -18,13 +20,46 @@ const initialState: SettingsFormState = {
 
 export function SettingsForm({
   initialSettings,
+  libraryMedia,
 }: {
   initialSettings: PublicSiteSettings;
+  libraryMedia: MediaPickerItem[];
 }) {
   const [state, formAction, isPending] = useActionState(saveSettingsForm, initialState);
 
   return (
     <form action={formAction} className="space-y-8">
+      <section className="rounded-panel border-border bg-surface space-y-6 border p-6">
+        <div>
+          <h2 className="text-text font-sans text-base font-semibold">Imagery</h2>
+          <p className="text-text-muted mt-1 font-serif text-xs">
+            Photos used across the public site. JPEG, PNG or WebP from the media library.
+            Changes go live when you save.
+          </p>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-[3fr_2fr]">
+          <ImageField
+            name="heroMediaId"
+            label="Homepage hero"
+            hint="Landscape photo, ideally 2400px wide or more (16:9 or wider)."
+            initialMediaId={initialSettings.heroImage?.mediaId ?? null}
+            initialUrl={initialSettings.heroImage?.url ?? null}
+            libraryMedia={libraryMedia}
+            aspect="aspect-[16/9]"
+          />
+          <ImageField
+            name="aboutMediaId"
+            label="About page portrait"
+            hint="Portrait photo (4:5) shown beside your About intro."
+            initialMediaId={initialSettings.aboutImage?.mediaId ?? null}
+            initialUrl={initialSettings.aboutImage?.url ?? null}
+            libraryMedia={libraryMedia}
+            aspect="aspect-[4/5]"
+          />
+        </div>
+      </section>
+
       <section className="rounded-panel border-border bg-surface space-y-6 border p-6">
         <h2 className="text-text font-sans text-base font-semibold">Branding</h2>
 

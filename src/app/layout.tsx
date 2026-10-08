@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 // third-party font CDN. Locked typefaces: FINAL LOCKED SPECIFICATION §D.10.
 import "@fontsource-variable/inter-tight";
 import "@fontsource-variable/newsreader";
+// Italic axis of the same locked Newsreader face — editorial emphasis only.
+import "@fontsource-variable/newsreader/wght-italic.css";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 

@@ -45,8 +45,10 @@ export default async function NewResearchPage({
   }
 
   return (
-    <main className="mx-auto max-w-lg px-6 py-16">
-      <h1 className="text-text font-sans text-2xl font-semibold">New Research</h1>
+    <main className="mx-auto w-full max-w-xl px-6 py-10 md:px-10 md:py-12">
+      <h1 className="text-text font-sans text-3xl font-semibold tracking-tight">
+        New Research
+      </h1>
 
       <form action={create} className="mt-8 space-y-5">
         <div>

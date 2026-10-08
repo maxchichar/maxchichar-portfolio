@@ -11,7 +11,18 @@ export const DEFAULT_SITE_SETTINGS = {
   socialInstagram: null,
   socialTiktok: null,
   footerText: null,
+  heroImage: null,
+  aboutImage: null,
 } as const;
+
+/** A READY media item resolved to what the public pages need to render it. */
+export interface SiteImage {
+  mediaId: string;
+  url: string;
+  alt: string | null;
+  width: number | null;
+  height: number | null;
+}
 
 export interface PublicSiteSettings {
   siteName: string;
@@ -24,6 +35,8 @@ export interface PublicSiteSettings {
   socialInstagram: string | null;
   socialTiktok: string | null;
   footerText: string | null;
+  heroImage: SiteImage | null;
+  aboutImage: SiteImage | null;
 }
 
 const safeSocialUrlSchema = z
@@ -36,6 +49,17 @@ const safeSocialUrlSchema = z
   .refine(
     (val) => val === null || /^https?:\/\/\S+$/.test(val),
     "Must be a valid http(s) URL.",
+  );
+
+const optionalMediaIdSchema = z
+  .string()
+  .trim()
+  .optional()
+  .nullable()
+  .transform((val) => (val && val.length > 0 ? val : null))
+  .refine(
+    (val) => val === null || z.uuid().safeParse(val).success,
+    "Invalid media reference.",
   );
 
 export const siteSettingsSchema = z.object({
@@ -75,6 +99,8 @@ export const siteSettingsSchema = z.object({
     .optional()
     .nullable()
     .transform((val) => (val && val.length > 0 ? val : null)),
+  heroMediaId: optionalMediaIdSchema,
+  aboutMediaId: optionalMediaIdSchema,
 });
 
 export type SiteSettingsInput = z.infer<typeof siteSettingsSchema>;

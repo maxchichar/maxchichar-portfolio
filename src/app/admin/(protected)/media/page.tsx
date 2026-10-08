@@ -33,8 +33,10 @@ export default async function MediaLibraryPage({
   const filtersActive = status !== "READY" || Boolean(filenameQuery);
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-16">
-      <h1 className="text-text font-sans text-2xl font-semibold">Media Library</h1>
+    <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10 md:py-12">
+      <h1 className="text-text font-sans text-3xl font-semibold tracking-tight">
+        Media Library
+      </h1>
       <p className="text-text-muted mt-1 font-serif text-sm">
         {media.length} {media.length === 1 ? "file" : "files"}
       </p>

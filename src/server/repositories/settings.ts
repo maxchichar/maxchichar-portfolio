@@ -57,6 +57,8 @@ export async function upsertSiteSettings(
       socialInstagram: data.socialInstagram ?? null,
       socialTiktok: data.socialTiktok ?? null,
       footerText: data.footerText ?? null,
+      heroMediaId: data.heroMediaId ?? null,
+      aboutMediaId: data.aboutMediaId ?? null,
       updatedBy: actorId ?? null,
       updatedAt: new Date(),
     })
