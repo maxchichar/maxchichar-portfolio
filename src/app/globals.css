@@ -260,14 +260,16 @@ html.lenis body {
   overflow: hidden;
 }
 
-/* Page transitions (React <ViewTransition>, class "page"): old page lifts
-   away, new page rises in. Browsers without support just navigate. */
-::view-transition-old(.page) {
-  animation: 200ms var(--ease-out-quint) both fade-out-up;
+/* Page changes swap instantly, in every browser. A page-level fade used to
+   run here in browsers with view transitions (Chrome, Edge, Safari) and it
+   hid the headline word reveal underneath it; Firefox skipped it and showed
+   the reveal in full. With the root snapshot left unanimated, every browser
+   shows the same reveal on every page open. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
 }
-::view-transition-new(.page) {
-  animation: 520ms var(--ease-out-expo) 120ms both fade-in-up;
-}
+
 /* Shared-element morph (work cover -> case study hero). */
 ::view-transition-group(.morph) {
   animation-duration: 560ms;
@@ -486,17 +488,6 @@ html.lenis body {
  * Cross-browser / cross-device fallbacks for the motion system.
  * --------------------------------------------------------------------- */
 
-/* Page entrance where view transitions aren't supported (e.g. Firefox).
-   `backwards` fill so no transform lingers afterwards (a lingering
-   transform would break position:fixed children like the progress bar). */
-@supports not (view-transition-name: none) {
-  @media (prefers-reduced-motion: no-preference) {
-    .page-enter {
-      animation: fade-in-up 600ms var(--ease-out-expo) backwards;
-    }
-  }
-}
-
 /* Scroll reveal driven by <RevealObserver> (browsers without scroll-driven
    animations, and reduced-motion users). */
 .reveal-js .reveal {
@@ -523,8 +514,5 @@ html.lenis body {
   .reveal-js .reveal {
     transform: none;
     transition: opacity 600ms ease-out !important;
-  }
-  .page-enter {
-    animation: fade-in 300ms ease-out backwards !important;
   }
 }

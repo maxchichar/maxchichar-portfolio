@@ -76,13 +76,13 @@ describe("Base Metadata helper logic (Level 9.1)", () => {
       assert.strictEqual(DEFAULT_SITE_TITLE, "CHIBUEZE MAXWELL");
       assert.strictEqual(
         DEFAULT_SITE_DESCRIPTION,
-        "Super Intelligence Engineer & Entrepreneur — I build intelligent systems for real-world problems.",
+        "Super Intelligence Engineer & Entrepreneur. I build intelligent systems for real-world problems.",
       );
 
       assert.ok(meta.metadataBase instanceof URL);
       assert.deepStrictEqual(meta.title, {
         default: "CHIBUEZE MAXWELL",
-        template: "%s — CHIBUEZE MAXWELL",
+        template: "%s | CHIBUEZE MAXWELL",
       });
       assert.strictEqual(meta.description, DEFAULT_SITE_DESCRIPTION);
       assert.deepStrictEqual(meta.robots, {
@@ -114,7 +114,7 @@ describe("Base Metadata helper logic (Level 9.1)", () => {
 
       assert.deepStrictEqual(meta.title, {
         default: "Maxwell C.",
-        template: "%s — Maxwell C.",
+        template: "%s | Maxwell C.",
       });
       assert.strictEqual(meta.description, "Custom AI research portfolio.");
     });
@@ -123,13 +123,13 @@ describe("Base Metadata helper logic (Level 9.1)", () => {
       const metaEmpty = constructBaseMetadata({ siteName: "" });
       assert.deepStrictEqual(metaEmpty.title, {
         default: "CHIBUEZE MAXWELL",
-        template: "%s — CHIBUEZE MAXWELL",
+        template: "%s | CHIBUEZE MAXWELL",
       });
 
       const metaWhitespace = constructBaseMetadata({ siteName: "   " });
       assert.deepStrictEqual(metaWhitespace.title, {
         default: "CHIBUEZE MAXWELL",
-        template: "%s — CHIBUEZE MAXWELL",
+        template: "%s | CHIBUEZE MAXWELL",
       });
     });
 

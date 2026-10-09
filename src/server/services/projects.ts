@@ -79,7 +79,7 @@ export async function ensureDraft(projectId: string, actor: Actor) {
     const published = await projectsRepo.getPublishedVersion(tx, projectId);
     if (!published) {
       throw new ProjectServiceError(
-        "No draft and no published version exist for this project — data integrity issue.",
+        "No draft and no published version exist for this project. Data integrity issue.",
       );
     }
 
@@ -131,7 +131,7 @@ export async function saveDraft(
     const draft = await projectsRepo.getDraftVersion(tx, projectId);
     if (!draft) {
       throw new ProjectServiceError(
-        "No open draft for this project — call ensureDraft first.",
+        "No open draft for this project. Call ensureDraft first.",
       );
     }
 
@@ -216,7 +216,7 @@ export async function rollbackProject(
     const existingDraft = await projectsRepo.getDraftVersion(tx, projectId);
     if (existingDraft) {
       throw new ProjectServiceError(
-        "An open draft already exists — publish or discard it before rolling back.",
+        "An open draft already exists. Publish or discard it before rolling back.",
       );
     }
 
@@ -298,7 +298,7 @@ export async function removeEvidence(projectId: string, evidenceId: string) {
   );
   if (!deleted) {
     throw new ProjectServiceError(
-      "Evidence not found for this project — it may belong to a different project, or was already removed.",
+      "Evidence not found for this project. It may belong to a different project, or was already removed.",
     );
   }
 }

@@ -227,7 +227,7 @@ function Toolbar({ editor, onImage }: { editor: Editor; onImage: () => void }) {
         active: state.codeBlock,
         run: () => c().toggleCodeBlock().run(),
       },
-      { label: "Divider", content: "—", run: () => c().setHorizontalRule().run() },
+      { label: "Divider", content: "―", run: () => c().setHorizontalRule().run() },
       { label: "Image from library", content: "▣", run: onImage },
     ],
     [

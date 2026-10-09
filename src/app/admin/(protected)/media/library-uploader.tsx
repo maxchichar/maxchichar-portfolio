@@ -138,7 +138,7 @@ export function LibraryUploader() {
                     ? "Validating…"
                     : i.state === "done"
                       ? "Ready ✓"
-                      : `Failed — ${i.error}`}
+                      : `Failed: ${i.error}`}
               </span>
             </li>
           ))}

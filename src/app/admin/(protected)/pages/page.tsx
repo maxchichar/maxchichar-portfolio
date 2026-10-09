@@ -18,7 +18,7 @@ export default async function PagesListPage() {
     <main className="mx-auto w-full max-w-4xl px-6 py-10 md:px-10 md:py-12">
       <AdminPageHeader
         title="Pages"
-        description="Home, About, and Now — fixed pages, always present."
+        description="Home, About, and Now. Fixed pages, always present."
       />
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -39,7 +39,7 @@ export default async function PagesListPage() {
               {draft && <StatusPill status="DRAFT" label="Draft" />}
               {!published && !draft && (
                 <span className="text-text-muted font-mono text-xs">
-                  No version — run seed:pages
+                  No version yet. Run seed:pages
                 </span>
               )}
             </div>

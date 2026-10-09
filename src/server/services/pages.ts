@@ -61,7 +61,7 @@ export async function ensureDraft(pageId: string, actor: Actor) {
     const published = await pagesRepo.getPublishedVersion(tx, pageId);
     if (!published) {
       throw new PageServiceError(
-        "No draft and no published version exist for this page — run `npm run seed:pages`.",
+        "No draft and no published version exist for this page. Run `npm run seed:pages`.",
       );
     }
 
@@ -113,7 +113,7 @@ export async function saveDraft(pageId: string, content: PageContent, actor: Act
 
     const draft = await pagesRepo.getDraftVersion(tx, pageId);
     if (!draft) {
-      throw new PageServiceError("No open draft for this page — call ensureDraft first.");
+      throw new PageServiceError("No open draft for this page. Call ensureDraft first.");
     }
 
     return pagesRepo.updateDraftVersion(tx, draft.id, { content });
@@ -165,7 +165,7 @@ export async function rollbackPage(
     const existingDraft = await pagesRepo.getDraftVersion(tx, pageId);
     if (existingDraft) {
       throw new PageServiceError(
-        "An open draft already exists — publish or discard it before rolling back.",
+        "An open draft already exists. Publish or discard it before rolling back.",
       );
     }
 
@@ -236,7 +236,7 @@ async function loadPublished<T extends z.ZodType>(slug: PageSlug, schema: T) {
   const parsed = schema.safeParse(published.content);
   if (!parsed.success) {
     console.error(
-      `getPublished("${slug}"): published version ${published.id} failed content validation — treating page as unpublished.`,
+      `getPublished("${slug}"): published version ${published.id} failed content validation. Treating page as unpublished.`,
       parsed.error.issues,
     );
     return null;

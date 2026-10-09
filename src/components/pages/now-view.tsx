@@ -31,7 +31,7 @@ export function NowView({
       <header className="border-border border-b pb-14 md:pb-20">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="animate-rise index-label">
-            <span>—</span>
+            <span aria-hidden="true" className="h-px w-6 bg-current" />
             <span>Now</span>
           </p>
           {/* "Last updated" isn't a stored field — it's the published

@@ -16,7 +16,7 @@ export const revalidate = 0;
 export const metadata: Metadata = constructPageMetadata({
   title: "Selected Work",
   description:
-    "Super Intelligence Engineer & Entrepreneur — Selected projects, intelligent systems, and engineering case studies.",
+    "Super Intelligence Engineer & Entrepreneur. Selected projects, intelligent systems, and engineering case studies.",
   path: "/work",
 });
 

@@ -247,7 +247,7 @@ export async function deleteMedia(mediaId: string, actor: Actor) {
         siteSettings: "Settings (site images)",
       };
       throw new MediaServiceError(
-        `Cannot delete — this image is still used by ${referencedBy
+        `Cannot delete: this image is still used by ${referencedBy
           .map((key) => labels[key] ?? key)
           .join(", ")}.`,
       );
@@ -264,7 +264,7 @@ export async function deleteMedia(mediaId: string, actor: Actor) {
       const code = (err as { code?: string })?.code;
       if (code === "23503") {
         throw new MediaServiceError(
-          "Cannot delete — this media was just referenced by other content.",
+          "Cannot delete: this media was just referenced by other content.",
         );
       }
       throw err;

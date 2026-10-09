@@ -94,7 +94,7 @@ export async function ensureDraft(researchId: string, actor: Actor) {
     const published = await researchRepo.getPublishedVersion(tx, researchId);
     if (!published) {
       throw new ResearchServiceError(
-        "No draft and no published version exist for this research item — data integrity issue.",
+        "No draft and no published version exist for this research item. Data integrity issue.",
       );
     }
 
@@ -141,7 +141,7 @@ export async function saveDraft(
     const draft = await researchRepo.getDraftVersion(tx, researchId);
     if (!draft) {
       throw new ResearchServiceError(
-        "No open draft for this research item — call ensureDraft first.",
+        "No open draft for this research item. Call ensureDraft first.",
       );
     }
 
@@ -222,7 +222,7 @@ export async function rollbackResearch(
     const existingDraft = await researchRepo.getDraftVersion(tx, researchId);
     if (existingDraft) {
       throw new ResearchServiceError(
-        "An open draft already exists — publish or discard it before rolling back.",
+        "An open draft already exists. Publish or discard it before rolling back.",
       );
     }
 
@@ -300,7 +300,7 @@ export async function removeEvidence(researchId: string, evidenceId: string) {
   );
   if (!deleted) {
     throw new ResearchServiceError(
-      "Evidence not found for this research item — it may belong to a different item, or was already removed.",
+      "Evidence not found for this research item. It may belong to a different item, or was already removed.",
     );
   }
 }

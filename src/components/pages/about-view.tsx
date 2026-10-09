@@ -29,7 +29,7 @@ export function AboutView({
         <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-7 lg:pt-8">
             <p className="animate-rise index-label">
-              <span>—</span>
+              <span aria-hidden="true" className="h-px w-6 bg-current" />
               <span>About</span>
             </p>
             <h1 className="text-display text-text mt-6 font-sans font-semibold">

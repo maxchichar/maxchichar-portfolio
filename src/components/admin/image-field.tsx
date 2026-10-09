@@ -159,7 +159,7 @@ export function ImageField({
               <circle cx="9" cy="10" r="2" />
               <path d="M21 16l-5-5-9 9" strokeLinejoin="round" />
             </svg>
-            No image — click to upload
+            No image. Click to upload
           </label>
         )}
         {busy ? (
@@ -211,7 +211,7 @@ export function ImageField({
             "Saving…"
           ) : (
             <>
-              <span className="text-accent">✓</span> Saved — live on the site
+              <span className="text-accent">✓</span> Saved and live on the site
             </>
           )}
         </p>
