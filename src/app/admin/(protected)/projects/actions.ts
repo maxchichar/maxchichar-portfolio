@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/config";
 import { evidenceCreateSchema } from "@/lib/validation/evidence";
 import {
-  plainTextToTiptapDoc,
+  parseRichTextField,
   PROJECT_SECTION_KEYS,
   projectCreateSchema,
   projectDraftUpdateSchema,
@@ -82,12 +82,12 @@ export async function saveDraftForm(formData: FormData): Promise<void> {
   const projectId = requireField(formData, "projectId");
 
   const sections = PROJECT_SECTION_KEYS.map((key) => {
-    const text = String(formData.get(`section_${key}`) ?? "").trim();
-    if (!text) return null;
+    const content = parseRichTextField(formData.get(`section_${key}`));
+    if (!tiptapDocToPlainText(content).trim()) return null;
     return {
       key,
       heading: String(formData.get(`heading_${key}`) ?? key),
-      content: plainTextToTiptapDoc(text),
+      content,
     };
   }).filter((s): s is NonNullable<typeof s> => s !== null);
 
@@ -216,5 +216,3 @@ export async function removeEvidenceForm(formData: FormData): Promise<void> {
   revalidatePath(`/admin/projects/${projectId}`);
   redirect(`/admin/projects/${projectId}`);
 }
-
-export { tiptapDocToPlainText };

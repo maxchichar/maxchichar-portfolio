@@ -21,8 +21,8 @@ export function EvidencePanel({
   error?: string;
 }) {
   return (
-    <section className="border-border mt-10 border-t pt-6">
-      <h2 className="text-text font-sans text-sm font-medium">Evidence</h2>
+    <section className="rounded-panel border-border bg-surface border p-6">
+      <h2 className="text-text font-sans text-sm font-semibold">Evidence</h2>
 
       <div className="mt-3 space-y-2">
         {evidence.length === 0 ? (
@@ -31,7 +31,7 @@ export function EvidencePanel({
           evidence.map((e) => (
             <div
               key={e.id}
-              className="rounded-card border-border bg-surface flex items-start justify-between border px-4 py-2.5"
+              className="rounded-card border-border bg-bg flex items-start justify-between border px-4 py-2.5"
             >
               <div>
                 <span className="text-text-muted font-mono text-xs">{e.type}</span>
@@ -59,7 +59,7 @@ export function EvidencePanel({
 
       <form
         action={addEvidenceForm}
-        className="rounded-panel border-border bg-surface mt-4 space-y-3 border p-4"
+        className="rounded-panel border-border bg-bg mt-4 space-y-3 border p-4"
       >
         <input type="hidden" name="projectId" value={projectId} />
         <div className="grid grid-cols-2 gap-3">

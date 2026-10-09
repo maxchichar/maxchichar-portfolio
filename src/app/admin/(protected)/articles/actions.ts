@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth/config";
-import { plainTextToTiptapDoc, tiptapDocToPlainText } from "@/lib/validation/project";
+import { parseRichTextField } from "@/lib/validation/project";
 import { articleDraftUpdateSchema } from "@/lib/validation/article";
 import * as articlesService from "@/server/services/articles";
 
@@ -39,7 +39,7 @@ export async function saveDraftForm(formData: FormData): Promise<void> {
   const actor = await requireActor();
   const articleId = requireField(formData, "articleId");
 
-  const contentText = String(formData.get("content") ?? "");
+  const content = parseRichTextField(formData.get("content"));
 
   const tags = String(formData.get("tags") ?? "")
     .split(",")
@@ -61,7 +61,7 @@ export async function saveDraftForm(formData: FormData): Promise<void> {
     title: formData.get("title"),
     excerpt: formData.get("excerpt"),
     category: formData.get("category") || null,
-    content: plainTextToTiptapDoc(contentText),
+    content,
     tags,
     coverMediaId,
   });
@@ -109,5 +109,3 @@ export async function unarchiveArticleForm(formData: FormData): Promise<void> {
   revalidatePath(`/admin/articles/${articleId}`);
   redirect(`/admin/articles/${articleId}`);
 }
-
-export { tiptapDocToPlainText };

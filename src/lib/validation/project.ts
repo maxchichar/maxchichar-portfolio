@@ -46,6 +46,28 @@ export function plainTextToTiptapDoc(text: string): TiptapDoc {
   };
 }
 
+const MAX_RICH_FIELD_BYTES = 500_000;
+
+/**
+ * Reads an editor field from a form submission. The admin rich-text editor
+ * posts Tiptap JSON; anything that isn't a valid doc (or legacy plain text
+ * from a non-JS submit) falls back to paragraphs, so input is never lost.
+ * Rendering is allow-listed separately (components/rich-text), so stored
+ * JSON is never trusted as markup.
+ */
+export function parseRichTextField(raw: FormDataEntryValue | null): TiptapDoc {
+  const value = typeof raw === "string" ? raw.trim() : "";
+  if (value.startsWith("{") && value.length <= MAX_RICH_FIELD_BYTES) {
+    try {
+      const parsed = tiptapDocSchema.safeParse(JSON.parse(value));
+      if (parsed.success) return parsed.data;
+    } catch {
+      // fall through to plain text
+    }
+  }
+  return plainTextToTiptapDoc(value);
+}
+
 /**
  * Plain text of a stored document, blocks separated by blank lines. Walks
  * nested blocks (lists, quotes) so rich content written in the editor still

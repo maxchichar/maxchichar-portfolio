@@ -1,8 +1,18 @@
 import { notFound } from "next/navigation";
 
+import { EditorLayout } from "@/components/admin/editor/editor-layout";
+import { EditorSection } from "@/components/admin/editor/editor-section";
+import { PublishPanel } from "@/components/admin/editor/publish-panel";
+import {
+  hintClass,
+  inputClass,
+  labelClass,
+  textareaClass,
+} from "@/components/admin/editor/styles";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { PROJECT_SECTION_KEYS } from "@/lib/validation/project";
-import * as projectService from "@/server/services/projects";
 import * as mediaService from "@/server/services/media";
+import * as projectService from "@/server/services/projects";
 
 import {
   archiveProjectForm,
@@ -11,10 +21,9 @@ import {
   rollbackProjectForm,
   saveDraftForm,
   unarchiveProjectForm,
-  tiptapDocToPlainText,
 } from "../actions";
-import { EvidencePanel } from "./evidence-panel";
 import { CoverImageUploader } from "./cover-image-uploader";
+import { EvidencePanel } from "./evidence-panel";
 
 const SECTION_LABELS: Record<(typeof PROJECT_SECTION_KEYS)[number], string> = {
   problem: "The Problem",
@@ -32,6 +41,8 @@ const SECTION_LABELS: Record<(typeof PROJECT_SECTION_KEYS)[number], string> = {
   limitations: "Limitations",
   future_work: "Future Work",
 };
+
+const FORM_ID = "project-draft-form";
 
 export default async function ProjectEditPage({
   params,
@@ -54,262 +65,205 @@ export default async function ProjectEditPage({
     : null;
 
   // Same existing service /admin/media itself uses — no new query.
-  const libraryMedia = draft
-    ? await mediaService.listMediaLibrary({ status: "READY" })
-    : [];
+  const libraryMedia = (
+    draft ? await mediaService.listMediaLibrary({ status: "READY" }) : []
+  ).map((m) => ({
+    id: m.id,
+    filename: m.filename,
+    storageUrl: m.storageUrl,
+    width: m.width,
+    height: m.height,
+  }));
 
-  const sectionText = (key: string) => {
-    const section = (draft?.sections as { key: string; content: unknown }[] | null)?.find(
+  const sectionDoc = (key: string) =>
+    (draft?.sections as { key: string; content: unknown }[] | null)?.find(
       (s) => s.key === key,
-    );
-    return section ? tiptapDocToPlainText(section.content) : "";
-  };
+    )?.content ?? null;
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-6 py-10 md:px-10 md:py-12">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-text font-sans text-3xl font-semibold tracking-tight">
-            {current.title}
-          </h1>
-          <p className="text-text-muted mt-1 font-mono text-xs">
-            /{project.slug} · item status: {project.status}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {published && (
-            <span className="rounded-badge border-accent/40 text-accent border px-2 py-0.5 font-mono text-xs">
-              PUBLISHED v{published.versionNumber}
-            </span>
-          )}
-          {draft && (
-            <span className="rounded-badge border-border text-text-muted border px-2 py-0.5 font-mono text-xs">
-              DRAFT v{draft.versionNumber}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {!draft && published && (
-        <form action={ensureDraftForm} className="mt-6">
+    <EditorLayout
+      backHref="/admin/projects"
+      backLabel="Projects"
+      title={current.title}
+      subtitle={`/work/${project.slug}`}
+      aside={
+        <PublishPanel
+          idName="projectId"
+          id={project.id}
+          formId={FORM_ID}
+          itemStatus={project.status}
+          draft={draft}
+          published={published}
+          versions={versions}
+          liveHref={`/work/${project.slug}`}
+          ensureDraftAction={ensureDraftForm}
+          publishAction={publishProjectForm}
+          rollbackAction={rollbackProjectForm}
+          archiveAction={archiveProjectForm}
+          unarchiveAction={unarchiveProjectForm}
+          noun="project"
+        />
+      }
+    >
+      {draft ? (
+        <form id={FORM_ID} action={saveDraftForm} className="space-y-6">
           <input type="hidden" name="projectId" value={project.id} />
-          <button
-            type="submit"
-            className="rounded-card border-accent text-accent hover:bg-accent hover:text-bg border px-4 py-2 font-sans text-sm transition-colors"
+
+          <EditorSection
+            title="Overview"
+            description="How this project appears in listings."
           >
-            Start editing (forks a new draft from the published version)
-          </button>
-        </form>
-      )}
-
-      {draft && (
-        <form action={saveDraftForm} className="mt-8 space-y-5">
-          <input type="hidden" name="projectId" value={project.id} />
-          <div>
-            <label className="text-text-muted block font-sans text-sm">Title</label>
-            <input
-              name="title"
-              defaultValue={draft.title}
-              required
-              className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
+            <div>
+              <label htmlFor="title" className={labelClass}>
+                Title
+              </label>
+              <input
+                id="title"
+                name="title"
+                defaultValue={draft.title}
+                required
+                className={`${inputClass} text-base`}
+              />
+            </div>
+            <div>
+              <label htmlFor="shortDescription" className={labelClass}>
+                Short description
+              </label>
+              <textarea
+                id="shortDescription"
+                name="shortDescription"
+                defaultValue={draft.shortDescription}
+                required
+                rows={2}
+                className={textareaClass}
+              />
+              <p className={hintClass}>Shown on cards and as the case study lede.</p>
+            </div>
+            <CoverImageUploader
+              initialMediaId={draft.coverMediaId}
+              initialUrl={currentCoverMedia?.storageUrl ?? null}
+              libraryMedia={libraryMedia}
             />
-          </div>
-          <div>
-            <label className="text-text-muted block font-sans text-sm">
-              Short description
-            </label>
-            <textarea
-              name="shortDescription"
-              defaultValue={draft.shortDescription}
-              required
-              rows={2}
-              className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm outline-none"
-            />
-          </div>
+          </EditorSection>
 
-          <CoverImageUploader
-            initialMediaId={draft.coverMediaId}
-            initialUrl={currentCoverMedia?.storageUrl ?? null}
-            libraryMedia={libraryMedia.map((m) => ({
-              id: m.id,
-              filename: m.filename,
-              storageUrl: m.storageUrl,
-              width: m.width,
-              height: m.height,
-            }))}
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-text-muted block font-sans text-sm">Category</label>
-              <input
-                name="category"
-                defaultValue={draft.category ?? ""}
-                className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-text-muted block font-sans text-sm">Year</label>
-              <input
-                name="year"
-                type="number"
-                defaultValue={draft.year ?? ""}
-                className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-text-muted block font-sans text-sm">
-              Technologies (comma-separated)
-            </label>
-            <input
-              name="technologies"
-              defaultValue={(draft.technologies ?? []).join(", ")}
-              className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
-            />
-          </div>
-          <div>
-            <label className="text-text-muted block font-sans text-sm">
-              Tags (comma-separated)
-            </label>
-            <input
-              name="tags"
-              defaultValue={tags.map((t) => t.name).join(", ")}
-              className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-text-muted block font-sans text-sm">GitHub</label>
-              <input
-                name="githubUrl"
-                defaultValue={draft.githubUrl ?? ""}
-                className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-text-muted block font-sans text-sm">Live</label>
-              <input
-                name="liveUrl"
-                defaultValue={draft.liveUrl ?? ""}
-                className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-text-muted block font-sans text-sm">Docs</label>
-              <input
-                name="documentationUrl"
-                defaultValue={draft.documentationUrl ?? ""}
-                className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
-              />
-            </div>
-          </div>
-
-          <fieldset className="border-border space-y-4 border-t pt-5">
-            <legend className="text-text font-sans text-sm font-medium">
-              Case study sections — leave blank to omit
-            </legend>
-            {PROJECT_SECTION_KEYS.map((key) => (
-              <div key={key}>
-                <label className="text-text-muted block font-sans text-xs">
-                  {SECTION_LABELS[key]}
+          <EditorSection
+            title="Details"
+            description="Facts shown in the case study header."
+          >
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="category" className={labelClass}>
+                  Category
                 </label>
+                <input
+                  id="category"
+                  name="category"
+                  defaultValue={draft.category ?? ""}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="year" className={labelClass}>
+                  Year
+                </label>
+                <input
+                  id="year"
+                  name="year"
+                  type="number"
+                  defaultValue={draft.year ?? ""}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="technologies" className={labelClass}>
+                Technologies
+              </label>
+              <input
+                id="technologies"
+                name="technologies"
+                defaultValue={(draft.technologies ?? []).join(", ")}
+                className={inputClass}
+              />
+              <p className={hintClass}>Comma-separated.</p>
+            </div>
+            <div>
+              <label htmlFor="tags" className={labelClass}>
+                Tags
+              </label>
+              <input
+                id="tags"
+                name="tags"
+                defaultValue={tags.map((t) => t.name).join(", ")}
+                className={inputClass}
+              />
+              <p className={hintClass}>Comma-separated.</p>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-3">
+              {(
+                [
+                  ["githubUrl", "GitHub", draft.githubUrl],
+                  ["liveUrl", "Live URL", draft.liveUrl],
+                  ["documentationUrl", "Docs URL", draft.documentationUrl],
+                ] as const
+              ).map(([name, label, value]) => (
+                <div key={name}>
+                  <label htmlFor={name} className={labelClass}>
+                    {label}
+                  </label>
+                  <input
+                    id={name}
+                    name={name}
+                    type="url"
+                    placeholder="https://"
+                    defaultValue={value ?? ""}
+                    className={inputClass}
+                  />
+                </div>
+              ))}
+            </div>
+          </EditorSection>
+
+          <EditorSection
+            title="Case study"
+            description="Sections left empty are omitted from the public page."
+          >
+            {PROJECT_SECTION_KEYS.map((key, i) => (
+              <div key={key}>
+                <p className={`${labelClass} mb-1.5 flex items-baseline gap-2`}>
+                  <span className="text-text-muted font-mono text-[11px]">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  {SECTION_LABELS[key]}
+                </p>
                 <input
                   type="hidden"
                   name={`heading_${key}`}
                   value={SECTION_LABELS[key]}
                 />
-                <textarea
+                <RichTextEditor
                   name={`section_${key}`}
-                  defaultValue={sectionText(key)}
-                  rows={3}
-                  className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1 w-full border px-3.5 py-2.5 font-serif text-sm outline-none"
+                  initialContent={sectionDoc(key)}
+                  label={SECTION_LABELS[key]}
+                  placeholder={`Write the ${SECTION_LABELS[key].toLowerCase()}…`}
+                  libraryMedia={libraryMedia}
+                  minHeight="min-h-24"
                 />
               </div>
             ))}
-          </fieldset>
-
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              className="rounded-card border-border text-text hover:border-accent border px-4 py-2.5 font-sans text-sm transition-colors"
-            >
-              Save draft
-            </button>
-          </div>
+          </EditorSection>
         </form>
-      )}
-
-      {draft && (
-        <form action={publishProjectForm} className="mt-4">
-          <input type="hidden" name="projectId" value={project.id} />
-          <button
-            type="submit"
-            className="rounded-card bg-accent text-bg px-4 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90"
-          >
-            Publish this draft
-          </button>
-        </form>
+      ) : (
+        <div className="rounded-panel border-border bg-surface border border-dashed p-8 text-center">
+          <p className="text-text font-sans text-sm font-medium">This project is live.</p>
+          <p className="text-text-muted mt-1 font-serif text-sm">
+            Choose “Edit project” to start a new draft. The live page won&apos;t change
+            until you publish.
+          </p>
+        </div>
       )}
 
       <EvidencePanel projectId={project.id} evidence={evidence} error={evidenceError} />
-
-      <section className="border-border mt-10 border-t pt-6">
-        <h2 className="text-text font-sans text-sm font-medium">Version history</h2>
-        <div className="mt-3 space-y-2">
-          {versions.map((v) => (
-            <div
-              key={v.id}
-              className="rounded-card border-border bg-surface flex items-center justify-between border px-4 py-2.5"
-            >
-              <div>
-                <span className="text-text-muted font-mono text-xs">
-                  v{v.versionNumber} · {v.status}
-                </span>
-                <span className="text-text ml-2 font-sans text-sm">{v.title}</span>
-              </div>
-              {v.status === "SUPERSEDED" && !draft && (
-                <form action={rollbackProjectForm}>
-                  <input type="hidden" name="projectId" value={project.id} />
-                  <input type="hidden" name="targetVersionId" value={v.id} />
-                  <button
-                    type="submit"
-                    className="text-accent font-sans text-xs hover:underline"
-                  >
-                    Restore this version
-                  </button>
-                </form>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="border-border mt-8 border-t pt-6">
-        {project.status === "ACTIVE" ? (
-          <form action={archiveProjectForm}>
-            <input type="hidden" name="projectId" value={project.id} />
-            <button
-              type="submit"
-              className="text-text-muted hover:text-text font-sans text-xs"
-            >
-              Archive project
-            </button>
-          </form>
-        ) : (
-          <form action={unarchiveProjectForm}>
-            <input type="hidden" name="projectId" value={project.id} />
-            <button
-              type="submit"
-              className="text-text-muted hover:text-text font-sans text-xs"
-            >
-              Unarchive project
-            </button>
-          </form>
-        )}
-      </section>
-    </main>
+    </EditorLayout>
   );
 }
