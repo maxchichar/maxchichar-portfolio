@@ -632,3 +632,31 @@ export const auditLogs = pgTable(
     index("audit_logs_created_at_idx").on(table.createdAt),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// ANALYTICS — first-party, cookieless page views
+// ---------------------------------------------------------------------------
+// No cookies, no raw IPs, no user agents stored. `visitorHash` is an HMAC of
+// (IP + user agent) keyed with a salt that rotates daily, so a visitor can be
+// counted once per day but never re-identified or linked across days.
+export const pageViews = pgTable(
+  "page_views",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    path: text("path").notNull(),
+    referrerHost: text("referrer_host"),
+    country: text("country"),
+    device: text("device").notNull(),
+    browser: text("browser"),
+    visitorHash: text("visitor_hash").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("page_views_created_at_idx").on(table.createdAt),
+    index("page_views_path_created_at_idx").on(table.path, table.createdAt),
+    check(
+      "page_views_device_check",
+      sql`${table.device} IN ('desktop','mobile','tablet')`,
+    ),
+  ],
+);
