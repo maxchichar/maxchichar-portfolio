@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { LogoMark } from "@/components/brand/logo-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function NavBar({
@@ -50,13 +51,13 @@ export function NavBar({
         }`}
       >
         <div className="container-site flex h-16 items-center justify-between md:h-20">
-          {/* Wordmark — purple is an identity signal only, never interactive
-            feedback. */}
+          {/* Logo + name. Purple is an identity signal only, never
+            interactive feedback. */}
           <Link
             href="/"
             className="text-text flex items-center gap-2.5 font-sans text-sm font-semibold tracking-tight"
           >
-            <span aria-hidden="true" className="bg-accent-purple h-2 w-2 rounded-full" />
+            <LogoMark className="h-[18px] w-auto shrink-0" />
             {siteName}
           </Link>
 
