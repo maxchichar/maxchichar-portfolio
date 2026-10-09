@@ -9,7 +9,8 @@ import { ViewTransition } from "react";
 export function PageTransition({ children }: { children: React.ReactNode }) {
   return (
     <ViewTransition enter="page" exit="page" default="none">
-      {children}
+      {/* .page-enter: CSS entrance for browsers without view transitions. */}
+      <div className="page-enter">{children}</div>
     </ViewTransition>
   );
 }
