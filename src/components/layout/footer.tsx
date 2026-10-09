@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { getPublicSiteSettings } from "@/server/services/settings";
 
+import { FooterWordmark } from "./footer-wordmark";
+
 const NAV_LINKS = [
   { href: "/work", label: "Work" },
   { href: "/research", label: "Research" },
@@ -10,9 +12,6 @@ const NAV_LINKS = [
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ] as const;
-
-// The signature wordmark set edge-to-edge at the foot of every page.
-const WORDMARK = "MAXCHICHAR";
 
 export async function Footer() {
   const year = new Date().getFullYear();
@@ -119,38 +118,7 @@ export async function Footer() {
         </div>
       </div>
 
-      {/* Giant edge-to-edge wordmark. SVG textLength stretches the word to
-          exactly the viewport width regardless of font metrics, so it always
-          sits flush with both edges. Decorative — the name is already read
-          out above. */}
-      <div
-        aria-hidden="true"
-        className="reveal pointer-events-none -mb-[1.2vw] select-none"
-      >
-        <svg
-          viewBox="0 0 1000 150"
-          preserveAspectRatio="none"
-          className="block h-auto w-full"
-        >
-          <defs>
-            <linearGradient id="footer-wordmark-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--text)" stopOpacity="0.95" />
-              <stop offset="100%" stopColor="var(--text)" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <text
-            x="2"
-            y="138"
-            textLength="996"
-            lengthAdjust="spacingAndGlyphs"
-            fill="url(#footer-wordmark-fill)"
-            className="font-sans"
-            style={{ fontSize: 186, fontWeight: 800 }}
-          >
-            {WORDMARK}
-          </text>
-        </svg>
-      </div>
+      <FooterWordmark xUrl={settings.socialX} instagramUrl={settings.socialInstagram} />
     </footer>
   );
 }

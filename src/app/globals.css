@@ -704,3 +704,49 @@ html.has-reticle
   opacity: 0;
   transition: opacity 500ms ease-out;
 }
+
+/* ------------------------------------------------------------------------
+ * Footer wordmark: "Hidden in the name" (<FooterWordmark>).
+ * --------------------------------------------------------------------- */
+.wm .wm-char {
+  transition:
+    fill-opacity 350ms var(--ease-out-quint),
+    fill 350ms var(--ease-out-quint);
+}
+/* A letter is live: dim the rest, light up the chosen one. */
+.wm[data-active] .wm-char {
+  fill-opacity: 0.16;
+}
+.wm[data-active="x"] .wm-secret-x,
+.wm[data-active="i"] .wm-secret-i {
+  fill: var(--accent);
+  fill-opacity: 1;
+}
+/* Idle hint: the live letters glint in turn every few seconds. */
+@media (prefers-reduced-motion: no-preference) {
+  .wm:not([data-active]) .wm-secret {
+    animation: wm-glint 8s ease-in-out infinite;
+  }
+  .wm:not([data-active]) .wm-secret-i {
+    animation-delay: 0.6s;
+  }
+}
+@keyframes wm-glint {
+  0%,
+  84%,
+  96%,
+  100% {
+    fill: url(#footer-wordmark-fill);
+  }
+  88%,
+  92% {
+    fill: var(--accent);
+  }
+}
+.wm-link {
+  pointer-events: auto;
+}
+.wm-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
