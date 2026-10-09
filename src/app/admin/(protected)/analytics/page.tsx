@@ -44,6 +44,17 @@ export default async function AnalyticsPage({
         description="First-party and cookieless. No IPs or cookies are stored; visitors are counted once per day with a daily-rotating anonymous hash."
       />
 
+      {!s.available ? (
+        <p
+          role="alert"
+          className="rounded-card border-border bg-surface-2 text-text mb-6 border px-4 py-3 font-sans text-sm"
+        >
+          Analytics isn&apos;t available yet. Apply the latest database migration (
+          <code className="font-mono text-xs">npm run db:push</code>) to create the{" "}
+          <code className="font-mono text-xs">page_views</code> table.
+        </p>
+      ) : null}
+
       {/* Date range first, one row above everything it scopes. */}
       <nav
         aria-label="Date range"
