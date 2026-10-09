@@ -11,7 +11,10 @@ import {
   buildResearchJsonLd,
   JsonLdScript,
 } from "@/lib/structured-data";
-import { getPublicResearchDetail } from "@/server/services/research";
+import {
+  getPublicResearchDetail,
+  listPublicResearchOverview,
+} from "@/server/services/research";
 import { getPublicSiteSettings } from "@/server/services/settings";
 import { PageTransition } from "@/components/motion/page-transition";
 
@@ -48,7 +51,22 @@ export default async function ResearchDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const settings = await getPublicSiteSettings();
+  const [settings, allResearch] = await Promise.all([
+    getPublicSiteSettings(),
+    listPublicResearchOverview(),
+  ]);
+  const idx = allResearch.findIndex((r) => r.research.slug === slug);
+  const nextItem =
+    allResearch.length > 1 ? allResearch[(idx + 1) % allResearch.length] : undefined;
+  const next = nextItem
+    ? {
+        slug: nextItem.research.slug,
+        title: nextItem.published.title,
+        body: nextItem.published.abstract,
+        coverUrl: nextItem.coverUrl,
+      }
+    : null;
+
   const researchJsonLd = buildResearchJsonLd({
     title: item.published.title,
     abstract: item.published.abstract,
@@ -79,6 +97,7 @@ export default async function ResearchDetailPage({ params }: PageProps) {
             evidence={item.evidence}
             tags={item.tags}
             coverUrl={item.coverUrl}
+            next={next}
           />
         </main>
       </PageTransition>

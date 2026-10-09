@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ViewTransition } from "react";
 
 import { Hero } from "@/components/home/hero";
 import { Footer } from "@/components/layout/footer";
@@ -137,6 +138,7 @@ export default async function Home() {
                 <WorkCard
                   key={project.id}
                   href={`/work/${project.slug}`}
+                  transitionName={`cover-work-${project.slug}`}
                   title={published.title}
                   body={published.shortDescription}
                   coverUrl={coverUrl}
@@ -291,7 +293,9 @@ function WorkCard({
   coverUrl,
   meta,
   number,
+  transitionName,
 }: {
+  transitionName: string;
   href: string;
   title: string;
   body: string;
@@ -302,26 +306,31 @@ function WorkCard({
   const metaItems = meta.filter((m): m is string => Boolean(m));
   return (
     <Link href={href} className="group reveal block">
-      <div className="rounded-panel border-border bg-surface relative aspect-[4/3] overflow-hidden border">
-        {coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coverUrl}
-            alt=""
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
-          />
-        ) : (
-          <div aria-hidden="true" className="hero-wash flex h-full w-full items-end p-6">
-            <span className="text-text/15 font-sans text-8xl font-semibold tracking-tighter">
-              {String(number).padStart(2, "0")}
-            </span>
-          </div>
-        )}
-        <span className="bg-bg/70 text-text absolute top-4 right-4 flex h-9 w-9 translate-y-1 items-center justify-center rounded-full opacity-0 backdrop-blur transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-          ↗
-        </span>
-      </div>
+      <ViewTransition name={transitionName} share="morph" default="none">
+        <div className="rounded-panel border-border bg-surface relative aspect-[4/3] overflow-hidden border">
+          {coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={coverUrl}
+              alt=""
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="hero-wash flex h-full w-full items-end p-6"
+            >
+              <span className="text-text/15 font-sans text-8xl font-semibold tracking-tighter">
+                {String(number).padStart(2, "0")}
+              </span>
+            </div>
+          )}
+          <span className="bg-bg/70 text-text absolute top-4 right-4 flex h-9 w-9 translate-y-1 items-center justify-center rounded-full opacity-0 backdrop-blur transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+            ↗
+          </span>
+        </div>
+      </ViewTransition>
       {metaItems.length > 0 ? (
         <p className="text-text-muted mt-5 font-mono text-[11px] tracking-wider uppercase">
           {metaItems.join(" · ")}
