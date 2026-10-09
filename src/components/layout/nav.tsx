@@ -16,8 +16,22 @@ export const NAV_LINKS = [
  * `overlay` floats the bar transparently over a full-bleed hero (homepage);
  * it gains its solid, blurred backdrop once the visitor scrolls.
  */
-export async function Nav({ overlay = false }: { overlay?: boolean }) {
+export async function Nav({
+  overlay = false,
+  overlayDark = false,
+}: {
+  overlay?: boolean;
+  /** The overlaid hero is a dark island, so the floating bar uses dark tokens. */
+  overlayDark?: boolean;
+}) {
   const settings = await getPublicSiteSettings();
 
-  return <NavBar siteName={settings.siteName} links={NAV_LINKS} overlay={overlay} />;
+  return (
+    <NavBar
+      siteName={settings.siteName}
+      links={NAV_LINKS}
+      overlay={overlay}
+      overlayDark={overlayDark}
+    />
+  );
 }

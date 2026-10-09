@@ -116,7 +116,7 @@ export default async function Home() {
   return (
     <>
       <JsonLdScript data={homepageJsonLd} />
-      <Nav overlay />
+      <Nav overlay overlayDark={Boolean(siteSettings.heroImage)} />
 
       <PageTransition>
         <main>
