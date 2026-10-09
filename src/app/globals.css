@@ -134,6 +134,12 @@
   }
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
 @keyframes shimmer {
   to {
     background-position: -200% 0;
@@ -474,4 +480,51 @@ html.lenis body {
 }
 .ProseMirror.rich-text {
   font-size: 1.0625rem;
+}
+
+/* ------------------------------------------------------------------------
+ * Cross-browser / cross-device fallbacks for the motion system.
+ * --------------------------------------------------------------------- */
+
+/* Page entrance where view transitions aren't supported (e.g. Firefox).
+   `backwards` fill so no transform lingers afterwards (a lingering
+   transform would break position:fixed children like the progress bar). */
+@supports not (view-transition-name: none) {
+  @media (prefers-reduced-motion: no-preference) {
+    .page-enter {
+      animation: fade-in-up 600ms var(--ease-out-expo) backwards;
+    }
+  }
+}
+
+/* Scroll reveal driven by <RevealObserver> (browsers without scroll-driven
+   animations, and reduced-motion users). */
+.reveal-js .reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 800ms var(--ease-out-quint),
+    transform 800ms var(--ease-out-quint);
+}
+.reveal-js .reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Reduced motion: no movement, but keep gentle fades so the site still
+   feels alive (fades are not vestibular triggers). These deliberately
+   override the global "near-zero duration" rule above. */
+@media (prefers-reduced-motion: reduce) {
+  .split-word > span,
+  .animate-rise {
+    animation: fade-in 500ms ease-out both !important;
+    animation-delay: calc(var(--i, 0) * 40ms) !important;
+  }
+  .reveal-js .reveal {
+    transform: none;
+    transition: opacity 600ms ease-out !important;
+  }
+  .page-enter {
+    animation: fade-in 300ms ease-out backwards !important;
+  }
 }
