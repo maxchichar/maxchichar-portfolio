@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Validated categorical pair for the dark surface (#131316) — dataviz
+// Validated categorical pairs per theme (see --chart-1/--chart-2 in globals.css) — dataviz
 // validate_palette: lightness band, chroma, CVD ΔE 30.5, normal ΔE 34.4,
 // contrast all PASS. Visitors is the primary series (with an area wash).
 const SERIES = [
-  { key: "visitors", label: "Visitors", color: "#4f7cff" },
-  { key: "views", label: "Page views", color: "#d95926" },
+  { key: "visitors", label: "Visitors", color: "var(--chart-1)" },
+  { key: "views", label: "Page views", color: "var(--chart-2)" },
 ] as const;
 
 type Point = { day: string; views: number; visitors: number };

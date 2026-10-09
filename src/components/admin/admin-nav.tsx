@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { ThemeToggle } from "@/components/theme-toggle";
+
 const SECTIONS = [
   {
     label: "Overview",
@@ -89,14 +91,17 @@ export function AdminNav({
 
   const footer = (
     <div className="border-border space-y-3 border-t p-4">
-      <Link
-        href="/"
-        target="_blank"
-        className="text-text-muted hover:text-text flex items-center justify-between font-sans text-xs transition-colors"
-      >
-        View live site
-        <span aria-hidden="true">↗</span>
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/"
+          target="_blank"
+          className="text-text-muted hover:text-text flex items-center gap-1 font-sans text-xs transition-colors"
+        >
+          View live site
+          <span aria-hidden="true">↗</span>
+        </Link>
+        <ThemeToggle className="-my-2 -mr-2" />
+      </div>
       <div className="flex items-center gap-3">
         <span
           aria-hidden="true"
