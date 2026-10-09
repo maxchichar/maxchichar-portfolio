@@ -10,10 +10,12 @@ export function NavBar({
   siteName,
   links,
   overlay,
+  overlayDark = false,
 }: {
   siteName: string;
   links: readonly { href: string; label: string }[];
   overlay: boolean;
+  overlayDark?: boolean;
 }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
@@ -38,6 +40,9 @@ export function NavBar({
   return (
     <>
       <header
+        // While floating over a dark-island hero, use dark tokens; once
+        // scrolled (solid), follow the page theme again.
+        data-theme={overlayDark && !solid ? "dark" : undefined}
         className={`${overlay ? "fixed" : "sticky"} inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-300 ${
           solid
             ? "border-border bg-bg/75 border-b backdrop-blur-xl"

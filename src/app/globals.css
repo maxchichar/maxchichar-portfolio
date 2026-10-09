@@ -1,11 +1,19 @@
 @import "tailwindcss";
 
 /*
+ * Theme tokens are scopable: the dark set applies at the root and on any
+ * element with data-theme="dark"; the light set on any element with
+ * data-theme="light". So a section can force a theme for its subtree
+ * (e.g. the homepage hero stays dark over a low-key photo in light mode).
+ */
+
+/*
  * Portfolio OS design tokens.
  * Canonical source: Portfolio OS — FINAL LOCKED SPECIFICATION, §D.10.
  * Token names below are exact — do not rename without updating the spec.
  */
-:root {
+:root,
+[data-theme="dark"] {
   --bg: #0a0a0b;
   --surface: #131316;
   --border: #232328;
@@ -40,7 +48,7 @@
  * preference). Same token names, so every component follows automatically.
  * All text pairs pass WCAG AA on bg/surface/surface-2.
  */
-:root[data-theme="light"] {
+[data-theme="light"] {
   --bg: #f6f5f1;
   --surface: #ffffff;
   --surface-2: #eeede8;
@@ -183,10 +191,11 @@
 }
 
 @layer base {
-  html {
+  html,
+  [data-theme="dark"] {
     color-scheme: dark;
   }
-  html[data-theme="light"] {
+  [data-theme="light"] {
     color-scheme: light;
   }
 

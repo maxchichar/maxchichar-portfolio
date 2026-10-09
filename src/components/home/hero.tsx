@@ -54,7 +54,14 @@ export function Hero({
   name: string;
 }) {
   return (
-    <section className="relative isolate flex min-h-[100svh] flex-col overflow-hidden">
+    // With a photo, the hero is a dark island in both themes: the portrait is
+    // low-key studio photography (subject on black), and light scrims over it
+    // turned the black into grey and put dark text on a dark image. Without a
+    // photo it follows the page theme.
+    <section
+      data-theme={image ? "dark" : undefined}
+      className="bg-bg text-text relative isolate flex min-h-[100svh] flex-col overflow-hidden"
+    >
       {/* Backdrop: the landscape photo, or an atmospheric wash until one is set. */}
       <div className="grain absolute inset-0 -z-10">
         <div className="parallax absolute inset-0">
