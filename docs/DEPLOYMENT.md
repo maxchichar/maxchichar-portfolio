@@ -18,8 +18,7 @@ The system operates on a zero-server-maintenance, serverless architecture:
 
 ## 2. Production URLs & Domains
 
-- **Canonical Site Origin**: `https://chibueze-maxwell.vercel.app` (configured as `NEXT_PUBLIC_SITE_URL`)
-- **Secondary Production Alias**: `https://chibuezemaxwell.vercel.app`
+- **Canonical Site Origin**: `https://chibuezemaxwell.vercel.app` (configured as `NEXT_PUBLIC_SITE_URL`). This is the only production domain; the former `chibueze-maxwell.vercel.app` alias has been retired.
 - **Public Media CDN Origin**: `https://pub-be5b26d4fdc14d42a7bfa1843c84c207.r2.dev` (configured as `STORAGE_PUBLIC_URL`)
 
 ---
