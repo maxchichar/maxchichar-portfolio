@@ -239,8 +239,17 @@ export async function deleteMedia(mediaId: string, actor: Actor) {
       (key) => refs[key],
     );
     if (referencedBy.length > 0) {
+      const labels: Record<string, string> = {
+        projects: "a project",
+        research: "a research item",
+        articles: "an article",
+        evidence: "evidence",
+        siteSettings: "Settings (site images)",
+      };
       throw new MediaServiceError(
-        `Cannot delete — still referenced by: ${referencedBy.join(", ")}.`,
+        `Cannot delete — this image is still used by ${referencedBy
+          .map((key) => labels[key] ?? key)
+          .join(", ")}.`,
       );
     }
 

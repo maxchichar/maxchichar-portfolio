@@ -4,6 +4,7 @@ import { AdminPageHeader } from "@/components/admin/page-header";
 import * as mediaService from "@/server/services/media";
 
 import { CopyUrlButton } from "./copy-url-button";
+import { DeleteMediaButton } from "./[id]/delete-media-button";
 import { LibraryUploader } from "./library-uploader";
 
 function formatBytes(bytes: number): string {
@@ -25,9 +26,14 @@ function parseStatus(value: string | undefined): StatusOption {
 export default async function MediaLibraryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; deleted?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    deleted?: string;
+    deleteError?: string;
+  }>;
 }) {
-  const { q, status: rawStatus, deleted } = await searchParams;
+  const { q, status: rawStatus, deleted, deleteError } = await searchParams;
   const status = parseStatus(rawStatus);
   const filenameQuery = q?.trim() || undefined;
 
@@ -43,6 +49,15 @@ export default async function MediaLibraryPage({
       {deleted ? (
         <p role="status" className="text-accent -mt-6 mb-6 font-sans text-sm">
           Media deleted.
+        </p>
+      ) : null}
+
+      {deleteError ? (
+        <p
+          role="alert"
+          className="rounded-card border-border bg-surface-2 text-text -mt-4 mb-6 border px-4 py-3 font-sans text-sm"
+        >
+          {deleteError} Replace or remove it there first, then delete it here.
         </p>
       ) : null}
 
@@ -129,7 +144,10 @@ export default async function MediaLibraryPage({
                 </div>
               </Link>
               <div className="p-3 pt-3">
-                <CopyUrlButton url={item.storageUrl} />
+                <div className="flex items-center justify-between gap-2">
+                  <CopyUrlButton url={item.storageUrl} />
+                  <DeleteMediaButton mediaId={item.id} filename={item.filename} compact />
+                </div>
               </div>
             </div>
           ))}

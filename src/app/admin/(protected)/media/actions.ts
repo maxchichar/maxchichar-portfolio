@@ -50,7 +50,12 @@ export async function deleteMediaForm(formData: FormData): Promise<void> {
     await mediaService.deleteMedia(mediaId, actor);
   } catch (err) {
     if (err instanceof mediaService.MediaServiceError) {
-      redirect(`/admin/media/${mediaId}?deleteError=${encodeURIComponent(err.message)}`);
+      const fromLibrary = formData.get("returnTo") === "library";
+      redirect(
+        fromLibrary
+          ? `/admin/media?deleteError=${encodeURIComponent(err.message)}`
+          : `/admin/media/${mediaId}?deleteError=${encodeURIComponent(err.message)}`,
+      );
     }
     throw err;
   }

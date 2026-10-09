@@ -124,3 +124,42 @@ export async function updateSiteSettings(
     };
   }
 }
+
+export type SiteImageField = "heroMediaId" | "aboutMediaId";
+
+/**
+ * Sets (or clears) one site image immediately — used by the Settings
+ * imagery fields so an upload goes live without a separate form save.
+ */
+export async function setSiteImage(
+  field: SiteImageField,
+  mediaId: string | null,
+  actor: Actor,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (mediaId) {
+      const media = await mediaRepo.findById(db, mediaId);
+      if (!media || media.status !== "READY") {
+        return {
+          success: false,
+          error: "That image hasn't finished uploading and validating yet.",
+        };
+      }
+    }
+    await settingsRepo.upsertSiteSettings(db, { [field]: mediaId }, actor.id);
+    await logAudit({
+      userId: actor.id,
+      action: "settings.image_updated",
+      resourceType: "settings",
+      metadata: { field, mediaId },
+    });
+    return { success: true };
+  } catch (err) {
+    console.error("setSiteImage error:", err);
+    return {
+      success: false,
+      error:
+        "Couldn't save the image. If this keeps happening, make sure the latest database migration has been applied.",
+    };
+  }
+}
