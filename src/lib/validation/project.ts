@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { richDocToPlainText } from "@/lib/rich-text";
+
 // Section keys from the project case-study proof architecture — docs/SPECIFICATION.md.
 export const PROJECT_SECTION_KEYS = [
   "problem",
@@ -44,18 +46,15 @@ export function plainTextToTiptapDoc(text: string): TiptapDoc {
   };
 }
 
+/**
+ * Plain text of a stored document, blocks separated by blank lines. Walks
+ * nested blocks (lists, quotes) so rich content written in the editor still
+ * yields full text for reading time and descriptions.
+ */
 export function tiptapDocToPlainText(doc: unknown): string {
   const parsed = tiptapDocSchema.safeParse(doc);
   if (!parsed.success) return "";
-  return parsed.data.content
-    .map((node) => {
-      const content = node["content"];
-      if (!Array.isArray(content)) return "";
-      return content
-        .map((n) => (typeof n === "object" && n && "text" in n ? String(n.text) : ""))
-        .join("");
-    })
-    .join("\n\n");
+  return richDocToPlainText(parsed.data);
 }
 
 export const projectSectionSchema = z.object({

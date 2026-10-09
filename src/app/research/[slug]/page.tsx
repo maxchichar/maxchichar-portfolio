@@ -13,6 +13,7 @@ import {
 } from "@/lib/structured-data";
 import { getPublicResearchDetail } from "@/server/services/research";
 import { getPublicSiteSettings } from "@/server/services/settings";
+import { PageTransition } from "@/components/motion/page-transition";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -70,15 +71,17 @@ export default async function ResearchDetailPage({ params }: PageProps) {
     <>
       <JsonLdScript data={pageJsonLd} />
       <Nav />
-      <main>
-        <ResearchDetailView
-          research={item.research}
-          published={item.published}
-          evidence={item.evidence}
-          tags={item.tags}
-          coverUrl={item.coverUrl}
-        />
-      </main>
+      <PageTransition>
+        <main>
+          <ResearchDetailView
+            research={item.research}
+            published={item.published}
+            evidence={item.evidence}
+            tags={item.tags}
+            coverUrl={item.coverUrl}
+          />
+        </main>
+      </PageTransition>
       <Footer />
     </>
   );

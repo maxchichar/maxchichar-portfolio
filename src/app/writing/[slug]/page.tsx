@@ -13,6 +13,7 @@ import {
 } from "@/lib/structured-data";
 import { getPublicArticleDetail } from "@/server/services/articles";
 import { getPublicSiteSettings } from "@/server/services/settings";
+import { PageTransition } from "@/components/motion/page-transition";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -70,14 +71,16 @@ export default async function ArticleDetailPage({ params }: PageProps) {
     <>
       <JsonLdScript data={pageJsonLd} />
       <Nav />
-      <main>
-        <ArticleDetailView
-          article={item.article}
-          published={item.published}
-          tags={item.tags}
-          coverUrl={item.coverUrl}
-        />
-      </main>
+      <PageTransition>
+        <main>
+          <ArticleDetailView
+            article={item.article}
+            published={item.published}
+            tags={item.tags}
+            coverUrl={item.coverUrl}
+          />
+        </main>
+      </PageTransition>
       <Footer />
     </>
   );

@@ -13,6 +13,7 @@ import {
 } from "@/lib/structured-data";
 import { getPublicWorkCaseStudy } from "@/server/services/projects";
 import { getPublicSiteSettings } from "@/server/services/settings";
+import { PageTransition } from "@/components/motion/page-transition";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -71,15 +72,17 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
     <>
       <JsonLdScript data={pageJsonLd} />
       <Nav />
-      <main>
-        <CaseStudyView
-          project={item.project}
-          published={item.published}
-          evidence={item.evidence}
-          tags={item.tags}
-          coverUrl={item.coverUrl}
-        />
-      </main>
+      <PageTransition>
+        <main>
+          <CaseStudyView
+            project={item.project}
+            published={item.published}
+            evidence={item.evidence}
+            tags={item.tags}
+            coverUrl={item.coverUrl}
+          />
+        </main>
+      </PageTransition>
       <Footer />
     </>
   );

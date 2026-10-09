@@ -1,3 +1,5 @@
+import { SplitText } from "@/components/motion/split-text";
+
 /** Shared header for public index pages: eyebrow marker, display title, lede. */
 export function PageIntro({
   eyebrow,
@@ -5,7 +7,7 @@ export function PageIntro({
   children,
 }: {
   eyebrow: string;
-  title: React.ReactNode;
+  title: string;
   children?: React.ReactNode;
 }) {
   return (
@@ -14,16 +16,13 @@ export function PageIntro({
         <span>—</span>
         <span>{eyebrow}</span>
       </p>
-      <h1
-        className="animate-rise text-text mt-6 max-w-4xl font-sans text-[clamp(2.5rem,5.5vw,4.75rem)] leading-[0.98] font-semibold tracking-[-0.03em] text-balance"
-        style={{ animationDelay: "100ms" }}
-      >
-        {title}
+      <h1 className="text-h1 text-text mt-6 max-w-4xl font-sans font-semibold text-balance">
+        <SplitText text={title} baseDelay={80} />
       </h1>
       {children ? (
         <div
-          className="animate-rise text-text-muted mt-8 max-w-2xl font-serif text-lg leading-relaxed md:text-xl"
-          style={{ animationDelay: "200ms" }}
+          className="animate-rise text-lede text-text-muted mt-8 max-w-2xl font-serif"
+          style={{ animationDelay: "400ms" }}
         >
           {children}
         </div>

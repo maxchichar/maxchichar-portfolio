@@ -1,6 +1,8 @@
 import type { AboutPageContent } from "@/lib/validation/page";
 import type { SiteImage } from "@/lib/validation/settings";
 
+import { SplitText } from "@/components/motion/split-text";
+
 import { Paragraphs } from "./paragraphs";
 
 const SECTIONS = [
@@ -30,11 +32,8 @@ export function AboutView({
               <span>—</span>
               <span>About</span>
             </p>
-            <h1
-              className="animate-rise text-text mt-6 font-sans text-[clamp(2.75rem,6vw,5.5rem)] leading-[0.95] font-semibold tracking-[-0.035em]"
-              style={{ animationDelay: "100ms" }}
-            >
-              {name}
+            <h1 className="text-display text-text mt-6 font-sans font-semibold">
+              <SplitText text={name} baseDelay={80} />
             </h1>
             <div className="animate-rise mt-10" style={{ animationDelay: "200ms" }}>
               <Paragraphs

@@ -7,6 +7,7 @@ import { AboutView } from "@/components/pages/about-view";
 import { constructPageMetadata } from "@/lib/metadata";
 import { getPublishedAboutPage } from "@/server/services/pages";
 import { getPublicSiteSettings } from "@/server/services/settings";
+import { PageTransition } from "@/components/motion/page-transition";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -45,13 +46,15 @@ export default async function AboutPage() {
   return (
     <>
       <Nav />
-      <main>
-        <AboutView
-          content={about.content}
-          image={settings.aboutImage}
-          name={settings.siteName}
-        />
-      </main>
+      <PageTransition>
+        <main>
+          <AboutView
+            content={about.content}
+            image={settings.aboutImage}
+            name={settings.siteName}
+          />
+        </main>
+      </PageTransition>
       <Footer />
     </>
   );

@@ -36,7 +36,7 @@ export async function Footer() {
               <span>—</span>
               <span>Have a project in mind?</span>
             </p>
-            <h2 className="text-text mt-5 max-w-lg font-sans text-4xl leading-[1.05] font-semibold tracking-tight md:text-5xl">
+            <h2 className="text-h2 text-text mt-5 max-w-lg font-sans font-semibold">
               Let&apos;s build something{" "}
               <span className="text-text-muted font-serif font-normal italic">
                 that matters.
