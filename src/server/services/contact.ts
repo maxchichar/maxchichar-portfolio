@@ -1,5 +1,6 @@
 import "server-only";
 
+import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import {
   contactSubmissionSchema,
@@ -86,4 +87,35 @@ export async function submitContact(
       error: "Unable to send your message right now. Please try again later.",
     };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Admin inbox
+// ---------------------------------------------------------------------------
+
+export async function listInbox(status: contactRepo.InboxStatus | null) {
+  const [items, counts] = await Promise.all([
+    contactRepo.listSubmissions(db, status),
+    contactRepo.countSubmissionsByStatus(db),
+  ]);
+  return { items, counts };
+}
+
+export async function getSubmission(id: string) {
+  return contactRepo.findSubmissionById(db, id);
+}
+
+export async function setSubmissionStatus(
+  id: string,
+  status: contactRepo.InboxStatus,
+  actorId: string,
+) {
+  await contactRepo.updateSubmissionStatus(db, id, status);
+  await logAudit({
+    userId: actorId,
+    action: "contact.status_updated",
+    resourceType: "contact_submission",
+    resourceId: id,
+    metadata: { status },
+  });
 }

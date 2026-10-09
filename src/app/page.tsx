@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ViewTransition } from "react";
 
 import { Hero } from "@/components/home/hero";
 import { Footer } from "@/components/layout/footer";
@@ -15,6 +16,7 @@ import {
   buildWebSiteJsonLd,
   JsonLdScript,
 } from "@/lib/structured-data";
+import { PageTransition } from "@/components/motion/page-transition";
 
 // Homepage sections reuse the same public overview services /work, /research,
 // and /writing already call — no new database queries. Selection criteria
@@ -116,106 +118,112 @@ export default async function Home() {
       <JsonLdScript data={homepageJsonLd} />
       <Nav overlay />
 
-      <main>
-        <Hero hero={hero} image={siteSettings.heroImage} name={siteSettings.siteName} />
+      <PageTransition>
+        <main>
+          <Hero hero={hero} image={siteSettings.heroImage} name={siteSettings.siteName} />
 
-        <div id="main-content" className="scroll-mt-16" />
+          <div id="main-content" className="scroll-mt-16" />
 
-        <HomeSection
-          index={indexOf("work")}
-          eyebrow="Selected Work"
-          title="Systems built, shipped, and measured."
-          emptyBody="Work is being documented."
-          viewAllHref="/work"
-          viewAllLabel="All work"
-          hasItems={featuredWork.length > 0}
-        >
-          <div className="grid gap-x-6 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
-            {featuredWork.map(({ project, published, coverUrl }, i) => (
-              <WorkCard
-                key={project.id}
-                href={`/work/${project.slug}`}
-                title={published.title}
-                body={published.shortDescription}
-                coverUrl={coverUrl}
-                meta={[
-                  published.category,
-                  published.year ? String(published.year) : null,
-                ]}
-                number={i + 1}
-              />
-            ))}
-          </div>
-        </HomeSection>
-
-        <HomeSection
-          index={indexOf("research")}
-          eyebrow="Research"
-          title="Questions worth answering properly."
-          emptyBody="Research is being documented."
-          viewAllHref="/research"
-          viewAllLabel="All research"
-          hasItems={featuredResearch.length > 0}
-        >
-          <ul className="border-border border-t">
-            {featuredResearch.map(({ research, published }) => (
-              <IndexRow
-                key={research.id}
-                href={`/research/${research.slug}`}
-                title={published.title}
-                body={published.abstract}
-              />
-            ))}
-          </ul>
-        </HomeSection>
-
-        {home ? (
-          <section className="container-site py-20 md:py-28">
-            <div className="reveal rounded-panel border-border bg-surface relative overflow-hidden border p-8 md:p-14">
-              <div aria-hidden="true" className="hero-wash absolute inset-0 opacity-60" />
-              <div className="relative grid gap-8 md:grid-cols-12">
-                <p className="index-label md:col-span-3">
-                  <span>{indexOf("currently")}</span>
-                  <span>Currently</span>
-                </p>
-                <Paragraphs
-                  text={home.currentFocusSummary}
-                  className="text-text space-y-4 font-serif text-2xl leading-snug md:col-span-9 md:text-3xl"
+          <HomeSection
+            index={indexOf("work")}
+            eyebrow="Selected Work"
+            title="Systems built, shipped, and measured."
+            emptyBody="Work is being documented."
+            viewAllHref="/work"
+            viewAllLabel="All work"
+            hasItems={featuredWork.length > 0}
+          >
+            <div className="grid gap-x-6 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+              {featuredWork.map(({ project, published, coverUrl }, i) => (
+                <WorkCard
+                  key={project.id}
+                  href={`/work/${project.slug}`}
+                  transitionName={`cover-work-${project.slug}`}
+                  title={published.title}
+                  body={published.shortDescription}
+                  coverUrl={coverUrl}
+                  meta={[
+                    published.category,
+                    published.year ? String(published.year) : null,
+                  ]}
+                  number={i + 1}
                 />
-              </div>
+              ))}
             </div>
-          </section>
-        ) : null}
+          </HomeSection>
 
-        <HomeSection
-          index={indexOf("writing")}
-          eyebrow="Writing"
-          title="Notes from the work."
-          emptyBody="Writing is being documented."
-          viewAllHref="/writing"
-          viewAllLabel="All writing"
-          hasItems={latestWriting.length > 0}
-        >
-          <ul className="border-border border-t">
-            {latestWriting.map(({ article, published }) => (
-              <IndexRow
-                key={article.id}
-                href={`/writing/${article.slug}`}
-                title={published.title}
-                body={published.excerpt}
-                aside={
-                  published.publishedAt
-                    ? new Date(published.publishedAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : null
-                }
-              />
-            ))}
-          </ul>
-        </HomeSection>
-      </main>
+          <HomeSection
+            index={indexOf("research")}
+            eyebrow="Research"
+            title="Questions worth answering properly."
+            emptyBody="Research is being documented."
+            viewAllHref="/research"
+            viewAllLabel="All research"
+            hasItems={featuredResearch.length > 0}
+          >
+            <ul className="border-border border-t">
+              {featuredResearch.map(({ research, published }) => (
+                <IndexRow
+                  key={research.id}
+                  href={`/research/${research.slug}`}
+                  title={published.title}
+                  body={published.abstract}
+                />
+              ))}
+            </ul>
+          </HomeSection>
+
+          {home ? (
+            <section className="container-site py-20 md:py-28">
+              <div className="reveal rounded-panel border-border bg-surface relative overflow-hidden border p-8 md:p-14">
+                <div
+                  aria-hidden="true"
+                  className="hero-wash absolute inset-0 opacity-60"
+                />
+                <div className="relative grid gap-8 md:grid-cols-12">
+                  <p className="index-label md:col-span-3">
+                    <span>{indexOf("currently")}</span>
+                    <span>Currently</span>
+                  </p>
+                  <Paragraphs
+                    text={home.currentFocusSummary}
+                    className="text-text space-y-4 font-serif text-2xl leading-snug md:col-span-9 md:text-3xl"
+                  />
+                </div>
+              </div>
+            </section>
+          ) : null}
+
+          <HomeSection
+            index={indexOf("writing")}
+            eyebrow="Writing"
+            title="Notes from the work."
+            emptyBody="Writing is being documented."
+            viewAllHref="/writing"
+            viewAllLabel="All writing"
+            hasItems={latestWriting.length > 0}
+          >
+            <ul className="border-border border-t">
+              {latestWriting.map(({ article, published }) => (
+                <IndexRow
+                  key={article.id}
+                  href={`/writing/${article.slug}`}
+                  title={published.title}
+                  body={published.excerpt}
+                  aside={
+                    published.publishedAt
+                      ? new Date(published.publishedAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : null
+                  }
+                />
+              ))}
+            </ul>
+          </HomeSection>
+        </main>
+      </PageTransition>
 
       <Footer />
     </>
@@ -248,7 +256,7 @@ function HomeSection({
           <span>{index}</span>
           <span>{eyebrow}</span>
         </p>
-        <h2 className="text-text font-sans text-3xl leading-[1.05] font-semibold tracking-tight md:col-span-7 md:text-5xl">
+        <h2 className="text-h2 text-text font-sans font-semibold md:col-span-7">
           {title}
         </h2>
         {hasItems ? (
@@ -285,7 +293,9 @@ function WorkCard({
   coverUrl,
   meta,
   number,
+  transitionName,
 }: {
+  transitionName: string;
   href: string;
   title: string;
   body: string;
@@ -296,26 +306,31 @@ function WorkCard({
   const metaItems = meta.filter((m): m is string => Boolean(m));
   return (
     <Link href={href} className="group reveal block">
-      <div className="rounded-panel border-border bg-surface relative aspect-[4/3] overflow-hidden border">
-        {coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coverUrl}
-            alt=""
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
-          />
-        ) : (
-          <div aria-hidden="true" className="hero-wash flex h-full w-full items-end p-6">
-            <span className="text-text/15 font-sans text-8xl font-semibold tracking-tighter">
-              {String(number).padStart(2, "0")}
-            </span>
-          </div>
-        )}
-        <span className="bg-bg/70 text-text absolute top-4 right-4 flex h-9 w-9 translate-y-1 items-center justify-center rounded-full opacity-0 backdrop-blur transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-          ↗
-        </span>
-      </div>
+      <ViewTransition name={transitionName} share="morph" default="none">
+        <div className="rounded-panel border-border bg-surface relative aspect-[4/3] overflow-hidden border">
+          {coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={coverUrl}
+              alt=""
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="hero-wash flex h-full w-full items-end p-6"
+            >
+              <span className="text-text/15 font-sans text-8xl font-semibold tracking-tighter">
+                {String(number).padStart(2, "0")}
+              </span>
+            </div>
+          )}
+          <span className="bg-bg/70 text-text absolute top-4 right-4 flex h-9 w-9 translate-y-1 items-center justify-center rounded-full opacity-0 backdrop-blur transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+            ↗
+          </span>
+        </div>
+      </ViewTransition>
       {metaItems.length > 0 ? (
         <p className="text-text-muted mt-5 font-mono text-[11px] tracking-wider uppercase">
           {metaItems.join(" · ")}

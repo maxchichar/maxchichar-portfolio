@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Magnetic } from "@/components/motion/magnetic";
+import { SplitText } from "@/components/motion/split-text";
 import type { SiteImage } from "@/lib/validation/settings";
 
 interface HeroCopy {
@@ -15,16 +17,29 @@ interface HeroCopy {
 // appears — same look for the fallback and for CMS copy that keeps it.
 const HEADLINE_ACCENT = "intelligent";
 
+const HEADLINE_DELAY = 150;
+
+function countWords(text: string) {
+  return text.split(/\s+/).filter(Boolean).length;
+}
+
 function Headline({ text }: { text: string }) {
   const idx = text.indexOf(HEADLINE_ACCENT);
-  if (idx === -1) return <>{text}</>;
+  if (idx === -1) return <SplitText text={text} baseDelay={HEADLINE_DELAY} />;
+  const before = text.slice(0, idx);
+  const after = text.slice(idx + HEADLINE_ACCENT.length);
+  const beforeCount = countWords(before);
   return (
     <>
-      {text.slice(0, idx)}
+      <SplitText text={before} baseDelay={HEADLINE_DELAY} />
       <span className="text-accent-purple font-serif font-normal tracking-tight italic">
-        {HEADLINE_ACCENT}
+        <SplitText
+          text={HEADLINE_ACCENT}
+          baseDelay={HEADLINE_DELAY}
+          startIndex={beforeCount}
+        />
       </span>
-      {text.slice(idx + HEADLINE_ACCENT.length)}
+      <SplitText text={after} baseDelay={HEADLINE_DELAY} startIndex={beforeCount + 1} />
     </>
   );
 }
@@ -42,20 +57,22 @@ export function Hero({
     <section className="relative isolate flex min-h-[100svh] flex-col overflow-hidden">
       {/* Backdrop: the landscape photo, or an atmospheric wash until one is set. */}
       <div className="grain absolute inset-0 -z-10">
-        {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={image.url}
-            alt={image.alt ?? ""}
-            width={image.width ?? undefined}
-            height={image.height ?? undefined}
-            fetchPriority="high"
-            decoding="async"
-            className="animate-slow-zoom h-full w-full object-cover"
-          />
-        ) : (
-          <div aria-hidden="true" className="hero-wash h-full w-full" />
-        )}
+        <div className="parallax absolute inset-0">
+          {image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={image.url}
+              alt={image.alt ?? ""}
+              width={image.width ?? undefined}
+              height={image.height ?? undefined}
+              fetchPriority="high"
+              decoding="async"
+              className="animate-slow-zoom h-full w-full object-cover"
+            />
+          ) : (
+            <div aria-hidden="true" className="hero-wash h-full w-full" />
+          )}
+        </div>
         {/* Legibility scrims: bottom fade into the page, and a left fade
             under the copy. */}
         <div
@@ -81,46 +98,47 @@ export function Hero({
           {hero.eyebrow}
         </p>
 
-        <h1
-          className="animate-rise text-text mt-6 max-w-5xl font-sans text-[clamp(2.75rem,7.5vw,7.5rem)] leading-[0.95] font-semibold tracking-[-0.035em] text-balance"
-          style={{ animationDelay: "200ms" }}
-        >
+        <h1 className="text-display text-text mt-6 max-w-6xl font-sans font-semibold text-balance">
           <Headline text={hero.headline} />
         </h1>
 
         <div
           className="animate-rise mt-10 grid gap-8 md:grid-cols-12 md:items-end"
-          style={{ animationDelay: "350ms" }}
+          style={{ animationDelay: "650ms" }}
         >
-          <p className="text-text/80 max-w-xl font-serif text-lg leading-relaxed md:col-span-6 md:text-xl">
+          <p className="text-lede text-text/80 max-w-xl font-serif md:col-span-6">
             {hero.body}
           </p>
 
           <div className="flex flex-wrap gap-3 md:col-span-6 md:justify-end">
-            <Link
-              href={hero.primaryCta.href}
-              className="group bg-text text-bg hover:bg-accent inline-flex items-center gap-2 rounded-full px-6 py-3.5 font-sans text-sm font-medium transition-colors"
-            >
-              {hero.primaryCta.label}
-              <span
-                aria-hidden="true"
-                className="transition-transform group-hover:translate-x-0.5"
+            <Magnetic>
+              <Link
+                href={hero.primaryCta.href}
+                className="group bg-text text-bg hover:bg-accent inline-flex items-center gap-2 rounded-full px-6 py-3.5 font-sans text-sm font-medium transition-colors"
               >
-                →
-              </span>
-            </Link>
-            <Link
-              href={hero.secondaryCta.href}
-              className="border-text/25 text-text hover:border-accent hover:text-accent bg-bg/20 inline-flex items-center rounded-full border px-6 py-3.5 font-sans text-sm font-medium backdrop-blur-md transition-colors"
-            >
-              {hero.secondaryCta.label}
-            </Link>
+                {hero.primaryCta.label}
+                <span
+                  aria-hidden="true"
+                  className="transition-transform group-hover:translate-x-0.5"
+                >
+                  →
+                </span>
+              </Link>
+            </Magnetic>
+            <Magnetic>
+              <Link
+                href={hero.secondaryCta.href}
+                className="border-text/25 text-text hover:border-accent hover:text-accent bg-bg/20 inline-flex items-center rounded-full border px-6 py-3.5 font-sans text-sm font-medium backdrop-blur-md transition-colors"
+              >
+                {hero.secondaryCta.label}
+              </Link>
+            </Magnetic>
           </div>
         </div>
 
         <div
           className="animate-rise border-text/15 text-text-muted mt-14 flex items-center justify-between border-t pt-5 font-mono text-[11px] tracking-[0.18em] uppercase"
-          style={{ animationDelay: "500ms" }}
+          style={{ animationDelay: "800ms" }}
         >
           <span>{name}</span>
           <a

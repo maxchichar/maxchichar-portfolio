@@ -1,105 +1,160 @@
 import type { schema } from "@/lib/db";
 
-type EvidenceRow = typeof schema.evidence.$inferSelect;
+type EvidenceRow = typeof schema.evidence.$inferSelect & { mediaUrl?: string | null };
 
+const TYPE_LABELS: Record<string, string> = {
+  repository: "Repository",
+  benchmark: "Benchmark",
+  dataset: "Dataset",
+  screenshot: "Screenshot",
+  paper: "Paper",
+  demo: "Demo",
+  deployment: "Deployment",
+  measurement: "Measurement",
+  before_after: "Before / After",
+};
+
+function hostOf(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+function readData(data: unknown) {
+  if (!data || typeof data !== "object") return null;
+  const d = data as Record<string, unknown>;
+  if (!("after" in d)) return null;
+  return {
+    metric: d.metric ? String(d.metric) : null,
+    before: "before" in d ? String(d.before) : null,
+    after: String(d.after),
+    unit: d.unit ? String(d.unit) : "",
+  };
+}
+
+/**
+ * Evidence Wall (called "Exhibits" on research). Values are rendered exactly
+ * as stored — no derived percentages or computed claims (validation/evidence).
+ */
 export function EvidenceWall({
   items,
+  id = "evidence",
+  number,
   title = "Evidence Wall",
   description = "Verifiable benchmarks, code repositories, datasets, and empirical artifacts.",
 }: {
   items: EvidenceRow[];
+  id?: string;
+  number?: string;
   title?: string;
   description?: string;
 }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="mt-16">
-      <h2 className="text-accent-purple font-sans text-xs font-semibold tracking-wider uppercase">
+    <section
+      id={id}
+      className="border-border reveal scroll-mt-28 border-t py-12 first:border-t-0 first:pt-0 md:py-16"
+    >
+      <h2 className="text-h3 text-text flex items-baseline gap-4 font-sans font-semibold">
+        {number ? (
+          <span className="text-accent-purple font-mono text-xs font-normal tabular-nums">
+            {number}
+          </span>
+        ) : null}
         {title}
       </h2>
-      <p className="text-text-muted mt-1 font-serif text-sm">{description}</p>
+      <p className="text-text-muted mt-3 max-w-xl font-serif text-base">{description}</p>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="rounded-panel border-border bg-surface flex flex-col justify-between border p-5"
-          >
-            <div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="rounded-badge border-border text-text-muted bg-bg/50 border px-2 py-0.5 font-mono text-xs tracking-wider uppercase">
-                  {item.type.replace("_", " ")}
+      <ul className="mt-10 grid gap-4 md:grid-cols-2">
+        {items.map((item) => {
+          const data = readData(item.data);
+          const isWide = item.type === "screenshot" && item.mediaUrl;
+          const body = (
+            <>
+              {item.mediaUrl ? (
+                <div className="border-border bg-bg -mx-6 -mt-6 mb-6 overflow-hidden border-b">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.mediaUrl}
+                    alt={item.label}
+                    loading="lazy"
+                    className="aspect-video w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                  />
+                </div>
+              ) : null}
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-eyebrow text-text-muted font-mono uppercase">
+                  {TYPE_LABELS[item.type] ?? item.type}
                 </span>
-
                 {item.url ? (
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-accent font-sans text-xs font-medium hover:underline"
-                  >
-                    View Source &rarr;
-                  </a>
+                  <span className="text-text-muted group-hover:text-accent font-mono text-xs transition-colors">
+                    {hostOf(item.url)} ↗
+                  </span>
                 ) : null}
               </div>
 
-              <h3 className="text-text mt-3 font-sans text-base font-semibold">
-                {item.label}
-              </h3>
-
-              {item.description ? (
-                <p className="text-text-muted mt-2 font-serif text-sm">
-                  {item.description}
-                </p>
-              ) : null}
-
-              {/* Render structured measurement / before_after data */}
-              {item.data && typeof item.data === "object" ? (
-                <div className="rounded-card border-border bg-bg/40 mt-4 border p-3 font-mono text-xs">
-                  {"metric" in item.data ? (
-                    <div className="text-text-muted mb-1 font-sans text-xs font-medium">
-                      Metric:{" "}
-                      <span className="text-text">{String(item.data.metric)}</span>
-                    </div>
+              {data ? (
+                <div className="mt-6">
+                  {data.metric ? (
+                    <p className="text-text-muted font-sans text-sm">{data.metric}</p>
                   ) : null}
-                  <div className="flex items-center gap-4">
-                    {"before" in item.data ? (
-                      <div>
-                        <span className="text-text-muted block text-[10px] uppercase">
-                          Before
+                  <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                    {data.before ? (
+                      <>
+                        <span className="text-text-muted font-sans text-2xl font-medium tabular-nums">
+                          {data.before}
+                          <span className="ml-1 text-base">{data.unit}</span>
                         </span>
-                        <span className="text-text text-sm font-semibold">
-                          {String(item.data.before)}{" "}
-                          {"unit" in item.data && item.data.unit
-                            ? String(item.data.unit)
-                            : ""}
+                        <span aria-label="to" className="text-text-muted">
+                          →
                         </span>
-                      </div>
+                      </>
                     ) : null}
-                    {"before" in item.data && "after" in item.data ? (
-                      <span className="text-accent-purple font-sans text-sm">&rarr;</span>
-                    ) : null}
-                    {"after" in item.data ? (
-                      <div>
-                        <span className="text-text-muted block text-[10px] uppercase">
-                          After
-                        </span>
-                        <span className="text-accent text-sm font-semibold">
-                          {String(item.data.after)}{" "}
-                          {"unit" in item.data && item.data.unit
-                            ? String(item.data.unit)
-                            : ""}
-                        </span>
-                      </div>
-                    ) : null}
+                    <span className="text-text font-sans text-5xl font-semibold tracking-tight tabular-nums">
+                      {data.after}
+                      <span className="text-text-muted ml-1.5 text-xl font-medium">
+                        {data.unit}
+                      </span>
+                    </span>
                   </div>
                 </div>
               ) : null}
-            </div>
-          </div>
-        ))}
-      </div>
+
+              <h3 className="text-text group-hover:text-accent mt-6 font-sans text-lg font-semibold tracking-tight transition-colors">
+                {item.label}
+              </h3>
+              {item.description ? (
+                <p className="text-text-muted mt-2 font-serif text-base leading-relaxed">
+                  {item.description}
+                </p>
+              ) : null}
+            </>
+          );
+
+          const cardClass =
+            "group rounded-panel border-border bg-surface hover:border-text/20 block h-full overflow-hidden border p-6 transition-colors";
+
+          return (
+            <li key={item.id} className={isWide ? "md:col-span-2" : undefined}>
+              {item.url ? (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cardClass}
+                >
+                  {body}
+                </a>
+              ) : (
+                <div className={cardClass}>{body}</div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }

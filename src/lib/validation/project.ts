@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { richDocToPlainText } from "@/lib/rich-text";
+
 // Section keys from the project case-study proof architecture — docs/SPECIFICATION.md.
 export const PROJECT_SECTION_KEYS = [
   "problem",
@@ -44,18 +46,37 @@ export function plainTextToTiptapDoc(text: string): TiptapDoc {
   };
 }
 
+const MAX_RICH_FIELD_BYTES = 500_000;
+
+/**
+ * Reads an editor field from a form submission. The admin rich-text editor
+ * posts Tiptap JSON; anything that isn't a valid doc (or legacy plain text
+ * from a non-JS submit) falls back to paragraphs, so input is never lost.
+ * Rendering is allow-listed separately (components/rich-text), so stored
+ * JSON is never trusted as markup.
+ */
+export function parseRichTextField(raw: FormDataEntryValue | null): TiptapDoc {
+  const value = typeof raw === "string" ? raw.trim() : "";
+  if (value.startsWith("{") && value.length <= MAX_RICH_FIELD_BYTES) {
+    try {
+      const parsed = tiptapDocSchema.safeParse(JSON.parse(value));
+      if (parsed.success) return parsed.data;
+    } catch {
+      // fall through to plain text
+    }
+  }
+  return plainTextToTiptapDoc(value);
+}
+
+/**
+ * Plain text of a stored document, blocks separated by blank lines. Walks
+ * nested blocks (lists, quotes) so rich content written in the editor still
+ * yields full text for reading time and descriptions.
+ */
 export function tiptapDocToPlainText(doc: unknown): string {
   const parsed = tiptapDocSchema.safeParse(doc);
   if (!parsed.success) return "";
-  return parsed.data.content
-    .map((node) => {
-      const content = node["content"];
-      if (!Array.isArray(content)) return "";
-      return content
-        .map((n) => (typeof n === "object" && n && "text" in n ? String(n.text) : ""))
-        .join("");
-    })
-    .join("\n\n");
+  return richDocToPlainText(parsed.data);
 }
 
 export const projectSectionSchema = z.object({

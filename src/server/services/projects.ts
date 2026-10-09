@@ -9,6 +9,7 @@ import type {
 } from "@/lib/validation/project";
 
 import { publicUrlFor } from "@/lib/storage/r2";
+import { withEvidenceMedia } from "./public-media";
 import * as evidenceRepo from "../repositories/evidence";
 import * as mediaRepo from "../repositories/media";
 import * as projectsRepo from "../repositories/projects";
@@ -364,7 +365,7 @@ export async function getPublicWorkCaseStudy(slug: string) {
   const { project, published } = row;
 
   const [evidence, tags, coverMedia] = await Promise.all([
-    evidenceRepo.listEvidenceForProject(db, project.id),
+    evidenceRepo.listEvidenceForProject(db, project.id).then(withEvidenceMedia),
     tagsRepo.getProjectTags(db, project.id),
     published.coverMediaId ? mediaRepo.findById(db, published.coverMediaId) : null,
   ]);

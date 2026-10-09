@@ -11,8 +11,12 @@ import {
   buildJsonLdGraph,
   JsonLdScript,
 } from "@/lib/structured-data";
-import { getPublicArticleDetail } from "@/server/services/articles";
+import {
+  getPublicArticleDetail,
+  listPublicArticlesOverview,
+} from "@/server/services/articles";
 import { getPublicSiteSettings } from "@/server/services/settings";
+import { PageTransition } from "@/components/motion/page-transition";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -47,7 +51,23 @@ export default async function ArticleDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const settings = await getPublicSiteSettings();
+  const [settings, allArticles] = await Promise.all([
+    getPublicSiteSettings(),
+    listPublicArticlesOverview(),
+  ]);
+  // "Keep reading": the next article in the listing (newest first), wrapping.
+  const idx = allArticles.findIndex((a) => a.article.slug === slug);
+  const nextItem =
+    allArticles.length > 1 ? allArticles[(idx + 1) % allArticles.length] : undefined;
+  const next = nextItem
+    ? {
+        slug: nextItem.article.slug,
+        title: nextItem.published.title,
+        body: nextItem.published.excerpt,
+        coverUrl: nextItem.coverUrl,
+      }
+    : null;
+
   const articleJsonLd = buildArticleJsonLd({
     title: item.published.title,
     excerpt: item.published.excerpt,
@@ -70,14 +90,18 @@ export default async function ArticleDetailPage({ params }: PageProps) {
     <>
       <JsonLdScript data={pageJsonLd} />
       <Nav />
-      <main>
-        <ArticleDetailView
-          article={item.article}
-          published={item.published}
-          tags={item.tags}
-          coverUrl={item.coverUrl}
-        />
-      </main>
+      <PageTransition>
+        <main>
+          <ArticleDetailView
+            article={item.article}
+            published={item.published}
+            tags={item.tags}
+            coverUrl={item.coverUrl}
+            next={next}
+            author={{ name: settings.siteName, description: settings.siteDescription }}
+          />
+        </main>
+      </PageTransition>
       <Footer />
     </>
   );

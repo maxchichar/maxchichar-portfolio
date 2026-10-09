@@ -9,6 +9,9 @@
   --bg: #0a0a0b;
   --surface: #131316;
   --border: #232328;
+  /* One step lighter than --surface: on dark UI, elevation is expressed by
+     lighter surfaces, not shadows. Used for raised panels/popovers. */
+  --surface-2: #1a1a1f;
   --text: #f2f1ed;
   --text-muted: #8c8b92;
 
@@ -29,6 +32,7 @@
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-border: var(--border);
   --color-text: var(--text);
   --color-text-muted: var(--text-muted);
@@ -44,6 +48,29 @@
   --radius-badge: 2px;
   --radius-card: 6px;
   --radius-panel: 12px;
+
+  /* Fluid type scale (~1.33 ratio). Display sizes tighten leading and
+     tracking; reading sizes open them up. One scale, used everywhere. */
+  --text-display: clamp(3rem, 1.4rem + 7vw, 8rem);
+  --text-display--line-height: 0.92;
+  --text-display--letter-spacing: -0.04em;
+  --text-h1: clamp(2.5rem, 1.6rem + 4vw, 4.75rem);
+  --text-h1--line-height: 0.98;
+  --text-h1--letter-spacing: -0.032em;
+  --text-h2: clamp(2rem, 1.4rem + 2.6vw, 3.25rem);
+  --text-h2--line-height: 1.04;
+  --text-h2--letter-spacing: -0.026em;
+  --text-h3: clamp(1.375rem, 1.15rem + 0.9vw, 1.75rem);
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: -0.016em;
+  --text-lede: clamp(1.125rem, 1rem + 0.55vw, 1.375rem);
+  --text-lede--line-height: 1.55;
+  --text-eyebrow: 0.6875rem;
+  --text-eyebrow--line-height: 1.4;
+  --text-eyebrow--letter-spacing: 0.18em;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 
   --animate-rise: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-slow-zoom: slow-zoom 18s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -69,10 +96,53 @@
   }
 }
 
+@keyframes word-up {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes parallax-down {
+  to {
+    transform: translateY(18%) scale(1.06);
+  }
+}
+
+@keyframes fade-out-up {
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
 @layer base {
   html {
     color-scheme: dark;
-    scroll-behavior: smooth;
   }
 
   body {
@@ -166,4 +236,242 @@
       }
     }
   }
+}
+
+/* ------------------------------------------------------------------------
+ * Motion system (expressive, but always opt-out for reduced motion).
+ * --------------------------------------------------------------------- */
+
+/* Lenis smooth scrolling — recommended base styles. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Page transitions (React <ViewTransition>, class "page"): old page lifts
+   away, new page rises in. Browsers without support just navigate. */
+::view-transition-old(.page) {
+  animation: 200ms var(--ease-out-quint) both fade-out-up;
+}
+::view-transition-new(.page) {
+  animation: 520ms var(--ease-out-expo) 120ms both fade-in-up;
+}
+/* Shared-element morph (work cover -> case study hero). */
+::view-transition-group(.morph) {
+  animation-duration: 560ms;
+  animation-timing-function: var(--ease-out-expo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+@layer components {
+  /* Masked word-by-word headline reveal (see <SplitText>). */
+  .split-word {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    padding-bottom: 0.08em;
+    margin-bottom: -0.08em;
+  }
+  .split-word > span {
+    display: inline-block;
+    animation: word-up 1s var(--ease-out-expo) both;
+    animation-delay: calc(var(--i, 0) * 60ms + var(--base-delay, 0ms));
+  }
+
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      /* Hero photo drifts slower than the page while scrolling past it. */
+      .parallax {
+        animation: parallax-down linear both;
+        animation-timeline: scroll(root);
+        animation-range: 0 100vh;
+      }
+      /* Reading progress bar for long-form pages. */
+      .scroll-progress {
+        animation: grow-x linear both;
+        animation-timeline: scroll(root);
+      }
+    }
+  }
+  .scroll-progress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 60;
+    height: 2px;
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    background: var(--accent-purple);
+  }
+
+  .skeleton {
+    border-radius: var(--radius-card);
+    background: linear-gradient(
+        90deg,
+        var(--surface) 25%,
+        var(--surface-2) 37%,
+        var(--surface) 63%
+      )
+      0 0 / 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+
+  /* ----------------------------------------------------------------------
+   * Long-form reading styles for rendered rich text (<RichText>).
+   * Measure held near 68ch; rhythm on a 1.7 body line-height.
+   * ------------------------------------------------------------------- */
+  .rich-text {
+    max-width: 68ch;
+    font-family: var(--font-body-family);
+    font-size: 1.1875rem;
+    line-height: 1.7;
+    color: color-mix(in oklab, var(--text) 90%, transparent);
+  }
+  /* Lead variant: a single statement set large (e.g. the research question). */
+  .rich-text-lead {
+    font-size: clamp(1.375rem, 1.1rem + 1vw, 1.875rem);
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .rich-text > :first-child {
+    margin-top: 0;
+  }
+  .rich-text > * + * {
+    margin-top: 1.25em;
+  }
+  .rich-text h2,
+  .rich-text h3,
+  .rich-text h4 {
+    font-family: var(--font-heading-family);
+    font-weight: 600;
+    color: var(--text);
+    scroll-margin-top: 6rem;
+  }
+  .rich-text h2 {
+    margin-top: 2.4em;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  .rich-text h3 {
+    margin-top: 2em;
+    font-size: 1.375rem;
+    line-height: 1.3;
+    letter-spacing: -0.012em;
+  }
+  .rich-text h4 {
+    margin-top: 1.8em;
+    font-size: 1.125rem;
+  }
+  .rich-text h2 + *,
+  .rich-text h3 + *,
+  .rich-text h4 + * {
+    margin-top: 0.6em;
+  }
+  .rich-text strong {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .rich-text a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .rich-text a:hover {
+    text-decoration-thickness: 2px;
+  }
+  .rich-text ul,
+  .rich-text ol {
+    padding-left: 1.4em;
+  }
+  .rich-text ul {
+    list-style: disc;
+  }
+  .rich-text ol {
+    list-style: decimal;
+  }
+  .rich-text li + li {
+    margin-top: 0.4em;
+  }
+  .rich-text li::marker {
+    color: var(--text-muted);
+  }
+  .rich-text blockquote {
+    border-left: 2px solid var(--accent-purple);
+    padding-left: 1.25em;
+    font-style: italic;
+    color: var(--text);
+    font-size: 1.25em;
+    line-height: 1.5;
+  }
+  .rich-text code {
+    font-family: var(--font-mono-family);
+    font-size: 0.82em;
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-badge);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+  }
+  .rich-text pre {
+    overflow-x: auto;
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-panel);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 0.875rem;
+    line-height: 1.65;
+  }
+  .rich-text pre code {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: inherit;
+  }
+  .rich-text hr {
+    border: 0;
+    height: 1px;
+    background: var(--border);
+    margin-block: 3em;
+  }
+  .rich-text figure img,
+  .rich-text > img {
+    width: 100%;
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--border);
+  }
+  .rich-text figcaption {
+    margin-top: 0.75em;
+    font-family: var(--font-mono-family);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+}
+
+/* Admin rich-text editor (Tiptap / ProseMirror). */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: color-mix(in oklab, var(--text-muted) 70%, transparent);
+}
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid var(--accent);
+}
+.ProseMirror.rich-text {
+  font-size: 1.0625rem;
 }

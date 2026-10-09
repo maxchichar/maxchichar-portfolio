@@ -9,6 +9,8 @@ import "@fontsource-variable/newsreader/wght-italic.css";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 
+import { AnalyticsBeacon } from "@/components/analytics-beacon";
+import { SmoothScroll } from "@/components/motion/smooth-scroll";
 import { constructBaseMetadata } from "@/lib/metadata";
 import { getPublicSiteSettings } from "@/server/services/settings";
 
@@ -24,6 +26,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
       <body className="bg-bg text-text min-h-screen font-sans antialiased">
+        <SmoothScroll />
+        <AnalyticsBeacon />
         {children}
       </body>
     </html>

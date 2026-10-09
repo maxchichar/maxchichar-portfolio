@@ -1,5 +1,15 @@
 import { notFound } from "next/navigation";
 
+import { EditorLayout } from "@/components/admin/editor/editor-layout";
+import { EditorSection } from "@/components/admin/editor/editor-section";
+import { PublishPanel } from "@/components/admin/editor/publish-panel";
+import {
+  hintClass,
+  inputClass,
+  labelClass,
+  textareaClass,
+} from "@/components/admin/editor/styles";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import * as articlesService from "@/server/services/articles";
 import * as mediaService from "@/server/services/media";
 
@@ -10,9 +20,10 @@ import {
   rollbackArticleForm,
   saveDraftForm,
   unarchiveArticleForm,
-  tiptapDocToPlainText,
 } from "../actions";
 import { CoverImageUploader } from "./cover-image-uploader";
+
+const FORM_ID = "article-draft-form";
 
 export default async function ArticleEditPage({
   params,
@@ -27,206 +38,135 @@ export default async function ArticleEditPage({
   const current = draft ?? published;
   if (!current) notFound();
 
-  const contentText = draft ? tiptapDocToPlainText(draft.content) : "";
-
   const currentCoverMedia = draft?.coverMediaId
     ? await articlesService.getMediaById(draft.coverMediaId)
     : null;
 
   // Same existing service /admin/media itself uses — no new query.
-  const libraryMedia = draft
-    ? await mediaService.listMediaLibrary({ status: "READY" })
-    : [];
+  const libraryMedia = (
+    draft ? await mediaService.listMediaLibrary({ status: "READY" }) : []
+  ).map((m) => ({
+    id: m.id,
+    filename: m.filename,
+    storageUrl: m.storageUrl,
+    width: m.width,
+    height: m.height,
+  }));
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-6 py-10 md:px-10 md:py-12">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-text font-sans text-3xl font-semibold tracking-tight">
-            {current.title}
-          </h1>
-          <p className="text-text-muted mt-1 font-mono text-xs">
-            /{article.slug} · item status: {article.status}
+    <EditorLayout
+      backHref="/admin/articles"
+      backLabel="Writing"
+      title={current.title}
+      subtitle={`/writing/${article.slug}${
+        current.readingTime ? ` · ${current.readingTime} min read` : ""
+      }`}
+      aside={
+        <PublishPanel
+          idName="articleId"
+          id={article.id}
+          formId={FORM_ID}
+          itemStatus={article.status}
+          draft={draft}
+          published={published}
+          versions={versions}
+          liveHref={`/writing/${article.slug}`}
+          ensureDraftAction={ensureDraftForm}
+          publishAction={publishArticleForm}
+          rollbackAction={rollbackArticleForm}
+          archiveAction={archiveArticleForm}
+          unarchiveAction={unarchiveArticleForm}
+          noun="article"
+        />
+      }
+    >
+      {draft ? (
+        <form id={FORM_ID} action={saveDraftForm} className="space-y-6">
+          <input type="hidden" name="articleId" value={article.id} />
+
+          <EditorSection title="Article">
+            <div>
+              <label htmlFor="title" className={labelClass}>
+                Title
+              </label>
+              <input
+                id="title"
+                name="title"
+                defaultValue={draft.title}
+                required
+                className={`${inputClass} text-lg font-semibold`}
+              />
+            </div>
+            <div>
+              <label htmlFor="excerpt" className={labelClass}>
+                Excerpt
+              </label>
+              <textarea
+                id="excerpt"
+                name="excerpt"
+                defaultValue={draft.excerpt}
+                required
+                rows={2}
+                className={textareaClass}
+              />
+              <p className={hintClass}>Shown in listings and as the article lede.</p>
+            </div>
+            <div>
+              <p className={`${labelClass} mb-1.5`}>Body</p>
+              <RichTextEditor
+                name="content"
+                initialContent={draft.content}
+                label="Article body"
+                placeholder="Start writing…"
+                libraryMedia={libraryMedia}
+                minHeight="min-h-[28rem]"
+              />
+            </div>
+          </EditorSection>
+
+          <EditorSection title="Details">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="category" className={labelClass}>
+                  Category
+                </label>
+                <input
+                  id="category"
+                  name="category"
+                  defaultValue={draft.category ?? ""}
+                  placeholder="Essay, Note…"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="tags" className={labelClass}>
+                  Tags
+                </label>
+                <input
+                  id="tags"
+                  name="tags"
+                  defaultValue={tags.map((t) => t.name).join(", ")}
+                  className={inputClass}
+                />
+                <p className={hintClass}>Comma-separated.</p>
+              </div>
+            </div>
+            <CoverImageUploader
+              initialMediaId={draft.coverMediaId}
+              initialUrl={currentCoverMedia?.storageUrl ?? null}
+              libraryMedia={libraryMedia}
+            />
+          </EditorSection>
+        </form>
+      ) : (
+        <div className="rounded-panel border-border bg-surface border border-dashed p-8 text-center">
+          <p className="text-text font-sans text-sm font-medium">This article is live.</p>
+          <p className="text-text-muted mt-1 font-serif text-sm">
+            Choose “Edit article” to start a new draft. The live page won&apos;t change
+            until you publish.
           </p>
         </div>
-        <div className="flex gap-2">
-          {published && (
-            <span className="rounded-badge border-accent/40 text-accent border px-2 py-0.5 font-mono text-xs">
-              PUBLISHED v{published.versionNumber}
-            </span>
-          )}
-          {draft && (
-            <span className="rounded-badge border-border text-text-muted border px-2 py-0.5 font-mono text-xs">
-              DRAFT v{draft.versionNumber}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {!draft && published && (
-        <form action={ensureDraftForm} className="mt-6">
-          <input type="hidden" name="articleId" value={article.id} />
-          <button
-            type="submit"
-            className="rounded-card border-accent text-accent hover:bg-accent hover:text-bg border px-4 py-2 font-sans text-sm transition-colors"
-          >
-            Start editing (forks a new draft from the published version)
-          </button>
-        </form>
       )}
-
-      {draft && (
-        <form action={saveDraftForm} className="mt-8 space-y-5">
-          <input type="hidden" name="articleId" value={article.id} />
-          <div>
-            <label className="text-text-muted block font-sans text-sm">Title</label>
-            <input
-              name="title"
-              defaultValue={draft.title}
-              required
-              className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-text-muted block font-sans text-sm">Category</label>
-            <input
-              name="category"
-              defaultValue={draft.category ?? ""}
-              className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-text-muted block font-sans text-sm">Excerpt</label>
-            <textarea
-              name="excerpt"
-              defaultValue={draft.excerpt}
-              required
-              rows={3}
-              className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm outline-none"
-            />
-          </div>
-
-          <CoverImageUploader
-            initialMediaId={draft.coverMediaId}
-            initialUrl={currentCoverMedia?.storageUrl ?? null}
-            libraryMedia={libraryMedia.map((m) => ({
-              id: m.id,
-              filename: m.filename,
-              storageUrl: m.storageUrl,
-              width: m.width,
-              height: m.height,
-            }))}
-          />
-
-          <div>
-            <label className="text-text-muted block font-sans text-sm">
-              Tags (comma-separated)
-            </label>
-            <input
-              name="tags"
-              defaultValue={tags.map((t) => t.name).join(", ")}
-              className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <label className="text-text-muted block font-sans text-sm">Content</label>
-              <span className="text-text-muted font-mono text-xs">
-                {draft.readingTime ?? 1} min read (computed on save)
-              </span>
-            </div>
-            <textarea
-              name="content"
-              defaultValue={contentText}
-              required
-              rows={16}
-              className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm leading-relaxed outline-none"
-            />
-            <p className="text-text-muted mt-1 font-mono text-xs">
-              Paragraphs separated by a blank line become separate Tiptap paragraph nodes.
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              className="rounded-card border-border text-text hover:border-accent border px-4 py-2.5 font-sans text-sm transition-colors"
-            >
-              Save draft
-            </button>
-          </div>
-        </form>
-      )}
-
-      {draft && (
-        <form action={publishArticleForm} className="mt-4">
-          <input type="hidden" name="articleId" value={article.id} />
-          <button
-            type="submit"
-            className="rounded-card bg-accent text-bg px-4 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90"
-          >
-            Publish this draft
-          </button>
-        </form>
-      )}
-
-      <section className="border-border mt-10 border-t pt-6">
-        <h2 className="text-text font-sans text-sm font-medium">Version history</h2>
-        <div className="mt-3 space-y-2">
-          {versions.map((v) => (
-            <div
-              key={v.id}
-              className="rounded-card border-border bg-surface flex items-center justify-between border px-4 py-2.5"
-            >
-              <div>
-                <span className="text-text-muted font-mono text-xs">
-                  v{v.versionNumber} · {v.status}
-                </span>
-                <span className="text-text ml-2 font-sans text-sm">{v.title}</span>
-              </div>
-              {v.status === "SUPERSEDED" && !draft && (
-                <form action={rollbackArticleForm}>
-                  <input type="hidden" name="articleId" value={article.id} />
-                  <input type="hidden" name="targetVersionId" value={v.id} />
-                  <button
-                    type="submit"
-                    className="text-accent font-sans text-xs hover:underline"
-                  >
-                    Restore this version
-                  </button>
-                </form>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="border-border mt-8 border-t pt-6">
-        {article.status === "ACTIVE" ? (
-          <form action={archiveArticleForm}>
-            <input type="hidden" name="articleId" value={article.id} />
-            <button
-              type="submit"
-              className="text-text-muted hover:text-text font-sans text-xs"
-            >
-              Archive article
-            </button>
-          </form>
-        ) : (
-          <form action={unarchiveArticleForm}>
-            <input type="hidden" name="articleId" value={article.id} />
-            <button
-              type="submit"
-              className="text-text-muted hover:text-text font-sans text-xs"
-            >
-              Unarchive article
-            </button>
-          </form>
-        )}
-      </section>
-    </main>
+    </EditorLayout>
   );
 }

@@ -9,6 +9,7 @@ import type {
 } from "@/lib/validation/research";
 
 import { publicUrlFor } from "@/lib/storage/r2";
+import { withEvidenceMedia } from "./public-media";
 import * as evidenceRepo from "../repositories/evidence";
 import * as mediaRepo from "../repositories/media";
 import * as researchRepo from "../repositories/research";
@@ -352,7 +353,7 @@ export async function getPublicResearchDetail(slug: string) {
   const { research, published } = row;
 
   const [evidence, tags, coverMedia] = await Promise.all([
-    evidenceRepo.listEvidenceForResearch(db, research.id),
+    evidenceRepo.listEvidenceForResearch(db, research.id).then(withEvidenceMedia),
     tagsRepo.getResearchTags(db, research.id),
     published.coverMediaId ? mediaRepo.findById(db, published.coverMediaId) : null,
   ]);

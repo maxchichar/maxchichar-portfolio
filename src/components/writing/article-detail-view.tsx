@@ -1,104 +1,146 @@
 import Link from "next/link";
+
+import { DetailHero } from "@/components/detail/detail-hero";
+import { NextUp } from "@/components/detail/next-up";
+import { Toc } from "@/components/detail/toc";
+import { RichText } from "@/components/rich-text";
 import type { schema } from "@/lib/db";
-import { tiptapDocToPlainText } from "@/lib/validation/project";
+import { collectHeadings } from "@/lib/rich-text";
 
 type ArticleRow = typeof schema.articles.$inferSelect;
 type ArticleVersionRow = typeof schema.articleVersions.$inferSelect;
 type TagRow = typeof schema.tags.$inferSelect;
 
-interface ArticleDetailViewProps {
+interface NextArticle {
+  slug: string;
+  title: string;
+  body: string;
+  coverUrl: string | null;
+}
+
+export function ArticleDetailView({
+  article,
+  published,
+  tags,
+  coverUrl,
+  next,
+  author,
+}: {
   article: ArticleRow;
   published: ArticleVersionRow;
   tags: TagRow[];
   coverUrl: string | null;
-}
-
-export function ArticleDetailView({ published, tags, coverUrl }: ArticleDetailViewProps) {
-  const paragraphs = tiptapDocToPlainText(published.content)
-    .trim()
-    .split("\n\n")
-    .filter((p) => p.length > 0);
+  next: NextArticle | null;
+  author: { name: string; description: string | null };
+}) {
+  // Only top-level sections (h2) go in the contents list; it's shown once an
+  // article is long enough to need one.
+  const headings = collectHeadings(published.content).filter((h) => h.level === 2);
+  const showToc = headings.length >= 3;
 
   return (
-    <article className="mx-auto max-w-3xl px-6 py-16 md:py-24">
-      {/* Eyebrow & Navigation */}
-      <div className="mb-8">
-        <Link
-          href="/writing"
-          className="text-text-muted hover:text-accent font-sans text-sm font-medium transition-colors"
-        >
-          &larr; Back to Writing
-        </Link>
-      </div>
+    <article>
+      {/* Reading progress (scroll-driven CSS; hidden where unsupported). */}
+      <div aria-hidden="true" className="scroll-progress" />
 
-      {/* Hero Section */}
-      <header className="border-border border-b pb-12">
-        {published.category ? (
-          <span className="rounded-badge border-border text-accent-purple bg-surface border px-2.5 py-1 font-sans text-xs font-medium">
-            {published.category}
-          </span>
-        ) : null}
-
-        <h1 className="text-text mt-4 font-sans text-4xl font-semibold tracking-tight md:text-5xl">
-          {published.title}
-        </h1>
-
-        <p className="text-text-muted mt-4 font-serif text-lg leading-relaxed md:text-xl">
-          {published.excerpt}
-        </p>
-
-        <div className="text-text-muted mt-4 flex flex-wrap items-center gap-3 font-mono text-xs">
-          <span>
-            {published.publishedAt
+      <DetailHero
+        centered
+        backHref="/writing"
+        backLabel="All writing"
+        eyebrow={[published.category ?? "Essay"]}
+        title={published.title}
+        lede={published.excerpt}
+        facts={[
+          {
+            label: "Published",
+            value: published.publishedAt
               ? new Date(published.publishedAt).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "short",
+                  month: "long",
                   day: "numeric",
+                  year: "numeric",
                 })
-              : ""}
-          </span>
-          {published.readingTime ? (
-            <>
-              <span aria-hidden="true">&middot;</span>
-              <span>{published.readingTime} min read</span>
-            </>
-          ) : null}
-          <span aria-hidden="true">&middot;</span>
-          <span>v{published.versionNumber}</span>
+              : null,
+          },
+          {
+            label: "Reading time",
+            value: published.readingTime ? `${published.readingTime} min` : null,
+          },
+          { label: "Author", value: author.name },
+        ]}
+        coverUrl={coverUrl}
+        coverAlt={published.title}
+        coverTransitionName={`cover-writing-${article.slug}`}
+      />
+
+      <div
+        className={`container-site mt-16 md:mt-24 ${
+          showToc ? "grid gap-12 lg:grid-cols-12" : ""
+        }`}
+      >
+        {showToc ? (
+          <aside className="lg:col-span-3">
+            <Toc items={headings.map((h) => ({ id: h.id, label: h.text }))} />
+          </aside>
+        ) : null}
+
+        <div
+          className={showToc ? "lg:col-span-8 lg:col-start-5" : "mx-auto max-w-[68ch]"}
+        >
+          <RichText doc={published.content} />
+
+          <footer className="border-border mt-20 border-t pt-10">
+            {tags.length > 0 ? (
+              <ul className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <li
+                    key={tag.id}
+                    className="border-border text-text-muted rounded-full border px-3 py-1 font-mono text-xs"
+                  >
+                    #{tag.name}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
+            <div className="rounded-panel bg-surface mt-10 flex flex-col gap-6 p-7 sm:flex-row sm:items-center sm:justify-between md:p-8">
+              <div className="flex items-center gap-4">
+                <span
+                  aria-hidden="true"
+                  className="bg-accent-purple text-bg flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-sans text-base font-bold"
+                >
+                  {author.name.slice(0, 1)}
+                </span>
+                <div>
+                  <p className="text-text font-sans text-sm font-semibold">
+                    Written by {author.name}
+                  </p>
+                  {author.description ? (
+                    <p className="text-text-muted mt-0.5 font-serif text-sm">
+                      {author.description}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              <Link
+                href="/contact"
+                className="bg-text text-bg hover:bg-accent shrink-0 rounded-full px-5 py-2.5 text-center font-sans text-sm font-medium transition-colors"
+              >
+                Discuss this →
+              </Link>
+            </div>
+          </footer>
         </div>
-
-        {/* Cover Image */}
-        {coverUrl ? (
-          <div className="rounded-panel border-border mt-8 overflow-hidden border">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={coverUrl}
-              alt={published.title}
-              className="h-auto max-h-[480px] w-full object-cover"
-            />
-          </div>
-        ) : null}
-
-        {/* Tags */}
-        {tags.length > 0 ? (
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
-              <span key={tag.id} className="text-text-muted font-mono text-xs">
-                #{tag.name}
-              </span>
-            ))}
-          </div>
-        ) : null}
-      </header>
-
-      {/* Content — single Tiptap document rendered as paragraphs, same
-          plain-text-extraction approach case-study-view.tsx uses per
-          section (schema.ts: "canonical Tiptap JSON document"). */}
-      <div className="text-text mt-12 space-y-6 font-serif text-base leading-relaxed md:text-lg">
-        {paragraphs.map((p, idx) => (
-          <p key={idx}>{p}</p>
-        ))}
       </div>
+
+      {next ? (
+        <NextUp
+          label="Keep reading"
+          title={next.title}
+          body={next.body}
+          href={`/writing/${next.slug}`}
+          coverUrl={next.coverUrl}
+        />
+      ) : null}
     </article>
   );
 }

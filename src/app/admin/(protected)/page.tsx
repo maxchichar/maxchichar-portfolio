@@ -1,6 +1,9 @@
 import Link from "next/link";
 
+import { StatTile } from "@/components/admin/analytics/stat-tile";
 import { auth } from "@/lib/auth/config";
+import { getAnalyticsSummary } from "@/server/services/analytics";
+import { listInbox } from "@/server/services/contact";
 import { listArticlesOverview } from "@/server/services/articles";
 import { listMediaLibrary } from "@/server/services/media";
 import { listPagesOverview } from "@/server/services/pages";
@@ -19,7 +22,7 @@ function summarize(items: Overview) {
 }
 
 export default async function AdminDashboard() {
-  const [session, projects, research, articles, pages, media, settings] =
+  const [session, projects, research, articles, pages, media, settings, traffic, inbox] =
     await Promise.all([
       auth(),
       listProjectsOverview(),
@@ -28,7 +31,10 @@ export default async function AdminDashboard() {
       listPagesOverview(),
       listMediaLibrary({ status: "READY" }),
       getPublicSiteSettings(),
+      getAnalyticsSummary(7),
+      listInbox(null),
     ]);
+  const unread = inbox.counts.NEW ?? 0;
 
   const contentStats = [
     {
@@ -103,7 +109,44 @@ export default async function AdminDashboard() {
         </div>
       </header>
 
-      <section aria-label="Content" className="mt-10 grid gap-4 md:grid-cols-3">
+      <section
+        aria-label="Traffic"
+        className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        <StatTile
+          label="Visitors · 7 days"
+          value={traffic.visitors}
+          previous={traffic.prevVisitors}
+          note="vs previous 7d"
+        />
+        <StatTile
+          label="Page views · 7 days"
+          value={traffic.views}
+          previous={traffic.prevViews}
+          note="vs previous 7d"
+        />
+        <StatTile label="Live now" value={traffic.live} note="last 5 min" live />
+        <Link
+          href="/admin/inbox?view=NEW"
+          className="rounded-panel border-border bg-surface hover:border-text/25 border p-5 transition-colors"
+        >
+          <p className="text-text-muted font-sans text-sm">Unread messages</p>
+          <p className="text-text mt-3 font-sans text-4xl font-semibold tracking-tight">
+            {unread}
+          </p>
+          <p className="text-accent mt-2 font-sans text-xs">Open inbox →</p>
+        </Link>
+      </section>
+      <p className="mt-3 text-right">
+        <Link
+          href="/admin/analytics"
+          className="text-accent font-sans text-xs hover:underline"
+        >
+          Full analytics →
+        </Link>
+      </p>
+
+      <section aria-label="Content" className="mt-6 grid gap-4 md:grid-cols-3">
         {contentStats.map((stat) => (
           <div
             key={stat.label}

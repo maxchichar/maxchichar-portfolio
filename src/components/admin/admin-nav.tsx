@@ -7,7 +7,11 @@ import { useState } from "react";
 const SECTIONS = [
   {
     label: "Overview",
-    links: [{ href: "/admin", label: "Dashboard", icon: "grid" }],
+    links: [
+      { href: "/admin", label: "Dashboard", icon: "grid" },
+      { href: "/admin/analytics", label: "Analytics", icon: "chart" },
+      { href: "/admin/inbox", label: "Inbox", icon: "inbox" },
+    ],
   },
   {
     label: "Content",
@@ -232,6 +236,19 @@ function NavIcon({ name, className }: { name: IconName; className?: string }) {
           <rect x="2.5" y="3.5" width="15" height="13" rx="1.5" />
           <circle cx="7" cy="8" r="1.5" />
           <path d="M17.5 13l-4-4-8 7.5" />
+        </svg>
+      );
+    case "chart":
+      return (
+        <svg {...common}>
+          <path d="M3 16.5h14M5.5 13l3.5-4 3 2.5 4.5-6" />
+        </svg>
+      );
+    case "inbox":
+      return (
+        <svg {...common}>
+          <path d="M3 11.5l2-7h10l2 7v4a1 1 0 01-1 1H4a1 1 0 01-1-1z" />
+          <path d="M3 11.5h4l1 2h4l1-2h4" />
         </svg>
       );
     case "sliders":

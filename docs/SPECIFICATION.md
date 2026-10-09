@@ -99,6 +99,25 @@ runtime dependency on a third-party font CDN). Radii: 2px badges/inputs,
   the search overlay is actually built.
 - Admin uses a shared sidebar shell (`(protected)/layout.tsx`).
 
+### Round 2: design system, rich text, admin, analytics
+
+- **Type scale** (fluid `clamp()` tokens: display/h1/h2/h3/lede/eyebrow) and
+  `--surface-2` elevation token live in `globals.css`. Fonts unchanged.
+- **Motion** (public site only, all disabled under `prefers-reduced-motion`):
+  Lenis smooth scroll, React `<ViewTransition>` page transitions and
+  cover-image morphs, word-reveal headlines, scroll-driven reveals/parallax.
+- **Rich text**: admin editors use Tiptap and store the same Tiptap JSON as
+  before (no migration). Public rendering goes through `components/rich-text`
+  — React elements only, links/images allow-listed.
+- **Analytics** (migration `0002_page_views`): first-party, cookieless.
+  Stores path, referrer host, country (from the edge header), device and
+  browser — never raw IPs or user agents. Visitors are an HMAC of IP+UA
+  with a salt derived from `AUTH_SECRET` + UTC date, so they are counted
+  once per day and cannot be linked across days. Bots, `/admin`, Global
+  Privacy Control and Do Not Track are excluded.
+- **Inbox**: contact submissions are readable in `/admin/inbox` with
+  read/unread/archive/spam states (existing `status` column).
+
 ## Project & research proof architecture
 
 Project case study section order: Hero → Problem → Context → Why This

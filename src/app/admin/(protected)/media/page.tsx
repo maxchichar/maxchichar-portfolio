@@ -1,8 +1,10 @@
 import Link from "next/link";
 
+import { AdminPageHeader } from "@/components/admin/page-header";
 import * as mediaService from "@/server/services/media";
 
 import { CopyUrlButton } from "./copy-url-button";
+import { LibraryUploader } from "./library-uploader";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -34,20 +36,22 @@ export default async function MediaLibraryPage({
 
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10 md:py-12">
-      <h1 className="text-text font-sans text-3xl font-semibold tracking-tight">
-        Media Library
-      </h1>
-      <p className="text-text-muted mt-1 font-serif text-sm">
-        {media.length} {media.length === 1 ? "file" : "files"}
-      </p>
+      <AdminPageHeader
+        title="Media Library"
+        description={`${media.length} ${media.length === 1 ? "file" : "files"}. Every upload is validated server-side before it can be used.`}
+      />
       {deleted ? (
-        <p className="text-accent mt-2 font-sans text-sm">Media deleted.</p>
+        <p role="status" className="text-accent -mt-6 mb-6 font-sans text-sm">
+          Media deleted.
+        </p>
       ) : null}
+
+      <LibraryUploader />
 
       <form
         action="/admin/media"
         method="GET"
-        className="mt-6 flex flex-wrap items-center gap-3"
+        className="flex flex-wrap items-center gap-3"
       >
         <input
           type="text"
@@ -91,19 +95,20 @@ export default async function MediaLibraryPage({
           </p>
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {media.map((item) => (
             <div
               key={item.id}
-              className="rounded-panel border-border bg-surface overflow-hidden border"
+              className="group rounded-panel border-border bg-surface hover:border-text/25 overflow-hidden border transition-colors"
             >
-              <Link href={`/admin/media/${item.id}`} className="hover:opacity-90">
+              <Link href={`/admin/media/${item.id}`}>
                 <div className="border-border bg-bg/50 aspect-square w-full overflow-hidden border-b">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.storageUrl}
                     alt={item.altText ?? item.filename}
-                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                 </div>
                 <div className="px-3 pt-3">

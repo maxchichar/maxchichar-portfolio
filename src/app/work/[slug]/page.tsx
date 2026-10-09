@@ -11,8 +11,12 @@ import {
   buildWorkJsonLd,
   JsonLdScript,
 } from "@/lib/structured-data";
-import { getPublicWorkCaseStudy } from "@/server/services/projects";
+import {
+  getPublicWorkCaseStudy,
+  listPublicWorkOverview,
+} from "@/server/services/projects";
 import { getPublicSiteSettings } from "@/server/services/settings";
+import { PageTransition } from "@/components/motion/page-transition";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -47,7 +51,22 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
     notFound();
   }
 
-  const settings = await getPublicSiteSettings();
+  const [settings, allWork] = await Promise.all([
+    getPublicSiteSettings(),
+    listPublicWorkOverview(),
+  ]);
+  // Next case study: the following item in listing order, wrapping around.
+  const idx = allWork.findIndex((w) => w.project.slug === slug);
+  const nextItem = allWork.length > 1 ? allWork[(idx + 1) % allWork.length] : undefined;
+  const next = nextItem
+    ? {
+        slug: nextItem.project.slug,
+        title: nextItem.published.title,
+        body: nextItem.published.shortDescription,
+        coverUrl: nextItem.coverUrl,
+      }
+    : null;
+
   const workJsonLd = buildWorkJsonLd({
     title: item.published.title,
     description: item.published.shortDescription,
@@ -71,15 +90,18 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
     <>
       <JsonLdScript data={pageJsonLd} />
       <Nav />
-      <main>
-        <CaseStudyView
-          project={item.project}
-          published={item.published}
-          evidence={item.evidence}
-          tags={item.tags}
-          coverUrl={item.coverUrl}
-        />
-      </main>
+      <PageTransition>
+        <main>
+          <CaseStudyView
+            project={item.project}
+            published={item.published}
+            evidence={item.evidence}
+            tags={item.tags}
+            coverUrl={item.coverUrl}
+            next={next}
+          />
+        </main>
+      </PageTransition>
       <Footer />
     </>
   );

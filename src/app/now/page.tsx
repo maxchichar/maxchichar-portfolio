@@ -6,6 +6,7 @@ import { Nav } from "@/components/layout/nav";
 import { NowView } from "@/components/pages/now-view";
 import { constructPageMetadata } from "@/lib/metadata";
 import { getPublishedNowPage } from "@/server/services/pages";
+import { PageTransition } from "@/components/motion/page-transition";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -33,9 +34,11 @@ export default async function NowPage() {
   return (
     <>
       <Nav />
-      <main>
-        <NowView content={now.content} publishedAt={now.published.publishedAt} />
-      </main>
+      <PageTransition>
+        <main>
+          <NowView content={now.content} publishedAt={now.published.publishedAt} />
+        </main>
+      </PageTransition>
       <Footer />
     </>
   );

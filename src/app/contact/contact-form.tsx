@@ -6,11 +6,10 @@ import { CONTACT_REASONS } from "@/lib/validation/contact";
 
 import { submitContactForm, type ContactFormState } from "./actions";
 
-const inputClass =
-  "rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none";
-const textareaClass =
-  "rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm outline-none";
-const labelClass = "text-text-muted block font-sans text-sm";
+const fieldClass =
+  "rounded-card border-border bg-bg text-text placeholder:text-text-muted/60 hover:border-text/25 focus-visible:border-accent mt-2 w-full border px-4 py-3.5 font-sans text-base outline-none transition-colors";
+const labelClass = "text-text block font-sans text-sm font-medium";
+const optionalClass = "text-text-muted ml-1 font-normal";
 
 const initialState: ContactFormState = {
   success: false,
@@ -22,16 +21,22 @@ export function ContactForm() {
 
   if (state.success && resetKey === 0) {
     return (
-      <div className="rounded-panel border-border bg-surface border p-8">
-        <h2 className="text-text font-sans text-lg font-semibold">Message sent.</h2>
-        <p className="text-text-muted mt-2 font-serif text-sm leading-relaxed">
+      <div role="status" className="animate-rise py-10 text-center">
+        <span
+          aria-hidden="true"
+          className="bg-accent text-bg mx-auto flex h-14 w-14 items-center justify-center rounded-full text-2xl"
+        >
+          ✓
+        </span>
+        <h2 className="text-h3 text-text mt-6 font-sans font-semibold">Message sent.</h2>
+        <p className="text-text-muted mx-auto mt-3 max-w-sm font-serif text-lg leading-relaxed">
           Thank you for reaching out. Your message has been received and will be reviewed
           shortly.
         </p>
         <button
           type="button"
           onClick={() => setResetKey((k) => k + 1)}
-          className="rounded-card border-accent text-accent hover:bg-accent hover:text-bg mt-6 border px-4 py-2 font-sans text-sm transition-colors"
+          className="border-border text-text hover:border-accent hover:text-accent mt-8 rounded-full border px-5 py-2.5 font-sans text-sm transition-colors"
         >
           Send another message
         </button>
@@ -40,7 +45,7 @@ export function ContactForm() {
   }
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} className="space-y-7">
       {/* Honeypot field for spam prevention — invisible to regular users */}
       <div className="hidden" aria-hidden="true">
         <label htmlFor="website-hp">Website</label>
@@ -53,10 +58,26 @@ export function ContactForm() {
         />
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <fieldset>
+        <legend className={labelClass}>
+          What&apos;s this about?<span className={optionalClass}>(optional)</span>
+        </legend>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {CONTACT_REASONS.map((reason) => (
+            <label key={reason} className="cursor-pointer">
+              <input type="radio" name="reason" value={reason} className="peer sr-only" />
+              <span className="border-border text-text-muted hover:border-text/40 hover:text-text peer-checked:border-text peer-checked:bg-text peer-checked:text-bg peer-focus-visible:outline-accent inline-block rounded-full border px-4 py-2 font-sans text-sm transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2">
+                {reason}
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <div className="grid gap-7 sm:grid-cols-2">
         <div>
           <label htmlFor="contact-name" className={labelClass}>
-            Name <span className="text-accent">*</span>
+            Name
           </label>
           <input
             id="contact-name"
@@ -66,13 +87,13 @@ export function ContactForm() {
             maxLength={100}
             autoComplete="name"
             placeholder="Your name"
-            className={inputClass}
+            className={fieldClass}
           />
         </div>
 
         <div>
           <label htmlFor="contact-email" className={labelClass}>
-            Email <span className="text-accent">*</span>
+            Email
           </label>
           <input
             id="contact-email"
@@ -82,52 +103,29 @@ export function ContactForm() {
             maxLength={255}
             autoComplete="email"
             placeholder="you@example.com"
-            className={inputClass}
+            className={fieldClass}
           />
-        </div>
-      </div>
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div>
-          <label htmlFor="contact-org" className={labelClass}>
-            Organization <span className="text-text-muted/60">(optional)</span>
-          </label>
-          <input
-            id="contact-org"
-            name="organization"
-            type="text"
-            maxLength={150}
-            autoComplete="organization"
-            placeholder="Company, lab, or institution"
-            className={inputClass}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="contact-reason" className={labelClass}>
-            Reason <span className="text-text-muted/60">(optional)</span>
-          </label>
-          <select
-            id="contact-reason"
-            name="reason"
-            defaultValue=""
-            className={inputClass}
-          >
-            <option value="" disabled className="bg-surface text-text-muted">
-              Select a topic
-            </option>
-            {CONTACT_REASONS.map((reason) => (
-              <option key={reason} value={reason} className="bg-surface text-text">
-                {reason}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
       <div>
+        <label htmlFor="contact-org" className={labelClass}>
+          Organization<span className={optionalClass}>(optional)</span>
+        </label>
+        <input
+          id="contact-org"
+          name="organization"
+          type="text"
+          maxLength={150}
+          autoComplete="organization"
+          placeholder="Company, lab, or institution"
+          className={fieldClass}
+        />
+      </div>
+
+      <div>
         <label htmlFor="contact-message" className={labelClass}>
-          Message <span className="text-accent">*</span>
+          Message
         </label>
         <textarea
           id="contact-message"
@@ -136,27 +134,36 @@ export function ContactForm() {
           rows={6}
           minLength={5}
           maxLength={5000}
-          placeholder="Details on what you're working on, looking to collaborate on, or wish to discuss..."
-          className={textareaClass}
+          placeholder="What you're working on, what you'd like to collaborate on, or what you'd like to discuss…"
+          className={`${fieldClass} resize-y font-serif text-lg leading-relaxed`}
         />
       </div>
 
       {state.error ? (
         <div
           role="alert"
-          className="rounded-card border-border bg-surface text-text border px-4 py-3 font-sans text-sm"
+          className="rounded-card border-border bg-surface-2 text-text border px-4 py-3 font-sans text-sm"
         >
           {state.error}
         </div>
       ) : null}
 
-      <div>
+      <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+        <p className="text-text-muted font-sans text-xs">
+          All fields required unless noted.
+        </p>
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-card bg-accent text-bg px-6 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="group bg-text text-bg hover:bg-accent inline-flex items-center gap-2 rounded-full px-7 py-3.5 font-sans text-sm font-medium transition-colors disabled:opacity-50"
         >
-          {isPending ? "Sending..." : "Send message"}
+          {isPending ? "Sending…" : "Send message"}
+          <span
+            aria-hidden="true"
+            className="transition-transform group-hover:translate-x-0.5"
+          >
+            →
+          </span>
         </button>
       </div>
     </form>
