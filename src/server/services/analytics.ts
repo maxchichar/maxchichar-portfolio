@@ -78,7 +78,7 @@ async function breakdown(column: string, days: number, fallback: string, limit =
            count(*)::int as views,
            count(distinct visitor_hash)::int as visitors
     from page_views
-    where created_at >= now() - make_interval(days => ${days})
+    where created_at >= now() - make_interval(days => ${days}::int)
     group by 1
     order by visitors desc, views desc
     limit ${limit}
@@ -90,24 +90,24 @@ async function breakdown(column: string, days: number, fallback: string, limit =
   }));
 }
 
-export async function getAnalyticsSummary(days: AnalyticsRange) {
+async function loadAnalyticsSummary(days: AnalyticsRange) {
   const [totals, daily, live, pages, referrers, countries, devices, browsers] =
     await Promise.all([
       rows(sql`
         select
-          count(*) filter (where created_at >= now() - make_interval(days => ${days}))::int as views,
-          count(distinct visitor_hash) filter (where created_at >= now() - make_interval(days => ${days}))::int as visitors,
-          count(*) filter (where created_at < now() - make_interval(days => ${days}))::int as prev_views,
-          count(distinct visitor_hash) filter (where created_at < now() - make_interval(days => ${days}))::int as prev_visitors
+          count(*) filter (where created_at >= now() - make_interval(days => ${days}::int))::int as views,
+          count(distinct visitor_hash) filter (where created_at >= now() - make_interval(days => ${days}::int))::int as visitors,
+          count(*) filter (where created_at < now() - make_interval(days => ${days}::int))::int as prev_views,
+          count(distinct visitor_hash) filter (where created_at < now() - make_interval(days => ${days}::int))::int as prev_visitors
         from page_views
-        where created_at >= now() - make_interval(days => ${days * 2})
+        where created_at >= now() - make_interval(days => ${days * 2}::int)
       `),
       rows(sql`
         select to_char(d.day, 'YYYY-MM-DD') as day,
                count(p.id)::int as views,
                count(distinct p.visitor_hash)::int as visitors
         from generate_series(
-               date_trunc('day', now() at time zone 'utc') - make_interval(days => ${days - 1}),
+               date_trunc('day', now() at time zone 'utc') - make_interval(days => ${days - 1}::int),
                date_trunc('day', now() at time zone 'utc'),
                interval '1 day'
              ) as d(day)
@@ -129,6 +129,7 @@ export async function getAnalyticsSummary(days: AnalyticsRange) {
 
   const t = totals[0] ?? {};
   return {
+    available: true,
     days,
     views: num(t.views),
     visitors: num(t.visitors),
@@ -148,4 +149,37 @@ export async function getAnalyticsSummary(days: AnalyticsRange) {
   };
 }
 
-export type AnalyticsSummary = Awaited<ReturnType<typeof getAnalyticsSummary>>;
+export type AnalyticsSummary = Awaited<ReturnType<typeof loadAnalyticsSummary>>;
+
+/**
+ * Analytics must never take the admin down. If the query fails (most often
+ * because the `page_views` migration hasn't been applied yet), return an
+ * empty summary flagged `available: false` and log the cause.
+ */
+export async function getAnalyticsSummary(
+  days: AnalyticsRange,
+): Promise<AnalyticsSummary> {
+  try {
+    return await loadAnalyticsSummary(days);
+  } catch (err) {
+    console.warn(
+      "getAnalyticsSummary failed (is the page_views migration applied?):",
+      err,
+    );
+    return {
+      available: false,
+      days,
+      views: 0,
+      visitors: 0,
+      prevViews: 0,
+      prevVisitors: 0,
+      live: 0,
+      daily: [],
+      pages: [],
+      referrers: [],
+      countries: [],
+      devices: [],
+      browsers: [],
+    };
+  }
+}

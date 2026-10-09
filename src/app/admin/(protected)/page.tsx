@@ -109,6 +109,16 @@ export default async function AdminDashboard() {
         </div>
       </header>
 
+      {!traffic.available ? (
+        <p
+          role="alert"
+          className="rounded-card border-border bg-surface-2 text-text mt-10 border px-4 py-3 font-sans text-sm"
+        >
+          Analytics isn&apos;t available yet. Apply the latest database migration (
+          <code className="font-mono text-xs">npm run db:push</code>) to create the{" "}
+          <code className="font-mono text-xs">page_views</code> table.
+        </p>
+      ) : null}
       <section
         aria-label="Traffic"
         className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
