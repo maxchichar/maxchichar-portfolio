@@ -30,6 +30,12 @@ function client(): S3Client {
     region: "auto",
     endpoint,
     credentials: { accessKeyId, secretAccessKey },
+    // Path-style URLs (https://<account>.r2.cloudflarestorage.com/<bucket>/…)
+    // keep presigned uploads on the exact STORAGE_ENDPOINT origin that the
+    // CSP's connect-src allows. The SDK's default virtual-hosted style puts
+    // the bucket in the hostname (<bucket>.<account>.r2…), a different
+    // origin, so the browser blocked the PUT ("NetworkError").
+    forcePathStyle: true,
   });
 }
 
