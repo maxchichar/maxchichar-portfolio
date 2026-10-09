@@ -32,20 +32,25 @@ export default async function LoginPage({
 
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
-      <aside className="bg-surface relative hidden overflow-hidden lg:block">
+      {/* With a photo, the panel is a dark island in both themes (like the
+          public hero): light tokens would wash the portrait out. */}
+      <aside
+        data-theme={settings.heroImage ? "dark" : undefined}
+        className="bg-surface relative hidden overflow-hidden lg:block"
+      >
         {settings.heroImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={settings.heroImage.url}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-70"
+            className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
           <div aria-hidden="true" className="hero-wash absolute inset-0" />
         )}
         <div
           aria-hidden="true"
-          className="from-bg via-bg/40 absolute inset-0 bg-gradient-to-t to-transparent"
+          className="from-bg/90 via-bg/30 absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t to-transparent"
         />
         <div className="absolute inset-x-0 bottom-0 p-12">
           <LogoMark className="text-text mb-6 h-14 w-auto" />
