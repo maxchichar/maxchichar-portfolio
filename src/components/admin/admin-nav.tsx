@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { LogoMark } from "@/components/brand/logo-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const SECTIONS = [
@@ -120,12 +121,7 @@ export function AdminNav({
 
   const brand = (
     <Link href="/admin" className="flex items-center gap-2.5">
-      <span
-        aria-hidden="true"
-        className="bg-accent-purple text-bg flex h-7 w-7 items-center justify-center rounded-[6px] font-sans text-xs font-bold"
-      >
-        M
-      </span>
+      <LogoMark className="text-text h-6 w-auto shrink-0" />
       <span className="leading-tight">
         <span className="text-text block font-sans text-sm font-semibold tracking-tight">
           {siteName}

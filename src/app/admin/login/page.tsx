@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 
+import { LogoMark } from "@/components/brand/logo-mark";
 import { signIn } from "@/lib/auth/config";
 import { getPublicSiteSettings } from "@/server/services/settings";
 
@@ -47,6 +48,7 @@ export default async function LoginPage({
           className="from-bg via-bg/40 absolute inset-0 bg-gradient-to-t to-transparent"
         />
         <div className="absolute inset-x-0 bottom-0 p-12">
+          <LogoMark className="text-text mb-6 h-14 w-auto" />
           <p className="text-text font-sans text-5xl font-semibold tracking-tighter xl:text-6xl">
             MAXCHICHAR
           </p>
@@ -58,6 +60,7 @@ export default async function LoginPage({
 
       <div className="flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
+          <LogoMark className="text-text mb-8 h-9 w-auto lg:hidden" />
           <p className="text-accent-purple font-mono text-xs tracking-[0.2em] uppercase">
             {settings.siteName} · Studio
           </p>
