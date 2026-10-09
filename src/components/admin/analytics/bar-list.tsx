@@ -48,7 +48,8 @@ export function BarList({
                       className="absolute inset-y-0 left-0 rounded-r-[4px]"
                       style={{
                         width: `${Math.max(2, (r.visitors / max) * 100)}%`,
-                        background: "color-mix(in oklab, #4f7cff 22%, transparent)",
+                        background:
+                          "color-mix(in oklab, var(--chart-1) 22%, transparent)",
                       }}
                     />
                     <span className="text-text relative block truncate px-2 font-sans text-xs leading-7">

@@ -54,7 +54,8 @@ rather than silently resolving it either direction.
 ## Public information architecture
 
 Nav: Work · Research · Writing · Now · About, Contact as a persistent CTA,
-search as an icon-triggered overlay. Dark-only v1, no theme toggle.
+search as an icon-triggered overlay. Dark by default with an optional light
+theme (see "Light mode" below).
 Routes: `/`, `/work`, `/work/[slug]`, `/research`, `/research/[slug]`,
 `/writing`, `/writing/[slug]`, `/now`, `/about`, `/contact`.
 
@@ -117,6 +118,21 @@ runtime dependency on a third-party font CDN). Radii: 2px badges/inputs,
   Privacy Control and Do Not Track are excluded.
 - **Inbox**: contact submissions are readable in `/admin/inbox` with
   read/unread/archive/spam states (existing `status` column).
+
+### Light mode and reticle cursor
+
+- **Light mode**: `:root[data-theme="light"]` overrides the same token names
+  (all text pairs WCAG AA). `lib/theme.ts` runs inline in `<head>` before
+  paint: saved choice (`localStorage.theme`), else the OS preference, else
+  dark. Toggle in the site nav and admin sidebar; where View Transitions
+  exist the new theme spreads in a circle from the toggle. Analytics chart
+  colours are per-theme tokens (`--chart-1/2`), each pair validated.
+- **Reticle cursor** (`components/motion/reticle-cursor`): exact-hotspot
+  dot plus spring-following corner brackets that lock onto and frame links
+  and buttons, label cards/images ("View", "Open ↗"), squeeze on press and
+  show a coordinate readout at rest. Inverts against the background
+  (`mix-blend-mode: difference`). Only for `pointer: fine`, public site
+  only, off under reduced motion; text fields keep the native caret.
 
 ## Project & research proof architecture
 

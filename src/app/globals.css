@@ -19,9 +19,45 @@
   --accent-purple: #8b5cf6;
   --accent-purple-muted: #6d4ac0;
 
+  /* Atmospheric hero wash (fallback when no hero photo is set). */
+  --wash-base: #0d0d10;
+  --wash-purple: rgb(139 92 246 / 0.22);
+  --wash-blue: rgb(79 124 255 / 0.14);
+
+  /* Admin analytics chart pair — validated per theme with the dataviz
+     palette validator (lightness, chroma, CVD, contrast all PASS). */
+  --chart-1: #4f7cff;
+  --chart-2: #d95926;
+
   --font-heading-family: "Inter Tight Variable", ui-sans-serif, system-ui, sans-serif;
   --font-body-family: "Newsreader Variable", ui-serif, Georgia, serif;
   --font-mono-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+}
+
+/*
+ * Light theme. Selected by `data-theme="light"` on <html>, set before first
+ * paint by the inline script in app/layout.tsx (saved choice, else the OS
+ * preference). Same token names, so every component follows automatically.
+ * All text pairs pass WCAG AA on bg/surface/surface-2.
+ */
+:root[data-theme="light"] {
+  --bg: #f6f5f1;
+  --surface: #ffffff;
+  --surface-2: #eeede8;
+  --border: #dedcd5;
+  --text: #141416;
+  --text-muted: #5d5c64;
+
+  --accent: #2d5be3;
+  --accent-purple: #7036e0;
+  --accent-purple-muted: #8a63e8;
+
+  --wash-base: #ecebe6;
+  --wash-purple: rgb(112 54 224 / 0.16);
+  --wash-blue: rgb(45 91 227 / 0.1);
+
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
 }
 
 /*
@@ -150,6 +186,9 @@
   html {
     color-scheme: dark;
   }
+  html[data-theme="light"] {
+    color-scheme: light;
+  }
 
   body {
     background-color: var(--bg);
@@ -200,9 +239,9 @@
   /* Fallback hero backdrop when no hero photo is set. */
   .hero-wash {
     background:
-      radial-gradient(60% 50% at 80% 20%, rgb(139 92 246 / 0.22), transparent 70%),
-      radial-gradient(50% 45% at 15% 85%, rgb(79 124 255 / 0.14), transparent 70%),
-      linear-gradient(180deg, #0d0d10 0%, var(--bg) 100%);
+      radial-gradient(60% 50% at 80% 20%, var(--wash-purple), transparent 70%),
+      radial-gradient(50% 45% at 15% 85%, var(--wash-blue), transparent 70%),
+      linear-gradient(180deg, var(--wash-base) 0%, var(--bg) 100%);
   }
 
   /* Fine film grain over photography — keeps gradients from banding. */
@@ -515,4 +554,144 @@ html.lenis body {
     transform: none;
     transition: opacity 600ms ease-out !important;
   }
+}
+
+/* Theme switch: the new theme spreads out in a circle from the toggle.
+   Higher specificity than the instant root rule above, and only while a
+   switch is running (html.theme-switching). */
+html.theme-switching::view-transition-old(root) {
+  animation: none;
+}
+html.theme-switching::view-transition-new(root) {
+  animation: theme-reveal 650ms var(--ease-out-expo) both;
+}
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--theme-x, 50%) var(--theme-y, 0%));
+  }
+  to {
+    clip-path: circle(var(--theme-r, 150vmax) at var(--theme-x, 50%) var(--theme-y, 0%));
+  }
+}
+
+/* Theme toggle icon: chosen by the html attribute, not React state, so the
+   server-rendered markup is valid for both themes. */
+.theme-icon-moon {
+  display: none;
+}
+html[data-theme="light"] .theme-icon-sun {
+  display: none;
+}
+html[data-theme="light"] .theme-icon-moon {
+  display: block;
+}
+
+/* ------------------------------------------------------------------------
+ * Reticle cursor (<ReticleCursor>). The native cursor is hidden only while
+ * the reticle is active (html.has-reticle); text fields keep their caret.
+ * --------------------------------------------------------------------- */
+html.has-reticle,
+html.has-reticle * {
+  cursor: none !important;
+}
+html.has-reticle
+  :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not(
+        [type="button"]
+      ),
+    textarea,
+    [contenteditable="true"]
+  ) {
+  cursor: text !important;
+}
+
+.reticle {
+  color: #fff;
+  /* Inverts against whatever is underneath: visible on light, dark and photos. */
+  mix-blend-mode: difference;
+}
+.reticle-dot,
+.reticle-box,
+.reticle-label,
+.reticle-coords {
+  position: fixed;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+.reticle-dot {
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 9999px;
+  background: currentColor;
+  transition:
+    width 200ms var(--ease-out-quint),
+    height 200ms var(--ease-out-quint),
+    margin 200ms var(--ease-out-quint);
+}
+.reticle[data-state="lock"] .reticle-dot {
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+}
+.reticle-corner {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 0 solid currentColor;
+  transition:
+    width 260ms var(--ease-out-expo),
+    height 260ms var(--ease-out-expo);
+}
+.reticle[data-state="lock"] .reticle-corner {
+  width: 12px;
+  height: 12px;
+}
+.reticle[data-pressed="true"] .reticle-corner {
+  width: 14px;
+  height: 14px;
+}
+.reticle-tl {
+  top: 0;
+  left: 0;
+  border-top-width: 1.5px;
+  border-left-width: 1.5px;
+}
+.reticle-tr {
+  top: 0;
+  right: 0;
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
+}
+.reticle-bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 1.5px;
+  border-left-width: 1.5px;
+}
+.reticle-br {
+  right: 0;
+  bottom: 0;
+  border-right-width: 1.5px;
+  border-bottom-width: 1.5px;
+}
+.reticle-label,
+.reticle-coords {
+  font-family: var(--font-mono-family);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 250ms ease-out;
+}
+.reticle-label {
+  padding: 2px 6px;
+  border: 1px solid currentColor;
+}
+.reticle-coords {
+  letter-spacing: 0.08em;
+  opacity: 0;
+  transition: opacity 500ms ease-out;
 }
