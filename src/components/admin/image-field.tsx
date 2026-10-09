@@ -17,6 +17,7 @@ export function ImageField({
   initialUrl,
   libraryMedia,
   aspect = "aspect-[16/9]",
+  onCommit,
 }: {
   name: string;
   label: string;
@@ -25,6 +26,8 @@ export function ImageField({
   initialUrl: string | null;
   libraryMedia: MediaPickerItem[];
   aspect?: string;
+  /** If given, each change is saved immediately (no separate form save). */
+  onCommit?: (mediaId: string | null) => Promise<{ success: boolean; error?: string }>;
 }) {
   const [mediaId, setMediaId] = useState<string | null>(initialMediaId);
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialUrl);
@@ -34,7 +37,22 @@ export function ImageField({
   const [error, setError] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const busy = status === "uploading" || status === "validating";
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const busy =
+    status === "uploading" || status === "validating" || saveState === "saving";
+
+  async function commit(nextId: string | null) {
+    if (!onCommit) return;
+    setSaveState("saving");
+    const result = await onCommit(nextId);
+    if (result.success) {
+      setSaveState("saved");
+    } else {
+      setSaveState("idle");
+      setError(result.error ?? "Couldn't save the image.");
+      setStatus("error");
+    }
+  }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -85,6 +103,7 @@ export function ImageField({
       setMediaId(newMediaId);
       setPreviewUrl(URL.createObjectURL(file));
       setStatus("idle");
+      await commit(newMediaId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
       setStatus("error");
@@ -92,6 +111,7 @@ export function ImageField({
   }
 
   function handlePick(item: MediaPickerItem) {
+    void commit(item.id);
     setMediaId(item.id);
     setPreviewUrl(item.storageUrl);
     setError(null);
@@ -100,6 +120,7 @@ export function ImageField({
   }
 
   function handleRemove() {
+    void commit(null);
     setMediaId(null);
     setPreviewUrl(null);
     setError(null);
@@ -183,6 +204,18 @@ export function ImageField({
           </button>
         ) : null}
       </div>
+
+      {onCommit && saveState !== "idle" && !error ? (
+        <p role="status" className="text-text-muted mt-2 font-sans text-xs">
+          {saveState === "saving" ? (
+            "Saving…"
+          ) : (
+            <>
+              <span className="text-accent">✓</span> Saved — live on the site
+            </>
+          )}
+        </p>
+      ) : null}
 
       {error ? (
         <p

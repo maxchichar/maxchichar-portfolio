@@ -6,7 +6,7 @@ import { ImageField } from "@/components/admin/image-field";
 import type { MediaPickerItem } from "@/components/admin/media-picker";
 import type { PublicSiteSettings } from "@/lib/validation/settings";
 
-import { saveSettingsForm, type SettingsFormState } from "./actions";
+import { saveSettingsForm, saveSiteImage, type SettingsFormState } from "./actions";
 
 const inputClass =
   "rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none";
@@ -33,8 +33,8 @@ export function SettingsForm({
         <div>
           <h2 className="text-text font-sans text-base font-semibold">Imagery</h2>
           <p className="text-text-muted mt-1 font-serif text-xs">
-            Photos used across the public site. JPEG, PNG or WebP from the media library.
-            Changes go live when you save.
+            Photos used across the public site. JPEG, PNG or WebP. Image changes save and
+            go live immediately.
           </p>
         </div>
 
@@ -47,6 +47,7 @@ export function SettingsForm({
             initialUrl={initialSettings.heroImage?.url ?? null}
             libraryMedia={libraryMedia}
             aspect="aspect-[16/9]"
+            onCommit={(id) => saveSiteImage("heroMediaId", id)}
           />
           <ImageField
             name="aboutMediaId"
@@ -56,6 +57,7 @@ export function SettingsForm({
             initialUrl={initialSettings.aboutImage?.url ?? null}
             libraryMedia={libraryMedia}
             aspect="aspect-[4/5]"
+            onCommit={(id) => saveSiteImage("aboutMediaId", id)}
           />
         </div>
       </section>
