@@ -27,7 +27,10 @@ export function RevealObserver() {
           }
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
+      // Reveal as soon as any part is on screen. A shrunken bottom margin
+      // meant elements at the very end of the page (e.g. the footer
+      // wordmark) could never scroll into the zone and stayed invisible.
+      { rootMargin: "0px", threshold: 0 },
     );
 
     const observeAll = () =>
