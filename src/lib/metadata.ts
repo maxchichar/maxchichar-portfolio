@@ -4,7 +4,7 @@ import { DEFAULT_SITE_SETTINGS } from "@/lib/validation/settings";
 
 export const DEFAULT_SITE_TITLE = DEFAULT_SITE_SETTINGS.siteName; // "CHIBUEZE MAXWELL"
 export const DEFAULT_SITE_DESCRIPTION =
-  "Super Intelligence Engineer & Entrepreneur — I build intelligent systems for real-world problems.";
+  "Super Intelligence Engineer & Entrepreneur. I build intelligent systems for real-world problems.";
 
 /**
  * Resolves the canonical base site URL for metadata, canonicals, and sitemaps.
@@ -109,7 +109,7 @@ export function constructBaseMetadata(options?: BaseMetadataOptions): Metadata {
     metadataBase: getMetadataBase(),
     title: {
       default: siteName,
-      template: `%s — ${siteName}`,
+      template: `%s | ${siteName}`,
     },
     description,
     robots: {

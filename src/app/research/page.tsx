@@ -15,7 +15,7 @@ export const revalidate = 0;
 export const metadata: Metadata = constructPageMetadata({
   title: "Research",
   description:
-    "Super Intelligence Engineer & Entrepreneur — Investigations, technical notes, and experiments, documented with verifiable evidence.",
+    "Super Intelligence Engineer & Entrepreneur. Investigations, technical notes, and experiments, documented with verifiable evidence.",
   path: "/research",
 });
 
@@ -81,7 +81,7 @@ export default async function ResearchListingPage({
                         {published.type}
                       </span>
                       <span className="text-text-muted font-sans text-sm md:col-span-2">
-                        {published.category ?? "—"}
+                        {published.category ?? ""}
                       </span>
                       <span className="text-text-muted font-mono text-xs tabular-nums md:col-span-1 md:text-right">
                         {published.publishedAt

@@ -13,7 +13,7 @@ export function PageIntro({
   return (
     <header className="border-border mb-16 border-b pb-14 md:mb-20 md:pb-20">
       <p className="animate-rise index-label">
-        <span>—</span>
+        <span aria-hidden="true" className="h-px w-6 bg-current" />
         <span>{eyebrow}</span>
       </p>
       <h1 className="text-h1 text-text mt-6 max-w-4xl font-sans font-semibold text-balance">

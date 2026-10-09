@@ -16,7 +16,7 @@ export const revalidate = 0;
 export const metadata: Metadata = constructPageMetadata({
   title: "Writing",
   description:
-    "Super Intelligence Engineer & Entrepreneur — Essays and notes on building intelligent systems.",
+    "Super Intelligence Engineer & Entrepreneur. Essays and notes on building intelligent systems.",
   path: "/writing",
 });
 

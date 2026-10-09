@@ -36,7 +36,7 @@ export default async function ContactPage() {
             <div className="lg:col-span-5">
               <div className="lg:sticky lg:top-28">
                 <p className="animate-rise index-label">
-                  <span>—</span>
+                  <span aria-hidden="true" className="h-px w-6 bg-current" />
                   <span>Contact</span>
                 </p>
                 <h1 className="text-h1 text-text mt-6 font-sans font-semibold text-balance">

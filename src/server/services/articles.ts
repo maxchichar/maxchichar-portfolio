@@ -104,7 +104,7 @@ export async function ensureDraft(articleId: string, actor: Actor) {
     const published = await articlesRepo.getPublishedVersion(tx, articleId);
     if (!published) {
       throw new ArticleServiceError(
-        "No draft and no published version exist for this article — data integrity issue.",
+        "No draft and no published version exist for this article. Data integrity issue.",
       );
     }
 
@@ -151,7 +151,7 @@ export async function saveDraft(
     const draft = await articlesRepo.getDraftVersion(tx, articleId);
     if (!draft) {
       throw new ArticleServiceError(
-        "No open draft for this article — call ensureDraft first.",
+        "No open draft for this article. Call ensureDraft first.",
       );
     }
 
@@ -232,7 +232,7 @@ export async function rollbackArticle(
     const existingDraft = await articlesRepo.getDraftVersion(tx, articleId);
     if (existingDraft) {
       throw new ArticleServiceError(
-        "An open draft already exists — publish or discard it before rolling back.",
+        "An open draft already exists. Publish or discard it before rolling back.",
       );
     }
 

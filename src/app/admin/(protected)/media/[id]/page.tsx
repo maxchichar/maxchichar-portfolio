@@ -74,7 +74,7 @@ export default async function MediaDetailPage({
         <div>
           <dt className="text-text-muted">Dimensions</dt>
           <dd className="text-text mt-0.5">
-            {media.width && media.height ? `${media.width}×${media.height}` : "—"}
+            {media.width && media.height ? `${media.width}×${media.height}` : "Unknown"}
           </dd>
         </div>
         <div>
@@ -134,7 +134,7 @@ export default async function MediaDetailPage({
         {referencedBy.length > 0 ? (
           <div className="rounded-panel border-border bg-surface mt-3 border p-4">
             <p className="text-text-muted font-serif text-sm">
-              This media can&apos;t be deleted — it&apos;s still used by{" "}
+              This media can&apos;t be deleted because it&apos;s still used by{" "}
               {referencedBy.map((key, i) => (
                 <span key={key}>
                   {i > 0 ? (i === referencedBy.length - 1 ? " and " : ", ") : ""}

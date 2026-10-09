@@ -33,7 +33,7 @@ export async function Footer() {
         <div className="grid gap-14 md:grid-cols-12">
           <div className="md:col-span-6">
             <p className="index-label">
-              <span>—</span>
+              <span aria-hidden="true" className="h-px w-6 bg-current" />
               <span>Have a project in mind?</span>
             </p>
             <h2 className="text-h2 text-text mt-5 max-w-lg font-sans font-semibold">
@@ -113,7 +113,7 @@ export async function Footer() {
         <div className="border-border text-text-muted mt-20 flex flex-col gap-3 border-t pt-6 font-mono text-xs md:flex-row md:items-center md:justify-between">
           <p>
             &copy; {year} {settings.siteName}
-            {settings.siteDescription ? ` — ${settings.siteDescription}` : ""}
+            {settings.siteDescription ? `. ${settings.siteDescription}` : ""}
           </p>
           {settings.footerText ? <p>{settings.footerText}</p> : null}
         </div>
