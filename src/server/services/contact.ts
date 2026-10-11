@@ -1,5 +1,7 @@
 import "server-only";
 
+import { after } from "next/server";
+
 import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import {
@@ -11,6 +13,8 @@ import {
 } from "@/lib/validation/contact";
 
 import * as contactRepo from "../repositories/contact";
+import { isEmailConfigured } from "./email";
+import { sendContactEmails } from "./contact-email";
 
 export class ContactServiceError extends Error {}
 export class ContactRateLimitError extends ContactServiceError {}
@@ -68,7 +72,7 @@ export async function submitContact(
     }
 
     // Persist verified submission
-    await contactRepo.insertContactSubmission(db, {
+    const row = await contactRepo.insertContactSubmission(db, {
       name: data.name,
       email: data.email,
       organization: data.organization,
@@ -78,6 +82,21 @@ export async function submitContact(
       ipHash,
       status: "NEW",
     });
+
+    // Email the owner (and the visitor, if configured) once the response has
+    // been sent, so mail latency or an outage never affects the form.
+    if (isEmailConfigured()) {
+      after(() =>
+        sendContactEmails({
+          id: row.id,
+          name: row.name,
+          email: row.email,
+          organization: row.organization,
+          reason: row.reason,
+          message: row.message,
+        }),
+      );
+    }
 
     return { success: true };
   } catch (err: unknown) {

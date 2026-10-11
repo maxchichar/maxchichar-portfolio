@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { INBOX_STATUSES, type InboxStatus } from "@/server/repositories/contact";
 import { getSubmission, listInbox } from "@/server/services/contact";
+import { isEmailConfigured } from "@/server/services/email";
 
 import { setInboxStatusForm } from "./actions";
 
@@ -55,6 +56,15 @@ export default async function InboxPage({
             : "Messages from your contact form."
         }
       />
+
+      {!isEmailConfigured() ? (
+        <p className="border-border bg-surface text-text-muted mb-6 rounded-lg border px-4 py-3 font-sans text-sm">
+          <span className="text-text font-medium">Email alerts are off.</span> New
+          messages only appear here. Add{" "}
+          <code className="font-mono text-xs">RESEND_API_KEY</code> to your environment
+          variables to get an email for each one.
+        </p>
+      ) : null}
 
       <nav
         aria-label="Folders"
