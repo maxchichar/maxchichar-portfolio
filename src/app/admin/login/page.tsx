@@ -5,6 +5,7 @@ import { AuthError } from "next-auth";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { signIn } from "@/lib/auth/config";
 import { getPublicSiteSettings } from "@/server/services/settings";
+import { MediaImage } from "@/components/media-image";
 
 export default async function LoginPage({
   searchParams,
@@ -39,11 +40,13 @@ export default async function LoginPage({
         className="bg-surface relative hidden overflow-hidden lg:block"
       >
         {settings.heroImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <MediaImage
             src={settings.heroImage.url}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover"
+            fill
+            sizes="55vw"
+            loading="eager"
+            className="object-cover"
           />
         ) : (
           <div aria-hidden="true" className="hero-wash absolute inset-0" />

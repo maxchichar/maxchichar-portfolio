@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AdminPageHeader } from "@/components/admin/page-header";
 import * as mediaService from "@/server/services/media";
+import { MediaImage } from "@/components/media-image";
 
 import { CopyUrlButton } from "./copy-url-button";
 import { DeleteMediaButton } from "./[id]/delete-media-button";
@@ -117,13 +118,13 @@ export default async function MediaLibraryPage({
               className="group rounded-panel border-border bg-surface hover:border-text/25 overflow-hidden border transition-colors"
             >
               <Link href={`/admin/media/${item.id}`}>
-                <div className="border-border bg-bg/50 aspect-square w-full overflow-hidden border-b">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                <div className="border-border bg-bg/50 relative aspect-square w-full overflow-hidden border-b">
+                  <MediaImage
                     src={item.storageUrl}
                     alt={item.altText ?? item.filename}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    fill
+                    sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                 </div>
                 <div className="px-3 pt-3">

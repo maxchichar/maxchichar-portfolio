@@ -9,6 +9,7 @@ import { PageIntro } from "@/components/layout/page-intro";
 import { constructPageMetadata } from "@/lib/metadata";
 import { listPublicWorkOverview } from "@/server/services/projects";
 import { PageTransition } from "@/components/motion/page-transition";
+import { MediaImage } from "@/components/media-image";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -79,12 +80,18 @@ export default async function WorkListingPage({ searchParams }: PageProps<"/work
                           }`}
                         >
                           {coverUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
+                            <MediaImage
                               src={coverUrl}
                               alt=""
-                              loading={lead ? undefined : "lazy"}
-                              className="h-full w-full object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                              fill
+                              sizes={lead ? "100vw" : "(min-width: 768px) 50vw, 100vw"}
+                              {...(lead
+                                ? {
+                                    loading: "eager" as const,
+                                    fetchPriority: "high" as const,
+                                  }
+                                : {})}
+                              className="object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
                             />
                           ) : (
                             <div

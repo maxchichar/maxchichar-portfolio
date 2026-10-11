@@ -9,6 +9,7 @@ import { PageIntro } from "@/components/layout/page-intro";
 import { constructPageMetadata } from "@/lib/metadata";
 import { listPublicArticlesOverview } from "@/server/services/articles";
 import { PageTransition } from "@/components/motion/page-transition";
+import { MediaImage } from "@/components/media-image";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -77,13 +78,15 @@ export default async function WritingListingPage({
                 share="morph"
                 default="none"
               >
-                <div className="rounded-panel border-border bg-surface aspect-[4/3] overflow-hidden border md:col-span-7">
+                <div className="rounded-panel border-border bg-surface relative aspect-[4/3] overflow-hidden border md:col-span-7">
                   {featured.coverUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <MediaImage
                       src={featured.coverUrl}
                       alt=""
-                      className="h-full w-full object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                      fill
+                      sizes="(min-width: 768px) 58vw, 100vw"
+                      loading="eager"
+                      className="object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
                     />
                   ) : (
                     <div aria-hidden="true" className="hero-wash h-full w-full" />

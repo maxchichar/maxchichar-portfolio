@@ -17,6 +17,7 @@ import {
   JsonLdScript,
 } from "@/lib/structured-data";
 import { PageTransition } from "@/components/motion/page-transition";
+import { MediaImage } from "@/components/media-image";
 
 // Homepage sections reuse the same public overview services /work, /research,
 // and /writing already call — no new database queries. Selection criteria
@@ -309,12 +310,12 @@ function WorkCard({
       <ViewTransition name={transitionName} share="morph" default="none">
         <div className="rounded-panel border-border bg-surface relative aspect-[4/3] overflow-hidden border">
           {coverUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <MediaImage
               src={coverUrl}
               alt=""
-              loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+              fill
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
             />
           ) : (
             <div
