@@ -750,3 +750,28 @@ html.has-reticle
   outline: 2px solid var(--accent);
   outline-offset: 4px;
 }
+
+/* Command palette: quick fade + lift on open (instant under reduced motion). */
+@keyframes cmdk-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes cmdk-lift {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+}
+.cmdk-overlay {
+  animation: cmdk-fade 160ms ease-out;
+}
+.cmdk-panel {
+  animation: cmdk-lift 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cmdk-overlay,
+  .cmdk-panel {
+    animation: none;
+  }
+}

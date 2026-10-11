@@ -11,6 +11,7 @@ import "./globals.css";
 
 import { AnalyticsBeacon } from "@/components/analytics-beacon";
 import { ReticleCursor } from "@/components/motion/reticle-cursor";
+import { CommandPalette } from "@/components/search/command-palette";
 import { RevealObserver } from "@/components/motion/reveal-observer";
 import { SmoothScroll } from "@/components/motion/smooth-scroll";
 import { constructBaseMetadata } from "@/lib/metadata";
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <RevealObserver />
         <AnalyticsBeacon />
         <ReticleCursor />
+        <CommandPalette />
         {children}
       </body>
     </html>
