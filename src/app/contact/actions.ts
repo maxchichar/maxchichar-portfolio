@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 
+import { TURNSTILE_FIELD } from "@/lib/turnstile";
 import { submitContact } from "@/server/services/contact";
 
 export interface ContactFormState {
@@ -34,5 +35,6 @@ export async function submitContactForm(
     honeypot: formData.get("honeypot"),
   };
 
-  return submitContact(raw, clientIp);
+  const token = formData.get(TURNSTILE_FIELD);
+  return submitContact(raw, clientIp, typeof token === "string" ? token : null);
 }

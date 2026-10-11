@@ -1,7 +1,11 @@
+import { TURNSTILE_ORIGIN, turnstileSiteKey } from "./turnstile";
+
 export interface SecurityHeaderOptions {
   isDev?: boolean;
   storageEndpoint?: string | null;
   forceHsts?: boolean;
+  /** Allow the Cloudflare Turnstile script and iframe (contact form). */
+  turnstile?: boolean;
 }
 
 /**
@@ -36,7 +40,8 @@ export function extractStorageOrigin(endpoint?: string | null): string | null {
  * - font-src 'self' (self-hosted Fontsource variable fonts)
  * - connect-src 'self' + exact R2 storage origin for presigned PUT uploads
  * - media-src 'self' + exact R2 storage origin
- * - frame-src 'none' (no iframes used)
+ * - frame-src 'none' (no iframes used), except the exact Turnstile origin
+ *   (also added to script-src) when the contact form's human check is enabled
  * - object-src 'none' (blocks plugins)
  * - base-uri 'self'
  * - form-action 'self' (allows server actions and same-origin forms)
@@ -62,6 +67,10 @@ export function buildCspHeader(options?: SecurityHeaderOptions): string {
     // Development-only for Next.js Turbopack / Fast Refresh eval
     scriptSrc.push("'unsafe-eval'");
   }
+
+  const turnstile = options?.turnstile ?? Boolean(turnstileSiteKey());
+  if (turnstile) scriptSrc.push(TURNSTILE_ORIGIN);
+  const frameSrc = turnstile ? [TURNSTILE_ORIGIN] : ["'none'"];
 
   const imgSrc = ["'self'", "data:", "blob:"];
   if (storageOrigin) {
@@ -95,7 +104,7 @@ export function buildCspHeader(options?: SecurityHeaderOptions): string {
     "font-src": ["'self'"],
     "connect-src": connectSrc,
     "media-src": mediaSrc,
-    "frame-src": ["'none'"],
+    "frame-src": frameSrc,
     "object-src": ["'none'"],
     "base-uri": ["'self'"],
     "form-action": ["'self'"],
