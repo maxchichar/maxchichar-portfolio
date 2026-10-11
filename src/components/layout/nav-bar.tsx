@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { LogoMark } from "@/components/brand/logo-mark";
+import { SearchButton } from "@/components/search/search-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function NavBar({
@@ -87,6 +88,7 @@ export function NavBar({
           </nav>
 
           <div className="flex items-center gap-2">
+            <SearchButton className="w-10 md:w-auto" />
             <ThemeToggle />
             <Link
               href="/contact"

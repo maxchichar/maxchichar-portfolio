@@ -26,6 +26,35 @@ function applyTheme(next: Theme) {
 }
 
 /**
+ * Flips the theme. Where View Transitions exist, the new theme spreads out
+ * in a circle from `origin` (default: the viewport centre); otherwise, and
+ * under reduced motion, it switches instantly. Also used by the command
+ * palette's "Switch theme" action.
+ */
+export function switchTheme(origin?: { x: number; y: number }) {
+  const target: Theme = getTheme() === "light" ? "dark" : "light";
+  const doc = document as Document & {
+    startViewTransition?: (cb: () => void) => { finished: Promise<void> };
+  };
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!doc.startViewTransition || reduce) {
+    applyTheme(target);
+    return;
+  }
+
+  const x = origin?.x ?? innerWidth / 2;
+  const y = origin?.y ?? innerHeight / 2;
+  const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  const root = document.documentElement;
+  root.style.setProperty("--theme-x", `${x}px`);
+  root.style.setProperty("--theme-y", `${y}px`);
+  root.style.setProperty("--theme-r", `${r}px`);
+  root.classList.add("theme-switching");
+  const transition = doc.startViewTransition(() => applyTheme(target));
+  transition.finished.finally(() => root.classList.remove("theme-switching"));
+}
+
+/**
  * Light/dark switch. Where View Transitions exist, the new theme spreads
  * out in a circle from the button; otherwise (and under reduced motion) it
  * switches instantly. The sun/moon icon swaps in CSS, so server and client
@@ -36,27 +65,8 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   const next: Theme = theme === "light" ? "dark" : "light";
 
   function toggle(e: React.MouseEvent<HTMLButtonElement>) {
-    const target = getTheme() === "light" ? "dark" : "light";
-    const doc = document as Document & {
-      startViewTransition?: (cb: () => void) => { finished: Promise<void> };
-    };
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!doc.startViewTransition || reduce) {
-      applyTheme(target);
-      return;
-    }
-
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
-    const root = document.documentElement;
-    root.style.setProperty("--theme-x", `${x}px`);
-    root.style.setProperty("--theme-y", `${y}px`);
-    root.style.setProperty("--theme-r", `${r}px`);
-    root.classList.add("theme-switching");
-    const transition = doc.startViewTransition(() => applyTheme(target));
-    transition.finished.finally(() => root.classList.remove("theme-switching"));
+    switchTheme({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
   }
 
   return (

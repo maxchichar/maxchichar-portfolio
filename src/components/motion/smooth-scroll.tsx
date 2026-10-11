@@ -4,6 +4,9 @@ import Lenis from "lenis";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
+/** Dispatch with `detail: true` to pause page scrolling, `false` to resume. */
+export const SCROLL_LOCK_EVENT = "scroll-lock";
+
 /**
  * Inertial smooth scrolling for the public site (Lenis). Skipped in the
  * admin (a tool, not a showcase) and for visitors who prefer reduced motion.
@@ -23,7 +26,16 @@ export function SmoothScroll() {
       anchors: { offset: -80 },
       lerp: 0.11,
     });
-    return () => lenis.destroy();
+    // Overlays (the command palette) pause smooth scrolling while open.
+    const onLock = (e: Event) => {
+      if ((e as CustomEvent<boolean>).detail) lenis.stop();
+      else lenis.start();
+    };
+    window.addEventListener(SCROLL_LOCK_EVENT, onLock);
+    return () => {
+      window.removeEventListener(SCROLL_LOCK_EVENT, onLock);
+      lenis.destroy();
+    };
   }, [enabled]);
 
   return null;
