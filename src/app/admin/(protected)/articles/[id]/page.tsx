@@ -71,6 +71,7 @@ export default async function ArticleEditPage({
           published={published}
           versions={versions}
           liveHref={`/writing/${article.slug}`}
+          previewHref={`/preview/writing/${article.id}`}
           ensureDraftAction={ensureDraftForm}
           publishAction={publishArticleForm}
           rollbackAction={rollbackArticleForm}

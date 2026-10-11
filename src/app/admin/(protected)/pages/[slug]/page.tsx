@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { contentSchemaForSlug, PAGE_SLUGS, type PageSlug } from "@/lib/validation/page";
+import { PreviewButton } from "@/components/admin/editor/preview-button";
 import * as pagesService from "@/server/services/pages";
 
 import {
@@ -85,7 +86,7 @@ export default async function PageEditPage({
       )}
 
       {draft && fields && (
-        <form action={saveDraftForm} className="mt-8 space-y-5">
+        <form id="page-draft-form" action={saveDraftForm} className="mt-8 space-y-5">
           <input type="hidden" name="pageId" value={page.id} />
           <input type="hidden" name="slug" value={slug} />
 
@@ -320,6 +321,12 @@ export default async function PageEditPage({
           </button>
         </form>
       )}
+
+      {draft ? (
+        <div className="mt-4 max-w-xs">
+          <PreviewButton href={`/preview/page/${slug}`} formId="page-draft-form" />
+        </div>
+      ) : null}
 
       {draft && (
         <form action={publishPageForm} className="mt-4">

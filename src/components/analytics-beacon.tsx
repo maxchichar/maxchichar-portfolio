@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 
 /**
  * Sends one cookieless page-view beacon per client-side navigation. Skips
- * the admin, and does nothing for visitors with Global Privacy Control or
+ * the admin or draft previews, and does nothing for visitors with Global Privacy Control or
  * Do Not Track enabled.
  */
 export function AnalyticsBeacon() {
@@ -13,7 +13,13 @@ export function AnalyticsBeacon() {
   const last = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!pathname || pathname.startsWith("/admin") || last.current === pathname) return;
+    if (
+      !pathname ||
+      pathname.startsWith("/admin") ||
+      pathname.startsWith("/preview") ||
+      last.current === pathname
+    )
+      return;
     const nav = navigator as Navigator & { globalPrivacyControl?: boolean };
     if (nav.globalPrivacyControl || nav.doNotTrack === "1") return;
 

@@ -93,6 +93,7 @@ export default async function ResearchEditPage({
           published={published}
           versions={versions}
           liveHref={`/research/${research.slug}`}
+          previewHref={`/preview/research/${research.id}`}
           ensureDraftAction={ensureDraftForm}
           publishAction={publishResearchForm}
           rollbackAction={rollbackResearchForm}
