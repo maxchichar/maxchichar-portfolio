@@ -11,10 +11,8 @@ import {
   buildJsonLdGraph,
   JsonLdScript,
 } from "@/lib/structured-data";
-import {
-  getPublicArticleDetail,
-  listPublicArticlesOverview,
-} from "@/server/services/articles";
+import { getPublicArticleDetail } from "@/server/services/articles";
+import { getReadNext } from "@/server/services/related";
 import { getPublicSiteSettings } from "@/server/services/settings";
 import { PageTransition } from "@/components/motion/page-transition";
 
@@ -50,20 +48,16 @@ export default async function ArticleDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const [settings, allArticles] = await Promise.all([
+  const [settings, readNext] = await Promise.all([
     getPublicSiteSettings(),
-    listPublicArticlesOverview(),
+    getReadNext("writing", slug),
   ]);
-  // "Keep reading": the next article in the listing (newest first), wrapping.
-  const idx = allArticles.findIndex((a) => a.article.slug === slug);
-  const nextItem =
-    allArticles.length > 1 ? allArticles[(idx + 1) % allArticles.length] : undefined;
-  const next = nextItem
+  const next = readNext.next
     ? {
-        slug: nextItem.article.slug,
-        title: nextItem.published.title,
-        body: nextItem.published.excerpt,
-        coverUrl: nextItem.coverUrl,
+        slug: readNext.next.slug,
+        title: readNext.next.title,
+        body: readNext.next.summary,
+        coverUrl: readNext.next.coverUrl,
       }
     : null;
 
@@ -97,6 +91,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
             tags={item.tags}
             coverUrl={item.coverUrl}
             next={next}
+            related={readNext.related}
             author={{ name: settings.siteName, description: settings.siteDescription }}
           />
         </main>

@@ -114,7 +114,25 @@ export async function Footer() {
             &copy; {year} {settings.siteName}
             {settings.siteDescription ? `. ${settings.siteDescription}` : ""}
           </p>
-          {settings.footerText ? <p>{settings.footerText}</p> : null}
+          <div className="flex items-center gap-5">
+            {settings.footerText ? <p>{settings.footerText}</p> : null}
+            <a
+              href="/feed.xml"
+              className="hover:text-text inline-flex items-center gap-1.5 transition-colors"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                className="h-3 w-3"
+              >
+                <circle cx="3" cy="13" r="1.75" />
+                <path d="M1.25 6.5a8.25 8.25 0 018.25 8.25h-2a6.25 6.25 0 00-6.25-6.25v-2z" />
+                <path d="M1.25 1.25A13.5 13.5 0 0114.75 14.75h-2A11.5 11.5 0 001.25 3.25v-2z" />
+              </svg>
+              RSS
+            </a>
+          </div>
         </div>
       </div>
 

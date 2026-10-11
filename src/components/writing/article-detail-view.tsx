@@ -2,10 +2,12 @@ import Link from "next/link";
 
 import { DetailHero } from "@/components/detail/detail-hero";
 import { NextUp } from "@/components/detail/next-up";
+import { RelatedContent } from "@/components/detail/related";
 import { Toc } from "@/components/detail/toc";
 import { RichText } from "@/components/rich-text";
 import type { schema } from "@/lib/db";
 import { collectHeadings } from "@/lib/rich-text";
+import type { ContentCard } from "@/lib/related";
 
 type ArticleRow = typeof schema.articles.$inferSelect;
 type ArticleVersionRow = typeof schema.articleVersions.$inferSelect;
@@ -24,6 +26,7 @@ export function ArticleDetailView({
   tags,
   coverUrl,
   next,
+  related = [],
   author,
 }: {
   article: ArticleRow;
@@ -31,6 +34,7 @@ export function ArticleDetailView({
   tags: TagRow[];
   coverUrl: string | null;
   next: NextArticle | null;
+  related?: ContentCard[];
   author: { name: string; description: string | null };
 }) {
   // Only top-level sections (h2) go in the contents list; it's shown once an
@@ -131,6 +135,8 @@ export function ArticleDetailView({
           </footer>
         </div>
       </div>
+
+      <RelatedContent items={related} />
 
       {next ? (
         <NextUp

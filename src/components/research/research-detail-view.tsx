@@ -1,11 +1,13 @@
 import { DetailHero } from "@/components/detail/detail-hero";
 import { NarrativeSection } from "@/components/detail/narrative-section";
 import { NextUp } from "@/components/detail/next-up";
+import { RelatedContent } from "@/components/detail/related";
 import { Toc } from "@/components/detail/toc";
 import { EvidenceWall } from "@/components/work/evidence-wall";
 import type { schema } from "@/lib/db";
 import { tiptapDocToPlainText } from "@/lib/validation/project";
 import { RESEARCH_SECTION_KEYS } from "@/lib/validation/research";
+import type { ContentCard } from "@/lib/related";
 
 type ResearchRow = typeof schema.research.$inferSelect;
 type ResearchVersionRow = typeof schema.researchVersions.$inferSelect;
@@ -26,6 +28,7 @@ export function ResearchDetailView({
   tags,
   coverUrl,
   next,
+  related = [],
 }: {
   research: ResearchRow;
   published: ResearchVersionRow;
@@ -33,6 +36,7 @@ export function ResearchDetailView({
   tags: TagRow[];
   coverUrl: string | null;
   next: NextResearch | null;
+  related?: ContentCard[];
 }) {
   const sections = new Map<string, { heading: string; content: unknown }>();
   for (const s of (published.sections as
@@ -131,6 +135,8 @@ export function ResearchDetailView({
           </div>
         </div>
       ) : null}
+
+      <RelatedContent items={related} />
 
       {next ? (
         <NextUp
