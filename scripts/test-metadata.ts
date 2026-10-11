@@ -103,6 +103,8 @@ describe("Base Metadata helper logic (Level 9.1)", () => {
       ]);
       assert.deepStrictEqual(meta.alternates, {
         canonical: "/",
+        // RSS auto-discovery, declared alongside the canonical.
+        types: { "application/rss+xml": [{ url: "/feed.xml", title: "RSS feed" }] },
       });
     });
 
