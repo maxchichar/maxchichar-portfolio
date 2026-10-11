@@ -584,6 +584,27 @@ export const siteSettings = pgTable(
 // CONTACT
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Site documents: downloadable files the site offers (currently the CV),
+// keyed by slot. Kept out of site_settings on purpose: if this table hasn't
+// been migrated yet, only the CV feature is unavailable, not every setting.
+// ---------------------------------------------------------------------------
+export const SITE_DOCUMENT_KEYS = ["cv"] as const;
+export type SiteDocumentKey = (typeof SITE_DOCUMENT_KEYS)[number];
+
+export const siteDocuments = pgTable(
+  "site_documents",
+  {
+    key: text("key").primaryKey(),
+    mediaId: uuid("media_id")
+      .notNull()
+      .references(() => media.id),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [check("site_documents_key_check", sql`${table.key} IN ('cv')`)],
+);
+
 export const contactSubmissions = pgTable(
   "contact_submissions",
   {

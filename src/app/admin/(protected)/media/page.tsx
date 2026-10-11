@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AdminPageHeader } from "@/components/admin/page-header";
 import * as mediaService from "@/server/services/media";
+import { DocumentTile } from "@/components/admin/document-tile";
 import { MediaImage } from "@/components/media-image";
 
 import { CopyUrlButton } from "./copy-url-button";
@@ -119,13 +120,17 @@ export default async function MediaLibraryPage({
             >
               <Link href={`/admin/media/${item.id}`}>
                 <div className="border-border bg-bg/50 relative aspect-square w-full overflow-hidden border-b">
-                  <MediaImage
-                    src={item.storageUrl}
-                    alt={item.altText ?? item.filename}
-                    fill
-                    sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                  />
+                  {item.mimeType.startsWith("image/") ? (
+                    <MediaImage
+                      src={item.storageUrl}
+                      alt={item.altText ?? item.filename}
+                      fill
+                      sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                  ) : (
+                    <DocumentTile />
+                  )}
                 </div>
                 <div className="px-3 pt-3">
                   <p className="text-text truncate font-sans text-xs font-medium">

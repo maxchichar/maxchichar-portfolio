@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import * as mediaService from "@/server/services/media";
+import { DocumentTile } from "@/components/admin/document-tile";
 
 import { updateAltTextForm } from "../actions";
 import { CopyUrlButton } from "../copy-url-button";
@@ -24,7 +25,8 @@ const REFERENCE_LABELS = {
   research: "a Research cover",
   articles: "an Article cover",
   evidence: "an Evidence item",
-  siteSettings: "Site Settings (logo, favicon, or default OG image)",
+  siteSettings: "Site Settings (hero or About image)",
+  documents: "Site Settings (CV)",
 } as const;
 
 export default async function MediaDetailPage({
@@ -57,14 +59,25 @@ export default async function MediaDetailPage({
         </span>
       </div>
 
-      <div className="rounded-panel border-border bg-bg/50 mt-6 overflow-hidden border">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={media.storageUrl}
-          alt={media.altText ?? media.filename}
-          className="max-h-[420px] w-full object-contain"
-        />
-      </div>
+      {media.mimeType.startsWith("image/") ? (
+        <div className="rounded-panel border-border bg-bg/50 mt-6 overflow-hidden border">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={media.storageUrl}
+            alt={media.altText ?? media.filename}
+            className="max-h-[420px] w-full object-contain"
+          />
+        </div>
+      ) : (
+        <a
+          href={media.storageUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-panel border-border bg-bg/50 hover:border-text/25 relative mt-6 block h-56 overflow-hidden border transition-colors"
+        >
+          <DocumentTile label="PDF · Open ↗" />
+        </a>
+      )}
 
       <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 font-mono text-xs">
         <div>
