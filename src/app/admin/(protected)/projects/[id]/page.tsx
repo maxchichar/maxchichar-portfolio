@@ -96,6 +96,7 @@ export default async function ProjectEditPage({
           published={published}
           versions={versions}
           liveHref={`/work/${project.slug}`}
+          previewHref={`/preview/work/${project.id}`}
           ensureDraftAction={ensureDraftForm}
           publishAction={publishProjectForm}
           rollbackAction={rollbackProjectForm}

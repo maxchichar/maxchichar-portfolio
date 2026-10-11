@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PreviewButton } from "./preview-button";
 import { UnsavedGuard } from "./unsaved-guard";
 
 type Action = (formData: FormData) => Promise<void>;
@@ -48,6 +49,7 @@ export function PublishPanel({
   published,
   versions,
   liveHref,
+  previewHref,
   ensureDraftAction,
   publishAction,
   rollbackAction,
@@ -63,6 +65,8 @@ export function PublishPanel({
   published: { versionNumber: number; publishedAt: Date | null } | null;
   versions: Version[];
   liveHref: string | null;
+  /** Admin-only page rendering the saved draft with the public design. */
+  previewHref?: string;
   ensureDraftAction: Action;
   publishAction: Action;
   rollbackAction: Action;
@@ -125,6 +129,7 @@ export function PublishPanel({
               >
                 Save draft
               </button>
+              {previewHref ? <PreviewButton href={previewHref} formId={formId} /> : null}
               <form action={publishAction} data-needs-saved>
                 {hidden}
                 <button

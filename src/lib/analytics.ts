@@ -50,6 +50,6 @@ export function normalizePath(path: unknown): string | null {
   if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//"))
     return null;
   const clean = path.split(/[?#]/)[0]!.slice(0, 300) || "/";
-  if (/^\/(admin|api|_next)(\/|$)/.test(clean)) return null;
+  if (/^\/(admin|api|_next|preview)(\/|$)/.test(clean)) return null;
   return clean.length > 1 ? clean.replace(/\/+$/, "") : clean;
 }
