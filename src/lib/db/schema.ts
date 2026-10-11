@@ -633,6 +633,35 @@ export const testimonials = pgTable(
   ],
 );
 
+// ---------------------------------------------------------------------------
+// Error events: production errors grouped by fingerprint (same message on
+// the same route = one row with a counter), for alerting and the admin
+// Errors page. Privacy: no IPs, headers or query strings are stored.
+// ---------------------------------------------------------------------------
+export const errorEvents = pgTable(
+  "error_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    fingerprint: text("fingerprint").notNull().unique(),
+    source: text("source").notNull(),
+    message: text("message").notNull(),
+    route: text("route"),
+    lastPath: text("last_path"),
+    method: text("method"),
+    digest: text("digest"),
+    stack: text("stack"),
+    count: integer("count").notNull().default(1),
+    firstSeen: timestamp("first_seen", { withTimezone: true }).notNull().defaultNow(),
+    lastSeen: timestamp("last_seen", { withTimezone: true }).notNull().defaultNow(),
+    lastAlertedAt: timestamp("last_alerted_at", { withTimezone: true }),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  },
+  (table) => [
+    check("error_events_source_check", sql`${table.source} IN ('server','client')`),
+    index("error_events_last_seen_idx").on(table.lastSeen),
+  ],
+);
+
 export const contactSubmissions = pgTable(
   "contact_submissions",
   {
