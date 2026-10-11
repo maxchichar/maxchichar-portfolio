@@ -15,6 +15,7 @@ import {
 import * as contactRepo from "../repositories/contact";
 import { isEmailConfigured } from "./email";
 import { sendContactEmails } from "./contact-email";
+import { verifyTurnstile } from "./turnstile";
 
 export class ContactServiceError extends Error {}
 export class ContactRateLimitError extends ContactServiceError {}
@@ -27,6 +28,7 @@ export interface ContactSubmissionResult {
 export async function submitContact(
   rawInput: unknown,
   clientIp: string = "unknown",
+  turnstileToken?: string | null,
 ): Promise<ContactSubmissionResult> {
   const parsed = contactSubmissionSchema.safeParse(rawInput);
   if (!parsed.success) {
@@ -54,6 +56,21 @@ export async function submitContact(
         status: "SPAM",
       });
       return { success: true };
+    }
+
+    // Human check (Cloudflare Turnstile), when configured.
+    const human = await verifyTurnstile(turnstileToken, clientIp);
+    if (human === "missing") {
+      return {
+        success: false,
+        error: "Still checking you're human. Please wait a moment and send again.",
+      };
+    }
+    if (human === "fail") {
+      return {
+        success: false,
+        error: "We couldn't verify you're human. Please refresh the page and try again.",
+      };
     }
 
     // Rate limiting check: enforce max submissions per window per hashed IP

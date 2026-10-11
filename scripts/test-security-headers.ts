@@ -105,6 +105,20 @@ describe("Defensive HTTP Security Headers (Level 9.7)", () => {
       assert.ok(csp.includes("style-src 'self' 'unsafe-inline'"));
     });
 
+    it("allows only the exact Turnstile origin for script-src and frame-src when enabled", () => {
+      const csp = buildCspHeader({ isDev: false, turnstile: true });
+      assert.ok(
+        csp.includes(
+          "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+        ),
+      );
+      assert.ok(csp.includes("frame-src https://challenges.cloudflare.com"));
+      assert.ok(!csp.includes("frame-src 'none'"));
+      const off = buildCspHeader({ isDev: false, turnstile: false });
+      assert.ok(off.includes("frame-src 'none'"));
+      assert.ok(!off.includes("challenges.cloudflare.com"));
+    });
+
     it("permits data: and blob: in img-src for local placeholders and admin file previews", () => {
       const csp = buildCspHeader({ isDev: false });
       assert.ok(csp.includes("img-src 'self' data: blob:"));

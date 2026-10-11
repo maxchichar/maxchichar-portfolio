@@ -4,7 +4,9 @@ import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { SplitText } from "@/components/motion/split-text";
 import { constructPageMetadata } from "@/lib/metadata";
+import { turnstileSiteKey } from "@/lib/turnstile";
 import { getPublicSiteSettings } from "@/server/services/settings";
+import { isTurnstileEnabled } from "@/server/services/turnstile";
 
 import { ContactForm } from "./contact-form";
 import { PageTransition } from "@/components/motion/page-transition";
@@ -98,7 +100,9 @@ export default async function ContactPage() {
               className="animate-rise rounded-panel border-border bg-surface border p-6 sm:p-10 lg:col-span-7"
               style={{ animationDelay: "300ms" }}
             >
-              <ContactForm />
+              <ContactForm
+                turnstileSiteKey={isTurnstileEnabled() ? turnstileSiteKey() : null}
+              />
             </section>
           </div>
         </main>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { CONTACT_REASONS } from "@/lib/validation/contact";
 
 import { submitContactForm, type ContactFormState } from "./actions";
+import { TurnstileWidget, type TurnstileHandle } from "./turnstile-widget";
 
 const fieldClass =
   "rounded-card border-border bg-bg text-text placeholder:text-text-muted/60 hover:border-text/25 focus-visible:border-accent mt-2 w-full border px-4 py-3.5 font-sans text-base outline-none transition-colors";
@@ -15,11 +16,36 @@ const initialState: ContactFormState = {
   success: false,
 };
 
-export function ContactForm() {
+export function ContactForm({ turnstileSiteKey }: { turnstileSiteKey?: string | null }) {
   const [state, formAction, isPending] = useActionState(submitContactForm, initialState);
-  const [resetKey, setResetKey] = useState(0);
+  // The result the visitor dismissed with "Send another message".
+  const [dismissed, setDismissed] = useState<ContactFormState | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [humanCheckFailed, setHumanCheckFailed] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const turnstile = useRef<TurnstileHandle>(null);
 
-  if (state.success && resetKey === 0) {
+  // Turnstile tokens are single-use: get a fresh one after every attempt.
+  useEffect(() => {
+    if (state !== initialState) turnstile.current?.reset();
+  }, [state]);
+
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    setNotice(null);
+    if (!turnstileSiteKey || token) return;
+    // Hold the submit (React would otherwise clear the fields) until the
+    // check has produced a token.
+    e.preventDefault();
+    setNotice(
+      humanCheckFailed
+        ? "The human check couldn't load. Please refresh the page, or email me directly."
+        : "One moment, checking you're human. Then send again.",
+    );
+  };
+
+  const error = notice ?? state.error;
+
+  if (state.success && state !== dismissed) {
     return (
       <div role="status" className="animate-rise py-10 text-center">
         <span
@@ -35,7 +61,7 @@ export function ContactForm() {
         </p>
         <button
           type="button"
-          onClick={() => setResetKey((k) => k + 1)}
+          onClick={() => setDismissed(state)}
           className="border-border text-text hover:border-accent hover:text-accent mt-8 rounded-full border px-5 py-2.5 font-sans text-sm transition-colors"
         >
           Send another message
@@ -45,7 +71,7 @@ export function ContactForm() {
   }
 
   return (
-    <form action={formAction} className="space-y-7">
+    <form action={formAction} onSubmit={onSubmit} className="space-y-7">
       {/* Honeypot field for spam prevention — invisible to regular users */}
       <div className="hidden" aria-hidden="true">
         <label htmlFor="website-hp">Website</label>
@@ -139,12 +165,27 @@ export function ContactForm() {
         />
       </div>
 
-      {state.error ? (
+      {turnstileSiteKey ? (
+        <TurnstileWidget
+          ref={turnstile}
+          siteKey={turnstileSiteKey}
+          onToken={(t) => {
+            setToken(t);
+            if (t) {
+              setHumanCheckFailed(false);
+              setNotice(null);
+            }
+          }}
+          onError={() => setHumanCheckFailed(true)}
+        />
+      ) : null}
+
+      {error ? (
         <div
           role="alert"
           className="rounded-card border-border bg-surface-2 text-text border px-4 py-3 font-sans text-sm"
         >
-          {state.error}
+          {error}
         </div>
       ) : null}
 
