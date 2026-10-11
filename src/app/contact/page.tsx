@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 
+import { CvDownload } from "@/components/cv-download";
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { SplitText } from "@/components/motion/split-text";
 import { constructPageMetadata } from "@/lib/metadata";
 import { turnstileSiteKey } from "@/lib/turnstile";
+import { getSiteDocument } from "@/server/services/documents";
 import { getPublicSiteSettings } from "@/server/services/settings";
 import { isTurnstileEnabled } from "@/server/services/turnstile";
 
@@ -21,7 +23,10 @@ export const metadata: Metadata = constructPageMetadata({
 });
 
 export default async function ContactPage() {
-  const settings = await getPublicSiteSettings();
+  const [settings, cv] = await Promise.all([
+    getPublicSiteSettings(),
+    getSiteDocument("cv"),
+  ]);
   const socials = [
     { label: "GitHub", href: settings.socialGithub },
     { label: "LinkedIn", href: settings.socialLinkedin },
@@ -68,6 +73,16 @@ export default async function ContactPage() {
                         >
                           {settings.primaryEmail}
                         </a>
+                      </dd>
+                    </div>
+                  ) : null}
+                  {cv ? (
+                    <div>
+                      <dt className="text-eyebrow text-text-muted font-mono uppercase">
+                        CV
+                      </dt>
+                      <dd className="mt-3">
+                        <CvDownload cv={cv} />
                       </dd>
                     </div>
                   ) : null}

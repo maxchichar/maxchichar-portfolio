@@ -66,7 +66,7 @@ export default async function ProjectEditPage({
 
   // Same existing service /admin/media itself uses — no new query.
   const libraryMedia = (
-    draft ? await mediaService.listMediaLibrary({ status: "READY" }) : []
+    draft ? await mediaService.listMediaLibrary({ status: "READY", kind: "image" }) : []
   ).map((m) => ({
     id: m.id,
     filename: m.filename,

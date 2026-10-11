@@ -6,6 +6,7 @@ import { Nav } from "@/components/layout/nav";
 import { AboutView } from "@/components/pages/about-view";
 import { constructPageMetadata } from "@/lib/metadata";
 import { getPublishedAboutPage } from "@/server/services/pages";
+import { getSiteDocument } from "@/server/services/documents";
 import { getPublicSiteSettings } from "@/server/services/settings";
 import { PageTransition } from "@/components/motion/page-transition";
 
@@ -37,9 +38,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
-  const [about, settings] = await Promise.all([
+  const [about, settings, cv] = await Promise.all([
     getPublishedAboutPage(),
     getPublicSiteSettings(),
+    getSiteDocument("cv"),
   ]);
   if (!about) notFound();
 
@@ -52,6 +54,7 @@ export default async function AboutPage() {
             content={about.content}
             image={settings.aboutImage}
             name={settings.siteName}
+            cv={cv}
           />
         </main>
       </PageTransition>

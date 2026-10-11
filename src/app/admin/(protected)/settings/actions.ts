@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth/config";
+import { setSiteDocument } from "@/server/services/documents";
 import {
   setSiteImage,
   updateSiteSettings,
@@ -68,6 +69,25 @@ export async function saveSiteImage(
     id: session.user.id,
     type: "HUMAN",
   });
+  if (result.success) {
+    revalidatePath("/", "layout");
+  }
+  return result;
+}
+
+/** Sets or clears the CV (a validated PDF) immediately. */
+export async function saveSiteDocument(
+  key: "cv",
+  mediaId: string | null,
+): Promise<SettingsFormState> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Not authenticated." };
+  }
+  if (key !== "cv") {
+    return { success: false, error: "Unknown document." };
+  }
+  const result = await setSiteDocument(key, mediaId, { id: session.user.id });
   if (result.success) {
     revalidatePath("/", "layout");
   }

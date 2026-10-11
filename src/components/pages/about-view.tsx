@@ -1,6 +1,7 @@
 import type { AboutPageContent } from "@/lib/validation/page";
 import type { SiteImage } from "@/lib/validation/settings";
 
+import { CvDownload, type CvInfo } from "@/components/cv-download";
 import { SplitText } from "@/components/motion/split-text";
 import { MediaImage } from "@/components/media-image";
 
@@ -19,10 +20,12 @@ export function AboutView({
   content,
   image,
   name,
+  cv = null,
 }: {
   content: AboutPageContent;
   image: SiteImage | null;
   name: string;
+  cv?: CvInfo | null;
 }) {
   return (
     <article>
@@ -42,6 +45,12 @@ export function AboutView({
                 className="text-text space-y-5 font-serif text-xl leading-relaxed md:text-2xl"
               />
             </div>
+            {cv ? (
+              <CvDownload
+                cv={cv}
+                className="animate-rise mt-10 [animation-delay:300ms]"
+              />
+            ) : null}
           </div>
 
           <figure

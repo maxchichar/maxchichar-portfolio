@@ -6,7 +6,8 @@ import { disableTypes, imageSize } from "image-size";
 import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import {
-  ALLOWED_IMAGE_MIME_TYPES,
+  mediaKindOf,
+  type MediaKind,
   type UploadRequestInput,
 } from "@/lib/validation/media";
 import {
@@ -98,13 +99,12 @@ export async function confirmUpload(mediaId: string) {
 
   const sniffed = await fileTypeFromBuffer(bytes);
   const realMime = sniffed?.mime;
+  const realKind = realMime ? mediaKindOf(realMime) : null;
 
-  if (
-    !realMime ||
-    !ALLOWED_IMAGE_MIME_TYPES.includes(
-      realMime as (typeof ALLOWED_IMAGE_MIME_TYPES)[number],
-    )
-  ) {
+  // The real bytes must be an allowed type AND the same kind that was
+  // declared: a PDF can't arrive as an "image" (and end up as a cover), nor
+  // an image as the CV.
+  if (!realMime || !realKind || realKind !== mediaKindOf(existing.mimeType)) {
     await mediaRepo.markRejected(db, mediaId);
     await deleteObject(existing.storageKey).catch(() => {});
     await logAudit({
@@ -113,7 +113,7 @@ export async function confirmUpload(mediaId: string) {
       resourceType: "media",
       resourceId: mediaId,
       metadata: {
-        reason: "real bytes did not match an allowed image type",
+        reason: "real bytes did not match an allowed type of the declared kind",
         declaredMime: existing.mimeType,
         sniffedMime: realMime ?? null,
       },
@@ -123,18 +123,21 @@ export async function confirmUpload(mediaId: string) {
 
   let width: number | null = null;
   let height: number | null = null;
-  try {
-    // Safe here specifically because realMime is already confirmed to be
-    // one of the three allow-listed raster types — the vulnerable format
-    // handlers are never reached, on top of being disabled outright above.
-    const dims = imageSize(bytes);
-    width = dims.width ?? null;
-    height = dims.height ?? null;
-  } catch {
-    // Dimension extraction failing doesn't make the file unsafe — a
-    // genuinely valid JPEG/PNG/WebP with unusual structure still passed
-    // the magic-byte check. Store it as READY without dimensions rather
-    // than rejecting a legitimate upload over a cosmetic metadata gap.
+  // Dimensions only for images; PDFs never touch image-size.
+  if (realKind === "image") {
+    try {
+      // Safe here specifically because realMime is already confirmed to be
+      // one of the three allow-listed raster types — the vulnerable format
+      // handlers are never reached, on top of being disabled outright above.
+      const dims = imageSize(bytes);
+      width = dims.width ?? null;
+      height = dims.height ?? null;
+    } catch {
+      // Dimension extraction failing doesn't make the file unsafe — a
+      // genuinely valid JPEG/PNG/WebP with unusual structure still passed
+      // the magic-byte check. Store it as READY without dimensions rather
+      // than rejecting a legitimate upload over a cosmetic metadata gap.
+    }
   }
 
   const updated = await mediaRepo.markReady(db, mediaId, {
@@ -166,11 +169,14 @@ export async function confirmUpload(mediaId: string) {
 export async function listMediaLibrary(options?: {
   status?: mediaRepo.MediaStatus | "ALL";
   filenameQuery?: string;
+  /** Image pickers pass "image" so a PDF can never be chosen as a picture. */
+  kind?: MediaKind;
 }) {
   const status = options?.status ?? "READY";
   return mediaRepo.listMedia(db, {
     status: status === "ALL" ? undefined : status,
     filenameQuery: options?.filenameQuery,
+    kind: options?.kind,
   });
 }
 
@@ -245,9 +251,10 @@ export async function deleteMedia(mediaId: string, actor: Actor) {
         articles: "an article",
         evidence: "evidence",
         siteSettings: "Settings (site images)",
+        documents: "Settings (CV)",
       };
       throw new MediaServiceError(
-        `Cannot delete: this image is still used by ${referencedBy
+        `Cannot delete: this file is still used by ${referencedBy
           .map((key) => labels[key] ?? key)
           .join(", ")}.`,
       );

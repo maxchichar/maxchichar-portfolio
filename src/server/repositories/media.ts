@@ -1,9 +1,10 @@
 import "server-only";
 
-import { and, desc, eq, ilike, or } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, like, or } from "drizzle-orm";
 import type { NeonDatabase } from "drizzle-orm/neon-serverless";
 
 import { schema } from "@/lib/db";
+import { ALLOWED_DOCUMENT_MIME_TYPES, type MediaKind } from "@/lib/validation/media";
 
 type Tx =
   | NeonDatabase<typeof schema>
@@ -35,9 +36,13 @@ export async function findById(tx: Tx, id: string): Promise<MediaRow | null> {
  */
 export async function listMedia(
   tx: Tx,
-  options?: { status?: MediaStatus; filenameQuery?: string },
+  options?: { status?: MediaStatus; filenameQuery?: string; kind?: MediaKind },
 ): Promise<MediaRow[]> {
   const conditions = [
+    options?.kind === "image" ? like(schema.media.mimeType, "image/%") : undefined,
+    options?.kind === "document"
+      ? inArray(schema.media.mimeType, [...ALLOWED_DOCUMENT_MIME_TYPES])
+      : undefined,
     options?.status ? eq(schema.media.status, options.status) : undefined,
     options?.filenameQuery
       ? ilike(schema.media.filename, `%${options.filenameQuery}%`)
@@ -97,6 +102,7 @@ export interface MediaReferenceCheck {
   articles: boolean;
   evidence: boolean;
   siteSettings: boolean;
+  documents: boolean;
 }
 
 /**
@@ -155,12 +161,32 @@ export async function checkReferences(
         .limit(1),
     ]);
 
+  // Checked on its own: a missing site_documents table (migration not yet
+  // applied) just means nothing can reference media from it.
+  // Inside a savepoint, so the failed query can't abort a caller's transaction.
+  let documents = false;
+  try {
+    documents = await tx.transaction(async (sp) => {
+      const [docRow] = await sp
+        .select({ key: schema.siteDocuments.key })
+        .from(schema.siteDocuments)
+        .where(eq(schema.siteDocuments.mediaId, mediaId))
+        .limit(1);
+      return Boolean(docRow);
+    });
+  } catch (err) {
+    const code = (err as { code?: string; cause?: { code?: string } })?.code;
+    const causeCode = (err as { cause?: { code?: string } })?.cause?.code;
+    if (code !== "42P01" && causeCode !== "42P01") throw err;
+  }
+
   return {
     projects: Boolean(projectRow),
     research: Boolean(researchRow),
     articles: Boolean(articleRow),
     evidence: Boolean(evidenceRow),
     siteSettings: Boolean(settingsRow),
+    documents,
   };
 }
 

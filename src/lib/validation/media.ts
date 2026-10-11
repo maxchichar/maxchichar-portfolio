@@ -12,11 +12,32 @@ export const ALLOWED_IMAGE_MIME_TYPES = [
   "image/webp",
 ] as const;
 
+// Documents (the CV). PDF only, verified by magic bytes on confirm like
+// images; never passed to image-size.
+export const ALLOWED_DOCUMENT_MIME_TYPES = ["application/pdf"] as const;
+
+export const ALLOWED_UPLOAD_MIME_TYPES = [
+  ...ALLOWED_IMAGE_MIME_TYPES,
+  ...ALLOWED_DOCUMENT_MIME_TYPES,
+] as const;
+
+export type MediaKind = "image" | "document";
+
+export function mediaKindOf(mimeType: string): MediaKind | null {
+  if ((ALLOWED_IMAGE_MIME_TYPES as readonly string[]).includes(mimeType)) return "image";
+  if ((ALLOWED_DOCUMENT_MIME_TYPES as readonly string[]).includes(mimeType)) {
+    return "document";
+  }
+  return null;
+}
+
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB — a cover image, not a design asset dump
 
 export const uploadRequestSchema = z.object({
   filename: z.string().min(1).max(255),
-  mimeType: z.enum(ALLOWED_IMAGE_MIME_TYPES),
+  mimeType: z.enum(ALLOWED_UPLOAD_MIME_TYPES, {
+    message: "Only JPEG, PNG, WebP images or PDF documents can be uploaded.",
+  }),
   sizeBytes: z
     .number()
     .int()
