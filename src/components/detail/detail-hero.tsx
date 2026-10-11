@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ViewTransition } from "react";
 
 import { SplitText } from "@/components/motion/split-text";
+import { MediaImage } from "@/components/media-image";
 
 export interface Fact {
   label: string;
@@ -136,13 +137,15 @@ export function DetailHero({
       {coverUrl ? (
         <div className="container-site mt-12 md:mt-16">
           <ViewTransition name={coverTransitionName} share="morph" default="none">
-            <div className="rounded-panel border-border bg-surface overflow-hidden border">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+            <div className="rounded-panel border-border bg-surface relative aspect-[16/9] overflow-hidden border md:aspect-[21/9]">
+              <MediaImage
                 src={coverUrl}
                 alt={coverAlt}
+                fill
+                sizes="(min-width: 1440px) 1440px, 100vw"
+                loading="eager"
                 fetchPriority="high"
-                className="aspect-[16/9] w-full object-cover md:aspect-[21/9]"
+                className="object-cover"
               />
             </div>
           </ViewTransition>

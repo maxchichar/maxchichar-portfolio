@@ -2,6 +2,7 @@ import type { AboutPageContent } from "@/lib/validation/page";
 import type { SiteImage } from "@/lib/validation/settings";
 
 import { SplitText } from "@/components/motion/split-text";
+import { MediaImage } from "@/components/media-image";
 
 import { Paragraphs } from "./paragraphs";
 
@@ -49,13 +50,13 @@ export function AboutView({
           >
             <div className="rounded-panel border-border bg-surface grain relative aspect-[4/5] overflow-hidden border">
               {image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <MediaImage
                   src={image.url}
                   alt={image.alt ?? `Portrait of ${name}`}
-                  width={image.width ?? undefined}
-                  height={image.height ?? undefined}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(min-width: 1024px) 40vw, 100vw"
+                  loading="eager"
+                  className="object-cover"
                 />
               ) : (
                 <div aria-hidden="true" className="hero-wash h-full w-full" />

@@ -1,9 +1,23 @@
 import type { NextConfig } from "next";
 import { buildSecurityHeaders } from "./src/lib/security-headers";
+import { storageRemotePatterns } from "./src/lib/storage/image";
 
 const nextConfig: NextConfig = {
   // Disable X-Powered-By: Next.js to eliminate framework fingerprinting
   poweredByHeader: false,
+
+  images: {
+    // Only our own R2 uploads are optimized (see src/lib/storage/image.ts).
+    remotePatterns: storageRemotePatterns(),
+    // A short list of widths and one quality keeps the number of distinct
+    // optimized variants (and Vercel image transformations) small.
+    deviceSizes: [640, 828, 1080, 1440, 1920, 2560],
+    imageSizes: [256, 384],
+    qualities: [75],
+    formats: ["image/webp"],
+    // Upload keys are random UUIDs and never reused, so variants never go stale.
+    minimumCacheTTL: 60 * 60 * 24 * 31,
+  },
 
   async headers() {
     return [

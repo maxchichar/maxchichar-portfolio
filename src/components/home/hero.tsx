@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Magnetic } from "@/components/motion/magnetic";
 import { SplitText } from "@/components/motion/split-text";
 import type { SiteImage } from "@/lib/validation/settings";
+import { MediaImage } from "@/components/media-image";
 
 interface HeroCopy {
   eyebrow: string;
@@ -66,15 +67,14 @@ export function Hero({
       <div className="grain absolute inset-0 -z-10">
         <div className="parallax absolute inset-0">
           {image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <MediaImage
               src={image.url}
               alt={image.alt ?? ""}
-              width={image.width ?? undefined}
-              height={image.height ?? undefined}
+              fill
+              sizes="100vw"
+              loading="eager"
               fetchPriority="high"
-              decoding="async"
-              className="animate-slow-zoom h-full w-full object-cover"
+              className="animate-slow-zoom object-cover"
             />
           ) : (
             <div aria-hidden="true" className="hero-wash h-full w-full" />
