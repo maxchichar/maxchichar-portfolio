@@ -52,6 +52,15 @@ export function getMetadataBase(): URL {
  */
 export const DEFAULT_OG_IMAGE = "/og-default.png";
 
+/**
+ * RSS discovery (<link rel="alternate" type="application/rss+xml">). Repeated
+ * wherever `alternates` is set, because a page's `alternates` replaces the
+ * layout's rather than merging with it.
+ */
+export const FEED_ALTERNATE = {
+  "application/rss+xml": [{ url: "/feed.xml", title: "RSS feed" }],
+};
+
 export interface BaseMetadataOptions {
   siteName?: string | null;
   siteDescription?: string | null;
@@ -123,6 +132,7 @@ export function constructBaseMetadata(options?: BaseMetadataOptions): Metadata {
     },
     alternates: {
       canonical: "/",
+      types: FEED_ALTERNATE,
     },
     openGraph: {
       title: siteName,
@@ -182,6 +192,7 @@ export function constructPageMetadata(options: PageMetadataOptions): Metadata {
       ? {
           alternates: {
             canonical: cleanPath,
+            types: FEED_ALTERNATE,
           },
         }
       : {}),

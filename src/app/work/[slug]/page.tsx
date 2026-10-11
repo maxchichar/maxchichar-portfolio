@@ -11,10 +11,8 @@ import {
   buildWorkJsonLd,
   JsonLdScript,
 } from "@/lib/structured-data";
-import {
-  getPublicWorkCaseStudy,
-  listPublicWorkOverview,
-} from "@/server/services/projects";
+import { getPublicWorkCaseStudy } from "@/server/services/projects";
+import { getReadNext } from "@/server/services/related";
 import { getPublicSiteSettings } from "@/server/services/settings";
 import { getProjectTestimonials } from "@/server/services/testimonials";
 import { PageTransition } from "@/components/motion/page-transition";
@@ -51,20 +49,17 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
     notFound();
   }
 
-  const [settings, allWork, testimonials] = await Promise.all([
+  const [settings, readNext, testimonials] = await Promise.all([
     getPublicSiteSettings(),
-    listPublicWorkOverview(),
+    getReadNext("work", slug),
     getProjectTestimonials(item.project.id),
   ]);
-  // Next case study: the following item in listing order, wrapping around.
-  const idx = allWork.findIndex((w) => w.project.slug === slug);
-  const nextItem = allWork.length > 1 ? allWork[(idx + 1) % allWork.length] : undefined;
-  const next = nextItem
+  const next = readNext.next
     ? {
-        slug: nextItem.project.slug,
-        title: nextItem.published.title,
-        body: nextItem.published.shortDescription,
-        coverUrl: nextItem.coverUrl,
+        slug: readNext.next.slug,
+        title: readNext.next.title,
+        body: readNext.next.summary,
+        coverUrl: readNext.next.coverUrl,
       }
     : null;
 
@@ -100,6 +95,7 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
             tags={item.tags}
             coverUrl={item.coverUrl}
             next={next}
+            related={readNext.related}
             testimonials={testimonials}
           />
         </main>

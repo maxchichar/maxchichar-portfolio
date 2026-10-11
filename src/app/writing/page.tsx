@@ -51,7 +51,18 @@ export default async function WritingListingPage({
           <PageIntro
             eyebrow="Writing"
             title="Essays and notes on building intelligent systems."
-          />
+          >
+            <p>
+              New essays, research and case studies also go out on the{" "}
+              <a
+                href="/feed.xml"
+                className="text-text hover:text-accent underline decoration-1 underline-offset-4 transition-colors"
+              >
+                RSS feed
+              </a>
+              .
+            </p>
+          </PageIntro>
 
           <FilterChips
             basePath="/writing"

@@ -1,6 +1,7 @@
 import { DetailHero, type HeroAction } from "@/components/detail/detail-hero";
 import { NarrativeSection } from "@/components/detail/narrative-section";
 import { NextUp } from "@/components/detail/next-up";
+import { RelatedContent } from "@/components/detail/related";
 import { ProjectTestimonials } from "@/components/testimonials/testimonials";
 import { Toc } from "@/components/detail/toc";
 import type { schema } from "@/lib/db";
@@ -8,6 +9,7 @@ import type { PublicTestimonial } from "@/server/services/testimonials";
 import { tiptapDocToPlainText } from "@/lib/validation/project";
 
 import { EvidenceWall } from "./evidence-wall";
+import type { ContentCard } from "@/lib/related";
 
 type ProjectRow = typeof schema.projects.$inferSelect;
 type ProjectVersionRow = typeof schema.projectVersions.$inferSelect;
@@ -49,6 +51,7 @@ export function CaseStudyView({
   tags,
   coverUrl,
   next,
+  related = [],
   testimonials = [],
 }: {
   project: ProjectRow;
@@ -57,6 +60,7 @@ export function CaseStudyView({
   tags: TagRow[];
   coverUrl: string | null;
   next: NextProject | null;
+  related?: ContentCard[];
   testimonials?: PublicTestimonial[];
 }) {
   // Only sections with real content render — empty keys are omitted entirely.
@@ -181,6 +185,8 @@ export function CaseStudyView({
       ) : null}
 
       <ProjectTestimonials items={testimonials} />
+
+      <RelatedContent items={related} />
 
       {next ? (
         <NextUp

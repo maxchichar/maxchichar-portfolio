@@ -11,10 +11,8 @@ import {
   buildResearchJsonLd,
   JsonLdScript,
 } from "@/lib/structured-data";
-import {
-  getPublicResearchDetail,
-  listPublicResearchOverview,
-} from "@/server/services/research";
+import { getPublicResearchDetail } from "@/server/services/research";
+import { getReadNext } from "@/server/services/related";
 import { getPublicSiteSettings } from "@/server/services/settings";
 import { PageTransition } from "@/components/motion/page-transition";
 
@@ -50,19 +48,16 @@ export default async function ResearchDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const [settings, allResearch] = await Promise.all([
+  const [settings, readNext] = await Promise.all([
     getPublicSiteSettings(),
-    listPublicResearchOverview(),
+    getReadNext("research", slug),
   ]);
-  const idx = allResearch.findIndex((r) => r.research.slug === slug);
-  const nextItem =
-    allResearch.length > 1 ? allResearch[(idx + 1) % allResearch.length] : undefined;
-  const next = nextItem
+  const next = readNext.next
     ? {
-        slug: nextItem.research.slug,
-        title: nextItem.published.title,
-        body: nextItem.published.abstract,
-        coverUrl: nextItem.coverUrl,
+        slug: readNext.next.slug,
+        title: readNext.next.title,
+        body: readNext.next.summary,
+        coverUrl: readNext.next.coverUrl,
       }
     : null;
 
@@ -97,6 +92,7 @@ export default async function ResearchDetailPage({ params }: PageProps) {
             tags={item.tags}
             coverUrl={item.coverUrl}
             next={next}
+            related={readNext.related}
           />
         </main>
       </PageTransition>
