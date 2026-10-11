@@ -10,6 +10,7 @@ import { listPublicResearchOverview } from "@/server/services/research";
 import { listPublicArticlesOverview } from "@/server/services/articles";
 import { getPublishedHomePage } from "@/server/services/pages";
 import { getPublicSiteSettings } from "@/server/services/settings";
+import { getFeaturedTestimonials } from "@/server/services/testimonials";
 import {
   buildJsonLdGraph,
   buildPersonJsonLd,
@@ -18,6 +19,7 @@ import {
 } from "@/lib/structured-data";
 import { PageTransition } from "@/components/motion/page-transition";
 import { MediaImage } from "@/components/media-image";
+import { TestimonialsShowcase } from "@/components/testimonials/testimonials";
 
 // Homepage sections reuse the same public overview services /work, /research,
 // and /writing already call — no new database queries. Selection criteria
@@ -46,14 +48,21 @@ const DEFAULT_HERO = {
 } as const;
 
 export default async function Home() {
-  const [workOverview, researchOverview, articlesOverview, homePage, siteSettings] =
-    await Promise.all([
-      listPublicWorkOverview(),
-      listPublicResearchOverview(),
-      listPublicArticlesOverview(),
-      getPublishedHomePage(),
-      getPublicSiteSettings(),
-    ]);
+  const [
+    workOverview,
+    researchOverview,
+    articlesOverview,
+    homePage,
+    siteSettings,
+    testimonials,
+  ] = await Promise.all([
+    listPublicWorkOverview(),
+    listPublicResearchOverview(),
+    listPublicArticlesOverview(),
+    getPublishedHomePage(),
+    getPublicSiteSettings(),
+    getFeaturedTestimonials(),
+  ]);
 
   const socialLinks = [
     siteSettings.socialGithub,
@@ -111,7 +120,13 @@ export default async function Home() {
 
   // Section index markers (01, 02, …) — "Currently" only exists once the
   // home page is published, so the numbering is derived, not hard-coded.
-  const sections = ["work", "research", ...(home ? ["currently"] : []), "writing"];
+  const sections = [
+    "work",
+    ...(testimonials.length > 0 ? ["words"] : []),
+    "research",
+    ...(home ? ["currently"] : []),
+    "writing",
+  ];
   const indexOf = (key: string) => String(sections.indexOf(key) + 1).padStart(2, "0");
 
   return (
@@ -152,6 +167,18 @@ export default async function Home() {
               ))}
             </div>
           </HomeSection>
+
+          {testimonials.length > 0 ? (
+            <section className="container-site py-20 md:py-28">
+              <div className="reveal mb-10 grid gap-6 md:mb-4 md:grid-cols-12">
+                <p className="index-label md:col-span-3 md:pt-3">
+                  <span>{indexOf("words")}</span>
+                  <span>Kind words</span>
+                </p>
+              </div>
+              <TestimonialsShowcase items={testimonials} />
+            </section>
+          ) : null}
 
           <HomeSection
             index={indexOf("research")}

@@ -22,6 +22,7 @@ const SECTIONS = [
       { href: "/admin/projects", label: "Projects", icon: "box" },
       { href: "/admin/research", label: "Research", icon: "flask" },
       { href: "/admin/articles", label: "Writing", icon: "pen" },
+      { href: "/admin/testimonials", label: "Testimonials", icon: "quote" },
       { href: "/admin/pages", label: "Pages", icon: "file" },
     ],
   },
@@ -222,6 +223,13 @@ function NavIcon({ name, className }: { name: IconName; className?: string }) {
         <svg {...common}>
           <path d="M13.5 3.5l3 3L7 16H4v-3z" />
           <path d="M11.5 5.5l3 3" />
+        </svg>
+      );
+    case "quote":
+      return (
+        <svg {...common}>
+          <path d="M4 15.5c2.5-1 3.5-3 3.5-5.5V5H3.5v5H7" />
+          <path d="M12 15.5c2.5-1 3.5-3 3.5-5.5V5h-4v5H15" />
         </svg>
       );
     case "file":

@@ -2,6 +2,7 @@ import "server-only";
 
 import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
+import { isMissingTableError } from "@/lib/db/errors";
 import type { SiteDocumentKey } from "@/lib/db/schema";
 import { publicUrlFor } from "@/lib/storage/r2";
 import { mediaKindOf } from "@/lib/validation/media";
@@ -16,12 +17,6 @@ export interface SiteDocument {
   url: string;
   sizeBytes: number;
   updatedAt: Date;
-}
-
-/** Postgres "undefined_table": migration 0003 hasn't been applied yet. */
-export function isMissingTableError(err: unknown): boolean {
-  const e = err as { code?: string; cause?: { code?: string } } | null;
-  return e?.code === "42P01" || e?.cause?.code === "42P01";
 }
 
 let warnedMissing = false;

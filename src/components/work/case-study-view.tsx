@@ -1,8 +1,10 @@
 import { DetailHero, type HeroAction } from "@/components/detail/detail-hero";
 import { NarrativeSection } from "@/components/detail/narrative-section";
 import { NextUp } from "@/components/detail/next-up";
+import { ProjectTestimonials } from "@/components/testimonials/testimonials";
 import { Toc } from "@/components/detail/toc";
 import type { schema } from "@/lib/db";
+import type { PublicTestimonial } from "@/server/services/testimonials";
 import { tiptapDocToPlainText } from "@/lib/validation/project";
 
 import { EvidenceWall } from "./evidence-wall";
@@ -47,6 +49,7 @@ export function CaseStudyView({
   tags,
   coverUrl,
   next,
+  testimonials = [],
 }: {
   project: ProjectRow;
   published: ProjectVersionRow;
@@ -54,6 +57,7 @@ export function CaseStudyView({
   tags: TagRow[];
   coverUrl: string | null;
   next: NextProject | null;
+  testimonials?: PublicTestimonial[];
 }) {
   // Only sections with real content render — empty keys are omitted entirely.
   const sections = new Map<string, { heading: string; content: unknown }>();
@@ -175,6 +179,8 @@ export function CaseStudyView({
           </div>
         </div>
       ) : null}
+
+      <ProjectTestimonials items={testimonials} />
 
       {next ? (
         <NextUp

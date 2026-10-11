@@ -252,6 +252,7 @@ export async function deleteMedia(mediaId: string, actor: Actor) {
         evidence: "evidence",
         siteSettings: "Settings (site images)",
         documents: "Settings (CV)",
+        testimonials: "a testimonial (photo)",
       };
       throw new MediaServiceError(
         `Cannot delete: this file is still used by ${referencedBy
