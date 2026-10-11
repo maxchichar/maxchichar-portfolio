@@ -1,0 +1,71 @@
+name: Smoke test
+
+# Opens the key pages of a real deployment in a browser (desktop and mobile)
+# each time Vercel finishes deploying: the preview for a pull request, and
+# production after a merge. Read-only, so safe against the live site.
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Deployment URL to test (e.g. https://chibuezemaxwell.vercel.app)"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-${{ github.event.deployment_status.environment_url || inputs.url }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Key pages in a browser
+    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SMOKE_BASE_URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url || inputs.url }}
+      # Optional: lets the tests through Vercel Deployment Protection on
+      # preview URLs (Vercel > Settings > Deployment Protection > Protection
+      # Bypass for Automation, saved as a repository secret).
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Check the deployment is reachable
+        id: reach
+        run: |
+          echo "Testing $SMOKE_BASE_URL"
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 \
+            -H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}" "$SMOKE_BASE_URL/")
+          echo "HTTP $code"
+          if [ "$code" = "401" ] || [ "$code" = "403" ]; then
+            echo "::warning::$SMOKE_BASE_URL is behind Vercel Deployment Protection. Add the VERCEL_AUTOMATION_BYPASS_SECRET repository secret to smoke-test previews. Skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Chromium
+        if: steps.reach.outputs.skip != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke tests
+        if: steps.reach.outputs.skip != 'true'
+        run: npm run test:e2e
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
