@@ -16,6 +16,7 @@ import {
   listPublicWorkOverview,
 } from "@/server/services/projects";
 import { getPublicSiteSettings } from "@/server/services/settings";
+import { getProjectTestimonials } from "@/server/services/testimonials";
 import { PageTransition } from "@/components/motion/page-transition";
 
 interface PageProps {
@@ -50,9 +51,10 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
     notFound();
   }
 
-  const [settings, allWork] = await Promise.all([
+  const [settings, allWork, testimonials] = await Promise.all([
     getPublicSiteSettings(),
     listPublicWorkOverview(),
+    getProjectTestimonials(item.project.id),
   ]);
   // Next case study: the following item in listing order, wrapping around.
   const idx = allWork.findIndex((w) => w.project.slug === slug);
@@ -98,6 +100,7 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
             tags={item.tags}
             coverUrl={item.coverUrl}
             next={next}
+            testimonials={testimonials}
           />
         </main>
       </PageTransition>

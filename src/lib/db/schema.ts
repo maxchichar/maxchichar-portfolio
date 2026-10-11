@@ -605,6 +605,34 @@ export const siteDocuments = pgTable(
   (table) => [check("site_documents_key_check", sql`${table.key} IN ('cv')`)],
 );
 
+// ---------------------------------------------------------------------------
+// Testimonials: quotes from clients and collaborators. Shown on the homepage
+// when `featured`, and on a project page when linked to that project.
+// Unversioned on purpose: a quote is short and edited in place.
+// ---------------------------------------------------------------------------
+export const testimonials = pgTable(
+  "testimonials",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    quote: text("quote").notNull(),
+    authorName: text("author_name").notNull(),
+    authorRole: text("author_role"),
+    authorCompany: text("author_company"),
+    authorUrl: text("author_url"),
+    avatarMediaId: uuid("avatar_media_id").references(() => media.id),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+    featured: boolean("featured").notNull().default(false),
+    visible: boolean("visible").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("testimonials_project_idx").on(table.projectId),
+    index("testimonials_order_idx").on(table.sortOrder),
+  ],
+);
+
 export const contactSubmissions = pgTable(
   "contact_submissions",
   {

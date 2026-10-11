@@ -4,6 +4,7 @@ import { and, desc, eq, ilike, inArray, like, or } from "drizzle-orm";
 import type { NeonDatabase } from "drizzle-orm/neon-serverless";
 
 import { schema } from "@/lib/db";
+import { isMissingTableError } from "@/lib/db/errors";
 import { ALLOWED_DOCUMENT_MIME_TYPES, type MediaKind } from "@/lib/validation/media";
 
 type Tx =
@@ -103,6 +104,24 @@ export interface MediaReferenceCheck {
   evidence: boolean;
   siteSettings: boolean;
   documents: boolean;
+  testimonials: boolean;
+}
+
+/**
+ * Reference check against a table added by a later migration. Runs in a
+ * savepoint so that, if the table doesn't exist yet, the failed query can't
+ * abort the caller's transaction; a missing table references nothing.
+ */
+async function referencedInOptionalTable(
+  tx: Tx,
+  query: (sp: Tx) => Promise<unknown[]>,
+): Promise<boolean> {
+  try {
+    return await tx.transaction(async (sp) => (await query(sp)).length > 0);
+  } catch (err) {
+    if (isMissingTableError(err)) return false;
+    throw err;
+  }
 }
 
 /**
@@ -163,22 +182,22 @@ export async function checkReferences(
 
   // Checked on its own: a missing site_documents table (migration not yet
   // applied) just means nothing can reference media from it.
-  // Inside a savepoint, so the failed query can't abort a caller's transaction.
-  let documents = false;
-  try {
-    documents = await tx.transaction(async (sp) => {
-      const [docRow] = await sp
-        .select({ key: schema.siteDocuments.key })
-        .from(schema.siteDocuments)
-        .where(eq(schema.siteDocuments.mediaId, mediaId))
-        .limit(1);
-      return Boolean(docRow);
-    });
-  } catch (err) {
-    const code = (err as { code?: string; cause?: { code?: string } })?.code;
-    const causeCode = (err as { cause?: { code?: string } })?.cause?.code;
-    if (code !== "42P01" && causeCode !== "42P01") throw err;
-  }
+  // Sequential, not Promise.all: each check opens a savepoint on the same
+  // transaction, and concurrent savepoints would collide.
+  const documents = await referencedInOptionalTable(tx, (sp) =>
+    sp
+      .select({ key: schema.siteDocuments.key })
+      .from(schema.siteDocuments)
+      .where(eq(schema.siteDocuments.mediaId, mediaId))
+      .limit(1),
+  );
+  const testimonials = await referencedInOptionalTable(tx, (sp) =>
+    sp
+      .select({ id: schema.testimonials.id })
+      .from(schema.testimonials)
+      .where(eq(schema.testimonials.avatarMediaId, mediaId))
+      .limit(1),
+  );
 
   return {
     projects: Boolean(projectRow),
@@ -187,6 +206,7 @@ export async function checkReferences(
     evidence: Boolean(evidenceRow),
     siteSettings: Boolean(settingsRow),
     documents,
+    testimonials,
   };
 }
 

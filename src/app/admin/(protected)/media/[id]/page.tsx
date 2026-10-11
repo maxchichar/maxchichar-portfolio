@@ -27,6 +27,7 @@ const REFERENCE_LABELS = {
   evidence: "an Evidence item",
   siteSettings: "Site Settings (hero or About image)",
   documents: "Site Settings (CV)",
+  testimonials: "a Testimonial (author photo)",
 } as const;
 
 export default async function MediaDetailPage({
