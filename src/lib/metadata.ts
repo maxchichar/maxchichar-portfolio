@@ -45,6 +45,11 @@ export function getMetadataBase(): URL {
   return new URL(getSiteUrl());
 }
 
+/**
+ * Static fallback image (structured data, external checks). Social cards come
+ * from the generated `opengraph-image` routes, so metadata no longer names an
+ * image unless a page passes one explicitly.
+ */
 export const DEFAULT_OG_IMAGE = "/og-default.png";
 
 export interface BaseMetadataOptions {
@@ -125,13 +130,11 @@ export function constructBaseMetadata(options?: BaseMetadataOptions): Metadata {
       siteName,
       url: "/",
       type: "website",
-      images: [DEFAULT_OG_IMAGE],
     },
     twitter: {
       card: "summary_large_image",
       title: siteName,
       description,
-      images: [DEFAULT_OG_IMAGE],
     },
   };
 }
@@ -147,7 +150,7 @@ export interface PageMetadataOptions {
 /**
  * Builds page-specific metadata with Open Graph, Twitter Card, and Canonical support (Level 9.4 & 9.5).
  * Automatically cleans query parameters and normalizes canonical paths.
- * Supports cover images with automatic fallback to DEFAULT_OG_IMAGE.
+ * An explicit `image` overrides the segment's generated preview card.
  */
 export function constructPageMetadata(options: PageMetadataOptions): Metadata {
   const title = options.title;
@@ -155,10 +158,7 @@ export function constructPageMetadata(options: PageMetadataOptions): Metadata {
     options.description && options.description.trim().length > 0
       ? options.description.trim()
       : DEFAULT_SITE_DESCRIPTION;
-  const image =
-    options.image && options.image.trim().length > 0
-      ? options.image.trim()
-      : DEFAULT_OG_IMAGE;
+  const image = options.image?.trim() || null;
   const type = options.type || "website";
   const cleanPath = normalizeCanonicalPath(options.path);
 
@@ -170,13 +170,13 @@ export function constructPageMetadata(options: PageMetadataOptions): Metadata {
       description,
       type,
       ...(cleanPath ? { url: cleanPath } : {}),
-      images: [image],
+      ...(image ? { images: [image] } : {}),
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [image],
+      ...(image ? { images: [image] } : {}),
     },
     ...(cleanPath
       ? {

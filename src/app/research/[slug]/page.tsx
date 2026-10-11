@@ -38,7 +38,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: item.published.title,
     description: item.published.abstract,
     path: `/research/${slug}`,
-    image: item.coverUrl,
     type: "article",
   });
 }

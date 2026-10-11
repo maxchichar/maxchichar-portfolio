@@ -43,7 +43,7 @@ describe("Open Graph & Twitter Metadata (Level 9.4)", () => {
   });
 
   describe("Root Metadata Open Graph & Twitter configuration", () => {
-    it("provides root Open Graph metadata with title, description, siteName, url, type, and default image", () => {
+    it("provides root Open Graph metadata with title, description, siteName, url and type (image comes from app/opengraph-image)", () => {
       const meta = constructBaseMetadata();
       const og = meta.openGraph as Record<string, unknown> | undefined;
 
@@ -53,10 +53,10 @@ describe("Open Graph & Twitter Metadata (Level 9.4)", () => {
       assert.strictEqual(og.siteName, DEFAULT_SITE_TITLE);
       assert.strictEqual(og.url, "/");
       assert.strictEqual(og.type, "website");
-      assert.deepStrictEqual(og.images, [DEFAULT_OG_IMAGE]);
+      assert.strictEqual(og.images, undefined);
     });
 
-    it("provides root Twitter Card metadata with summary_large_image, title, description, and default image", () => {
+    it("provides root Twitter Card metadata with summary_large_image, title and description (image inherited from the generated card)", () => {
       const meta = constructBaseMetadata();
       const tw = meta.twitter as Record<string, unknown> | undefined;
 
@@ -64,7 +64,7 @@ describe("Open Graph & Twitter Metadata (Level 9.4)", () => {
       assert.strictEqual(tw.card, "summary_large_image");
       assert.strictEqual(tw.title, DEFAULT_SITE_TITLE);
       assert.strictEqual(tw.description, DEFAULT_SITE_DESCRIPTION);
-      assert.deepStrictEqual(tw.images, [DEFAULT_OG_IMAGE]);
+      assert.strictEqual(tw.images, undefined);
     });
 
     it("strictly omits Twitter/X handles (no fake site or creator handle)", () => {
@@ -91,7 +91,7 @@ describe("Open Graph & Twitter Metadata (Level 9.4)", () => {
     });
   });
 
-  describe("Detail pages and cover image fallback", () => {
+  describe("Page images: explicit override or generated card", () => {
     it("uses legitimate coverUrl when provided for Open Graph and Twitter images", () => {
       const meta = constructPageMetadata({
         title: "Autonomous Agent Core",
@@ -118,7 +118,7 @@ describe("Open Graph & Twitter Metadata (Level 9.4)", () => {
       assert.strictEqual(tw?.description, "An AI system case study.");
     });
 
-    it("falls back cleanly to /og-default.png when coverUrl is null, undefined, or empty", () => {
+    it("omits images when none is given, so the generated opengraph-image card is used", () => {
       const metaNull = constructPageMetadata({
         title: "Research Paper",
         description: "Abstract notes.",
@@ -128,8 +128,8 @@ describe("Open Graph & Twitter Metadata (Level 9.4)", () => {
       });
       const ogNull = metaNull.openGraph as Record<string, unknown> | undefined;
       const twNull = metaNull.twitter as Record<string, unknown> | undefined;
-      assert.deepStrictEqual(ogNull?.images, [DEFAULT_OG_IMAGE]);
-      assert.deepStrictEqual(twNull?.images, [DEFAULT_OG_IMAGE]);
+      assert.strictEqual(ogNull?.images, undefined);
+      assert.strictEqual(twNull?.images, undefined);
       assert.strictEqual(ogNull?.type, "article");
 
       const metaUndefined = constructPageMetadata({
@@ -141,8 +141,8 @@ describe("Open Graph & Twitter Metadata (Level 9.4)", () => {
       });
       const ogUndef = metaUndefined.openGraph as Record<string, unknown> | undefined;
       const twUndef = metaUndefined.twitter as Record<string, unknown> | undefined;
-      assert.deepStrictEqual(ogUndef?.images, [DEFAULT_OG_IMAGE]);
-      assert.deepStrictEqual(twUndef?.images, [DEFAULT_OG_IMAGE]);
+      assert.strictEqual(ogUndef?.images, undefined);
+      assert.strictEqual(twUndef?.images, undefined);
 
       const metaEmpty = constructPageMetadata({
         title: "Empty Image",
@@ -151,8 +151,8 @@ describe("Open Graph & Twitter Metadata (Level 9.4)", () => {
       });
       const ogEmpty = metaEmpty.openGraph as Record<string, unknown> | undefined;
       const twEmpty = metaEmpty.twitter as Record<string, unknown> | undefined;
-      assert.deepStrictEqual(ogEmpty?.images, [DEFAULT_OG_IMAGE]);
-      assert.deepStrictEqual(twEmpty?.images, [DEFAULT_OG_IMAGE]);
+      assert.strictEqual(ogEmpty?.images, undefined);
+      assert.strictEqual(twEmpty?.images, undefined);
     });
 
     it("strictly omits Twitter handles on page metadata", () => {
