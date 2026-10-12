@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { after } from "next/server";
 import { ViewTransition } from "react";
 
 import { Hero } from "@/components/home/hero";
@@ -11,7 +12,9 @@ import { listPublicArticlesOverview } from "@/server/services/articles";
 import type { HomePageContent } from "@/lib/validation/page";
 import { getPublishedHomePage } from "@/server/services/pages";
 import { getPublicSiteSettings } from "@/server/services/settings";
+import { recordError } from "@/server/services/errors";
 import { getFeaturedTestimonials } from "@/server/services/testimonials";
+import { withFallback } from "@/lib/with-fallback";
 import {
   buildJsonLdGraph,
   buildPersonJsonLd,
@@ -45,28 +48,55 @@ const DEFAULT_HERO = {
   secondaryCta: { label: "Read my research", href: "/research" },
 } as const;
 
+const UNAVAILABLE = "This section couldn't be loaded right now. Please check back soon.";
+
+/**
+ * A content read that degrades to `fallback` instead of failing the page, so a
+ * database outage leaves the hero, navigation and contact links working. The
+ * failure is still logged and reported (error log + alert email), after the
+ * response is sent.
+ */
+function homeRead<T>(label: string, promise: Promise<T>, fallback: T) {
+  return withFallback(promise, fallback, (err) => {
+    console.error(`home: ${label} failed, showing fallback:`, err);
+    after(() =>
+      recordError({
+        source: "server",
+        message: err instanceof Error ? err.message : err,
+        stack: err instanceof Error ? (err.stack ?? null) : null,
+        route: "/",
+        path: "/",
+      }),
+    );
+  });
+}
+
 /**
  * The homepage. `content` is the home page's CMS content: omitted on the
  * live site (the published version is loaded), or a draft when previewing.
  */
 export async function HomeView({ content }: { content?: HomePageContent | null } = {}) {
-  const [
-    workOverview,
-    researchOverview,
-    articlesOverview,
-    home,
-    siteSettings,
-    testimonials,
-  ] = await Promise.all([
-    listPublicWorkOverview(),
-    listPublicResearchOverview(),
-    listPublicArticlesOverview(),
-    content === undefined
-      ? getPublishedHomePage().then((p) => p?.content ?? null)
-      : Promise.resolve(content),
-    getPublicSiteSettings(),
-    getFeaturedTestimonials(),
-  ]);
+  // Settings and testimonials already fall back on their own; the rest are
+  // guarded here so one failed read can't take the whole page down.
+  const [work, research, articles, homeContent, siteSettings, testimonials] =
+    await Promise.all([
+      homeRead("work", listPublicWorkOverview(), []),
+      homeRead("research", listPublicResearchOverview(), []),
+      homeRead("writing", listPublicArticlesOverview(), []),
+      content === undefined
+        ? homeRead(
+            "home page content",
+            getPublishedHomePage().then((p) => p?.content ?? null),
+            null,
+          )
+        : { value: content, failed: false },
+      getPublicSiteSettings(),
+      getFeaturedTestimonials(),
+    ]);
+  const workOverview = work.value;
+  const researchOverview = research.value;
+  const articlesOverview = articles.value;
+  const home = homeContent.value;
 
   const socialLinks = [
     siteSettings.socialGithub,
@@ -147,7 +177,7 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
             index={indexOf("work")}
             eyebrow="Selected Work"
             title="Systems built, shipped, and measured."
-            emptyBody="Work is being documented."
+            emptyBody={work.failed ? UNAVAILABLE : "Work is being documented."}
             viewAllHref="/work"
             viewAllLabel="All work"
             hasItems={featuredWork.length > 0}
@@ -187,7 +217,7 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
             index={indexOf("research")}
             eyebrow="Research"
             title="Questions worth answering properly."
-            emptyBody="Research is being documented."
+            emptyBody={research.failed ? UNAVAILABLE : "Research is being documented."}
             viewAllHref="/research"
             viewAllLabel="All research"
             hasItems={featuredResearch.length > 0}
@@ -229,7 +259,7 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
             index={indexOf("writing")}
             eyebrow="Writing"
             title="Notes from the work."
-            emptyBody="Writing is being documented."
+            emptyBody={articles.failed ? UNAVAILABLE : "Writing is being documented."}
             viewAllHref="/writing"
             viewAllLabel="All writing"
             hasItems={latestWriting.length > 0}

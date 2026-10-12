@@ -20,6 +20,10 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "eslint-config-next"
         update-types: ["version-update:semver-major"]
+      # typescript-eslint (used by the lint config) supports TypeScript only up
+      # to 6.0 for now; a major bump breaks lint. Upgrade together, by hand.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
