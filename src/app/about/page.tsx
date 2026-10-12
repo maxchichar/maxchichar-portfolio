@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { AboutView } from "@/components/pages/about-view";
+import { UnavailableView } from "@/components/pages/unavailable-view";
 import { constructPageMetadata } from "@/lib/metadata";
+import { readOrFallback } from "@/server/services/fallback-read";
 import { getPublishedAboutPage } from "@/server/services/pages";
 import { getSiteDocument } from "@/server/services/documents";
 import { getPublicSiteSettings } from "@/server/services/settings";
@@ -21,8 +24,21 @@ function toDescription(text: string): string {
   return `${flat.slice(0, 157).replace(/\s+\S*$/, "")}…`;
 }
 
+// One read per request, shared by the metadata and the page. `failed` means
+// the read itself broke (show a fallback); a null value means the page simply
+// isn't published (404).
+const loadAbout = cache(() =>
+  readOrFallback("/about", "about page", getPublishedAboutPage(), null),
+);
+
 export async function generateMetadata(): Promise<Metadata> {
-  const about = await getPublishedAboutPage();
+  const { value: about, failed } = await loadAbout();
+  if (failed) {
+    return {
+      ...constructPageMetadata({ title: "About", path: "/about" }),
+      robots: { index: false, follow: true },
+    };
+  }
   if (!about) {
     return constructPageMetadata({
       title: "Page Not Found",
@@ -38,11 +54,22 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
-  const [about, settings, cv] = await Promise.all([
-    getPublishedAboutPage(),
+  const [{ value: about, failed }, settings, cv] = await Promise.all([
+    loadAbout(),
     getPublicSiteSettings(),
     getSiteDocument("cv"),
   ]);
+  if (failed) {
+    return (
+      <>
+        <Nav />
+        <main>
+          <UnavailableView eyebrow="About" path="/about" />
+        </main>
+        <Footer />
+      </>
+    );
+  }
   if (!about) notFound();
 
   return (
