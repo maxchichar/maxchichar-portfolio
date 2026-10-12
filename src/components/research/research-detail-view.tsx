@@ -4,6 +4,7 @@ import { NextUp } from "@/components/detail/next-up";
 import { RelatedContent } from "@/components/detail/related";
 import { Toc } from "@/components/detail/toc";
 import { EvidenceWall } from "@/components/work/evidence-wall";
+import { TagLinks } from "@/components/topics/tag-links";
 import type { schema } from "@/lib/db";
 import { tiptapDocToPlainText } from "@/lib/validation/project";
 import { RESEARCH_SECTION_KEYS } from "@/lib/validation/research";
@@ -128,9 +129,9 @@ export function ResearchDetailView({
               ),
             )}
             {tags.length > 0 ? (
-              <p className="border-border text-text-muted mt-4 border-t pt-10 font-mono text-xs">
-                {tags.map((t) => `#${t.name}`).join("  ")}
-              </p>
+              <div className="border-border mt-4 border-t pt-10">
+                <TagLinks tags={tags} />
+              </div>
             ) : null}
           </div>
         </div>

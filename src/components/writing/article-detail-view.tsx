@@ -5,6 +5,7 @@ import { NextUp } from "@/components/detail/next-up";
 import { RelatedContent } from "@/components/detail/related";
 import { Toc } from "@/components/detail/toc";
 import { RichText } from "@/components/rich-text";
+import { TagLinks } from "@/components/topics/tag-links";
 import type { schema } from "@/lib/db";
 import { collectHeadings } from "@/lib/rich-text";
 import type { ContentCard } from "@/lib/related";
@@ -93,18 +94,7 @@ export function ArticleDetailView({
           <RichText doc={published.content} />
 
           <footer className="border-border mt-20 border-t pt-10">
-            {tags.length > 0 ? (
-              <ul className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <li
-                    key={tag.id}
-                    className="border-border text-text-muted rounded-full border px-3 py-1 font-mono text-xs"
-                  >
-                    #{tag.name}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+            <TagLinks tags={tags} />
 
             <div className="rounded-panel bg-surface mt-10 flex flex-col gap-6 p-7 sm:flex-row sm:items-center sm:justify-between md:p-8">
               <div className="flex items-center gap-4">
