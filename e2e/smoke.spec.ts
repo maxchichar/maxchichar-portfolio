@@ -63,7 +63,7 @@ test("unknown pages return a real 404", async ({ page }) => {
   await expect(page.locator("h1").first()).toBeVisible();
 });
 
-test("feed, search index, sitemap, robots and share image respond", async ({
+test("feed, search index, sitemap, robots, llms.txt and share image respond", async ({
   request,
 }) => {
   const feed = await request.get("/feed.xml");
@@ -81,6 +81,10 @@ test("feed, search index, sitemap, robots and share image respond", async ({
 
   const robots = await request.get("/robots.txt");
   expect(await robots.text()).toContain("Sitemap:");
+
+  const llms = await request.get("/llms.txt");
+  expect(llms.ok()).toBeTruthy();
+  expect(await llms.text()).toMatch(/^# .+/);
 
   const og = await request.get("/opengraph-image");
   expect(og.ok()).toBeTruthy();
