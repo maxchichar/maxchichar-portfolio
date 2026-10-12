@@ -1,0 +1,26 @@
+# Weekly pull requests for dependency updates, plus security fixes as soon as
+# an advisory is published. Each PR runs CI and the preview smoke test, so a
+# bad update shows up red before it can be merged.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # One PR for routine minor and patch updates instead of dozens.
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Next.js and its lint config must move together; React is pinned to
+      # what Next supports. These get reviewed as deliberate upgrades.
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint-config-next"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

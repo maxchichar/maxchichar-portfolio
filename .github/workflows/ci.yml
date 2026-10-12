@@ -38,6 +38,11 @@ jobs:
         run: npm run format:check
       - name: Unit tests
         run: npm test
+      # Fails on a known high or critical vulnerability in anything the live
+      # site ships. Dev-only tools are left to Dependabot, so an advisory with
+      # no upstream fix yet in a lint plugin can't block every PR.
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
 
   build:
     name: Production build
