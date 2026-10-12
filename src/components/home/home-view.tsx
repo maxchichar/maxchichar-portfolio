@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { after } from "next/server";
 import { ViewTransition } from "react";
 
 import { Hero } from "@/components/home/hero";
@@ -12,9 +11,8 @@ import { listPublicArticlesOverview } from "@/server/services/articles";
 import type { HomePageContent } from "@/lib/validation/page";
 import { getPublishedHomePage } from "@/server/services/pages";
 import { getPublicSiteSettings } from "@/server/services/settings";
-import { recordError } from "@/server/services/errors";
+import { readOrFallback } from "@/server/services/fallback-read";
 import { getFeaturedTestimonials } from "@/server/services/testimonials";
-import { withFallback } from "@/lib/with-fallback";
 import {
   buildJsonLdGraph,
   buildPersonJsonLd,
@@ -51,27 +49,6 @@ const DEFAULT_HERO = {
 const UNAVAILABLE = "This section couldn't be loaded right now. Please check back soon.";
 
 /**
- * A content read that degrades to `fallback` instead of failing the page, so a
- * database outage leaves the hero, navigation and contact links working. The
- * failure is still logged and reported (error log + alert email), after the
- * response is sent.
- */
-function homeRead<T>(label: string, promise: Promise<T>, fallback: T) {
-  return withFallback(promise, fallback, (err) => {
-    console.error(`home: ${label} failed, showing fallback:`, err);
-    after(() =>
-      recordError({
-        source: "server",
-        message: err instanceof Error ? err.message : err,
-        stack: err instanceof Error ? (err.stack ?? null) : null,
-        route: "/",
-        path: "/",
-      }),
-    );
-  });
-}
-
-/**
  * The homepage. `content` is the home page's CMS content: omitted on the
  * live site (the published version is loaded), or a draft when previewing.
  */
@@ -80,11 +57,12 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
   // guarded here so one failed read can't take the whole page down.
   const [work, research, articles, homeContent, siteSettings, testimonials] =
     await Promise.all([
-      homeRead("work", listPublicWorkOverview(), []),
-      homeRead("research", listPublicResearchOverview(), []),
-      homeRead("writing", listPublicArticlesOverview(), []),
+      readOrFallback("/", "work", listPublicWorkOverview(), []),
+      readOrFallback("/", "research", listPublicResearchOverview(), []),
+      readOrFallback("/", "writing", listPublicArticlesOverview(), []),
       content === undefined
-        ? homeRead(
+        ? readOrFallback(
+            "/",
             "home page content",
             getPublishedHomePage().then((p) => p?.content ?? null),
             null,
