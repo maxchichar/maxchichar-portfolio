@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
+import { UnavailableView } from "@/components/pages/unavailable-view";
 import { ArticleDetailView } from "@/components/writing/article-detail-view";
-import { constructPageMetadata } from "@/lib/metadata";
+import { constructPageMetadata, withNoIndex } from "@/lib/metadata";
 import {
   buildArticleJsonLd,
   buildBreadcrumbJsonLd,
   buildJsonLdGraph,
   JsonLdScript,
 } from "@/lib/structured-data";
+import { readOrFallback } from "@/server/services/fallback-read";
 import { getPublicArticleDetail } from "@/server/services/articles";
 import { getReadNext } from "@/server/services/related";
 import { getPublicSiteSettings } from "@/server/services/settings";
@@ -23,9 +26,21 @@ interface PageProps {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+// One read per request, shared by the metadata and the page. `failed` means
+// the read itself broke (show a fallback); a null value means there's no
+// published item with this slug (404).
+const loadArticle = cache((slug: string) =>
+  readOrFallback("/writing/[slug]", "writing item", getPublicArticleDetail(slug), null),
+);
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const item = await getPublicArticleDetail(slug);
+  const { value: item, failed } = await loadArticle(slug);
+  if (failed) {
+    return withNoIndex(
+      constructPageMetadata({ title: "Writing", path: `/writing/${slug}` }),
+    );
+  }
   if (!item) {
     return {
       title: "Article Not Found",
@@ -42,7 +57,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ArticleDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const item = await getPublicArticleDetail(slug);
+  const { value: item, failed } = await loadArticle(slug);
+  if (failed) {
+    return (
+      <>
+        <Nav />
+        <main>
+          <UnavailableView eyebrow="Writing" path={`/writing/${slug}`} />
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   if (!item) {
     notFound();

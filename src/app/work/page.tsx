@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ViewTransition } from "react";
+import { cache, ViewTransition } from "react";
 
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { countBy, FilterChips, firstParam } from "@/components/layout/filter-chips";
 import { PageIntro } from "@/components/layout/page-intro";
-import { constructPageMetadata } from "@/lib/metadata";
+import { constructPageMetadata, withNoIndex } from "@/lib/metadata";
+import { readOrFallback } from "@/server/services/fallback-read";
 import { listPublicWorkOverview } from "@/server/services/projects";
 import { PageTransition } from "@/components/motion/page-transition";
 import { MediaImage } from "@/components/media-image";
@@ -14,15 +15,30 @@ import { MediaImage } from "@/components/media-image";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata: Metadata = constructPageMetadata({
+const METADATA: Metadata = constructPageMetadata({
   title: "Selected Work",
   description:
     "Super Intelligence Engineer & Entrepreneur. Selected projects, intelligent systems, and engineering case studies.",
   path: "/work",
 });
 
+// One read per request, shared by the metadata and the page. If it fails the
+// page keeps its intro and says the list couldn't load, instead of the error
+// screen, and stays out of search results until it recovers.
+const loadWork = cache(() =>
+  readOrFallback("/work", "work list", listPublicWorkOverview(), []),
+);
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { failed } = await loadWork();
+  return failed ? withNoIndex(METADATA) : METADATA;
+}
+
 export default async function WorkListingPage({ searchParams }: PageProps<"/work">) {
-  const [items, params] = await Promise.all([listPublicWorkOverview(), searchParams]);
+  const [{ value: items, failed }, params] = await Promise.all([
+    loadWork(),
+    searchParams,
+  ]);
   const categories = countBy(items, (i) => i.published.category);
   const requested = firstParam(params.category);
   const active = categories.some((c) => c.value === requested) ? requested : null;
@@ -150,7 +166,9 @@ export default async function WorkListingPage({ searchParams }: PageProps<"/work
           ) : (
             <div className="rounded-panel border-border border border-dashed p-12 text-center">
               <p className="text-text-muted font-serif text-lg">
-                Work is being documented.
+                {failed
+                  ? "This list couldn't be loaded right now. Please try again in a few minutes."
+                  : "Work is being documented."}
               </p>
             </div>
           )}
