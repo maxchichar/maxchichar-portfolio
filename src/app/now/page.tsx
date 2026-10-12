@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { NowView } from "@/components/pages/now-view";
 import { UnavailableView } from "@/components/pages/unavailable-view";
-import { constructPageMetadata } from "@/lib/metadata";
+import { constructPageMetadata, withNoIndex } from "@/lib/metadata";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { getPublishedNowPage } from "@/server/services/pages";
 import { PageTransition } from "@/components/motion/page-transition";
@@ -24,10 +24,7 @@ const loadNow = cache(() =>
 export async function generateMetadata(): Promise<Metadata> {
   const { value: now, failed } = await loadNow();
   if (failed) {
-    return {
-      ...constructPageMetadata({ title: "Now", path: "/now" }),
-      robots: { index: false, follow: true },
-    };
+    return withNoIndex(constructPageMetadata({ title: "Now", path: "/now" }));
   }
   if (!now) {
     return constructPageMetadata({

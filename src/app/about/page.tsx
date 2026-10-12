@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { AboutView } from "@/components/pages/about-view";
 import { UnavailableView } from "@/components/pages/unavailable-view";
-import { constructPageMetadata } from "@/lib/metadata";
+import { constructPageMetadata, withNoIndex } from "@/lib/metadata";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { getPublishedAboutPage } from "@/server/services/pages";
 import { getSiteDocument } from "@/server/services/documents";
@@ -34,10 +34,7 @@ const loadAbout = cache(() =>
 export async function generateMetadata(): Promise<Metadata> {
   const { value: about, failed } = await loadAbout();
   if (failed) {
-    return {
-      ...constructPageMetadata({ title: "About", path: "/about" }),
-      robots: { index: false, follow: true },
-    };
+    return withNoIndex(constructPageMetadata({ title: "About", path: "/about" }));
   }
   if (!about) {
     return constructPageMetadata({

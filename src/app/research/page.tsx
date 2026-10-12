@@ -1,28 +1,45 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cache } from "react";
 
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { countBy, FilterChips, firstParam } from "@/components/layout/filter-chips";
 import { PageIntro } from "@/components/layout/page-intro";
-import { constructPageMetadata } from "@/lib/metadata";
+import { constructPageMetadata, withNoIndex } from "@/lib/metadata";
+import { readOrFallback } from "@/server/services/fallback-read";
 import { listPublicResearchOverview } from "@/server/services/research";
 import { PageTransition } from "@/components/motion/page-transition";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata: Metadata = constructPageMetadata({
+const METADATA: Metadata = constructPageMetadata({
   title: "Research",
   description:
     "Super Intelligence Engineer & Entrepreneur. Investigations, technical notes, and experiments, documented with verifiable evidence.",
   path: "/research",
 });
 
+// One read per request, shared by the metadata and the page. If it fails the
+// page keeps its intro and says the list couldn't load, instead of the error
+// screen, and stays out of search results until it recovers.
+const loadResearch = cache(() =>
+  readOrFallback("/research", "research list", listPublicResearchOverview(), []),
+);
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { failed } = await loadResearch();
+  return failed ? withNoIndex(METADATA) : METADATA;
+}
+
 export default async function ResearchListingPage({
   searchParams,
 }: PageProps<"/research">) {
-  const [items, params] = await Promise.all([listPublicResearchOverview(), searchParams]);
+  const [{ value: items, failed }, params] = await Promise.all([
+    loadResearch(),
+    searchParams,
+  ]);
   const types = countBy(items, (i) => i.published.type);
   const requested = firstParam(params.type);
   const active = types.some((t) => t.value === requested) ? requested : null;
@@ -96,7 +113,9 @@ export default async function ResearchListingPage({
           ) : (
             <div className="rounded-panel border-border border border-dashed p-12 text-center">
               <p className="text-text-muted font-serif text-lg">
-                Research is being documented.
+                {failed
+                  ? "This list couldn't be loaded right now. Please try again in a few minutes."
+                  : "Research is being documented."}
               </p>
             </div>
           )}

@@ -158,6 +158,14 @@ export interface PageMetadataOptions {
 }
 
 /**
+ * Keeps a page out of search results while it shows fallback content (for
+ * example during a database outage), so the outage never gets indexed.
+ */
+export function withNoIndex(metadata: Metadata): Metadata {
+  return { ...metadata, robots: { index: false, follow: true } };
+}
+
+/**
  * Builds page-specific metadata with Open Graph, Twitter Card, and Canonical support (Level 9.4 & 9.5).
  * Automatically cleans query parameters and normalizes canonical paths.
  * An explicit `image` overrides the segment's generated preview card.
