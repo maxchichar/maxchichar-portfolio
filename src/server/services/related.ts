@@ -1,6 +1,7 @@
 import "server-only";
 
-import { readNext, type ContentCard, type ContentType } from "@/lib/related";
+import { readNext, type ContentType } from "@/lib/related";
+import type { TaggedCard } from "@/lib/topics";
 
 import { listPublicArticlesOverview } from "./articles";
 import { listPublicWorkOverview } from "./projects";
@@ -18,7 +19,7 @@ async function safe<T>(promise: Promise<T[]>): Promise<T[]> {
 }
 
 /** Every published item as a card, in each listing's own order. */
-export async function listContentCards(): Promise<ContentCard[]> {
+export async function listContentCards(): Promise<TaggedCard[]> {
   const [work, research, writing] = await Promise.all([
     safe(listPublicWorkOverview()),
     safe(listPublicResearchOverview()),
@@ -33,6 +34,7 @@ export async function listContentCards(): Promise<ContentCard[]> {
       summary: published.shortDescription,
       coverUrl,
       tags: tags.map((t) => t.name),
+      tagRefs: tags.map((t) => ({ name: t.name, slug: t.slug })),
       category: published.category,
       date: time(published.publishedAt),
       order,
@@ -45,6 +47,7 @@ export async function listContentCards(): Promise<ContentCard[]> {
       summary: published.abstract,
       coverUrl,
       tags: tags.map((t) => t.name),
+      tagRefs: tags.map((t) => ({ name: t.name, slug: t.slug })),
       category: published.category,
       date: time(published.publishedAt),
       order,
@@ -57,6 +60,7 @@ export async function listContentCards(): Promise<ContentCard[]> {
       summary: published.excerpt,
       coverUrl,
       tags: tags.map((t) => t.name),
+      tagRefs: tags.map((t) => ({ name: t.name, slug: t.slug })),
       category: published.category,
       date: time(published.publishedAt),
       order,

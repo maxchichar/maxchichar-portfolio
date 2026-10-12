@@ -41,6 +41,8 @@ export interface BuildSitemapOptions {
   articles?: SitemapItemArticle[];
   includeAbout?: boolean;
   includeNow?: boolean;
+  /** Slugs of topics with published content; adds /topics and each topic page. */
+  topics?: string[];
 }
 
 /**
@@ -53,6 +55,7 @@ export function buildSitemap({
   articles = [],
   includeAbout = true,
   includeNow = true,
+  topics = [],
 }: BuildSitemapOptions): MetadataRoute.Sitemap {
   const base = siteUrl.replace(/\/+$/, "");
 
@@ -97,7 +100,23 @@ export function buildSitemap({
     }),
   );
 
-  return [...staticEntries, ...workEntries, ...researchEntries, ...articleEntries];
+  const topicEntries: MetadataRoute.Sitemap =
+    topics.length > 0
+      ? [
+          { url: `${base}/topics` },
+          ...topics.map((slug) => ({
+            url: `${base}/topics/${encodeURIComponent(slug)}`,
+          })),
+        ]
+      : [];
+
+  return [
+    ...staticEntries,
+    ...workEntries,
+    ...researchEntries,
+    ...articleEntries,
+    ...topicEntries,
+  ];
 }
 
 /**
@@ -109,6 +128,7 @@ export function buildSitemap({
  * - Includes published active Work (/work/[slug])
  * - Includes published active Research (/research/[slug])
  * - Includes published active Writing (/writing/[slug])
+ * - Includes /topics and /topics/[slug] for every tag on published content
  * - Omits all drafts, superseded/archived items, admin routes, and API endpoints
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -129,6 +149,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const hasAbout = aboutResult.status === "fulfilled" ? Boolean(aboutResult.value) : true;
   const hasNow = nowResult.status === "fulfilled" ? Boolean(nowResult.value) : true;
 
+  const topics = [
+    ...new Set(
+      [...work, ...research, ...articles]
+        .flatMap((item) => item.tags.map((t) => t.slug.trim()))
+        .filter(Boolean),
+    ),
+  ].sort();
+
   return buildSitemap({
     siteUrl,
     work,
@@ -136,5 +164,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     articles,
     includeAbout: hasAbout,
     includeNow: hasNow,
+    topics,
   });
 }

@@ -193,6 +193,28 @@ describe("Dynamic Sitemap generation (Level 9.3)", () => {
     });
   });
 
+  describe("Topics", () => {
+    it("adds /topics and one entry per topic after the content", () => {
+      const entries = buildSitemap({
+        siteUrl: "https://example.com",
+        topics: ["agents", "evals"],
+      });
+      assert.deepStrictEqual(
+        entries.slice(7).map((e) => e.url),
+        [
+          "https://example.com/topics",
+          "https://example.com/topics/agents",
+          "https://example.com/topics/evals",
+        ],
+      );
+    });
+
+    it("omits /topics entirely when nothing is tagged", () => {
+      const entries = buildSitemap({ siteUrl: "https://example.com", topics: [] });
+      assert.ok(entries.every((e) => !e.url.includes("/topics")));
+    });
+  });
+
   describe("Runtime fallback without database", () => {
     it("resolves sitemap cleanly without throwing even if DB is unavailable", async () => {
       // In an environment where the DB is unreachable, sitemap() must handle

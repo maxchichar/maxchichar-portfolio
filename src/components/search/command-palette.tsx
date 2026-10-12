@@ -44,6 +44,13 @@ const PAGES: Entry[] = [
     href: "/writing",
     keywords: "articles essays blog",
   },
+  {
+    id: "p-topics",
+    kind: "page",
+    label: "Topics",
+    href: "/topics",
+    keywords: "tags themes",
+  },
   { id: "p-now", kind: "page", label: "Now", href: "/now" },
   { id: "p-about", kind: "page", label: "About", href: "/about", keywords: "bio" },
   {

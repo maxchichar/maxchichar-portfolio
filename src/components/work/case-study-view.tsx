@@ -4,6 +4,7 @@ import { NextUp } from "@/components/detail/next-up";
 import { RelatedContent } from "@/components/detail/related";
 import { ProjectTestimonials } from "@/components/testimonials/testimonials";
 import { Toc } from "@/components/detail/toc";
+import { TagLinks } from "@/components/topics/tag-links";
 import type { schema } from "@/lib/db";
 import type { PublicTestimonial } from "@/server/services/testimonials";
 import { tiptapDocToPlainText } from "@/lib/validation/project";
@@ -173,11 +174,7 @@ export function CaseStudyView({
                     </ul>
                   </>
                 ) : null}
-                {tags.length > 0 ? (
-                  <p className="text-text-muted mt-6 font-mono text-xs">
-                    {tags.map((t) => `#${t.name}`).join("  ")}
-                  </p>
-                ) : null}
+                <TagLinks tags={tags} className="mt-6" />
               </div>
             ) : null}
           </div>
