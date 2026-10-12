@@ -10,8 +10,15 @@ import { expect, test, type Page } from "@playwright/test";
 const PAGES = ["/", "/work", "/research", "/writing", "/now", "/about", "/contact"];
 
 // Noise that isn't the site's fault (Vercel's preview toolbar, browser
-// extensions in the runner image).
-const IGNORED = [/vercel\.live/i, /vercel-live/i, /chrome-extension:/i];
+// extensions in the runner image, and Cloudflare Turnstile's own challenge
+// requests, which it rejects for headless browsers and per-deployment
+// hostnames; the contact form already handles a failed check).
+const IGNORED = [
+  /vercel\.live/i,
+  /vercel-live/i,
+  /chrome-extension:/i,
+  /challenges\.cloudflare\.com/i,
+];
 
 function collectErrors(page: Page): string[] {
   const errors: string[] = [];
