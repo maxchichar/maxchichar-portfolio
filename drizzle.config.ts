@@ -1,6 +1,8 @@
 import { defineConfig } from "drizzle-kit";
+import { loadEnvConfig } from "@next/env";
 
-// Config only — not run against a real database until Phase 2.
+loadEnvConfig(process.cwd());
+
 export default defineConfig({
   schema: "./src/lib/db/schema.ts",
   out: "./drizzle",
