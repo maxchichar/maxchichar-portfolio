@@ -1,14 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { MAX_UPLOAD_BYTES } from "@/lib/validation/media";
 import { MediaPicker, type MediaPickerItem } from "@/components/admin/media-picker";
 
-// Same presigned direct-to-R2 flow as the cover-image uploaders (request →
-// PUT → confirm), generalised for any single-image field: the chosen media
-// id lands in a hidden input named `name`, and the server re-checks it is
-// READY on save. Used by Settings for the hero and About images.
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+// Presigned direct-to-R2 upload (request → PUT → confirm) for any
+// single-image field: the chosen media id lands in a hidden input named
+// `name`, and the server re-checks it is READY on save. Used for content
+// cover images, the Settings hero and About images, and testimonial photos.
+// Files can be picked, dropped onto the preview, or chosen from the library.
 export function ImageField({
   name,
   label,
@@ -37,6 +40,10 @@ export function ImageField({
   const [error, setError] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const hiddenInputRef = useRef<HTMLInputElement>(null);
+  const changed = useRef(false);
+  const blobUrl = useRef<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const busy =
     status === "uploading" || status === "validating" || saveState === "saving";
@@ -54,10 +61,47 @@ export function ImageField({
     }
   }
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  // The hidden input's value changes without a DOM event, so tell the form:
+  // the editor's unsaved-changes guard listens for input/change events.
+  useEffect(() => {
+    if (!changed.current) return;
+    hiddenInputRef.current?.dispatchEvent(new Event("change", { bubbles: true }));
+  }, [mediaId]);
+
+  // Free the local preview of a replaced upload.
+  useEffect(
+    () => () => {
+      if (blobUrl.current) URL.revokeObjectURL(blobUrl.current);
+    },
+    [],
+  );
+  function showPreview(url: string | null, isBlob = false) {
+    if (blobUrl.current) URL.revokeObjectURL(blobUrl.current);
+    blobUrl.current = isBlob ? url : null;
+    setPreviewUrl(url);
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (file) void uploadFile(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    if (busy) return;
+    const file = e.dataTransfer.files?.[0];
+    if (file) void uploadFile(file);
+  }
+
+  async function uploadFile(file: File) {
     setError(null);
+
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      setError("Use a JPEG, PNG or WebP image.");
+      setStatus("error");
+      return;
+    }
 
     if (file.size > MAX_UPLOAD_BYTES) {
       setError(`File exceeds the ${MAX_UPLOAD_BYTES / 1024 / 1024}MB limit.`);
@@ -100,8 +144,9 @@ export function ImageField({
         );
       }
 
+      changed.current = true;
       setMediaId(newMediaId);
-      setPreviewUrl(URL.createObjectURL(file));
+      showPreview(URL.createObjectURL(file), true);
       setStatus("idle");
       await commit(newMediaId);
     } catch (err) {
@@ -112,8 +157,9 @@ export function ImageField({
 
   function handlePick(item: MediaPickerItem) {
     void commit(item.id);
+    changed.current = true;
     setMediaId(item.id);
-    setPreviewUrl(item.storageUrl);
+    showPreview(item.storageUrl);
     setError(null);
     setStatus("idle");
     setPickerOpen(false);
@@ -121,8 +167,9 @@ export function ImageField({
 
   function handleRemove() {
     void commit(null);
+    changed.current = true;
     setMediaId(null);
-    setPreviewUrl(null);
+    showPreview(null);
     setError(null);
     setStatus("idle");
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -134,10 +181,16 @@ export function ImageField({
     <div>
       <p className="text-text block font-sans text-sm font-medium">{label}</p>
       {hint ? <p className="text-text-muted mt-0.5 font-sans text-xs">{hint}</p> : null}
-      <input type="hidden" name={name} value={mediaId ?? ""} />
+      <input ref={hiddenInputRef} type="hidden" name={name} value={mediaId ?? ""} />
 
       <div
-        className={`rounded-card border-border bg-bg relative mt-3 w-full overflow-hidden border ${aspect}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!busy) setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+        className={`rounded-card bg-bg relative mt-3 w-full overflow-hidden border transition-colors ${aspect} ${dragging ? "border-accent ring-accent/30 ring-2" : "border-border"}`}
       >
         {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -159,9 +212,16 @@ export function ImageField({
               <circle cx="9" cy="10" r="2" />
               <path d="M21 16l-5-5-9 9" strokeLinejoin="round" />
             </svg>
-            No image. Click to upload
+            <span>
+              <span className="text-text">Drop an image here</span> or click to upload
+            </span>
           </label>
         )}
+        {dragging && previewUrl ? (
+          <div className="bg-bg/70 absolute inset-0 flex items-center justify-center">
+            <p className="text-text font-sans text-xs">Drop to replace</p>
+          </div>
+        ) : null}
         {busy ? (
           <div className="bg-bg/70 absolute inset-0 flex items-center justify-center">
             <p className="text-text font-mono text-xs">

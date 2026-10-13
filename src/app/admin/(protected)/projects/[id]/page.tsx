@@ -10,6 +10,7 @@ import {
   textareaClass,
 } from "@/components/admin/editor/styles";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { ImageField } from "@/components/admin/image-field";
 import { PROJECT_SECTION_KEYS } from "@/lib/validation/project";
 import * as mediaService from "@/server/services/media";
 import * as projectService from "@/server/services/projects";
@@ -22,7 +23,6 @@ import {
   saveDraftForm,
   unarchiveProjectForm,
 } from "../actions";
-import { CoverImageUploader } from "./cover-image-uploader";
 import { EvidencePanel } from "./evidence-panel";
 
 const SECTION_LABELS: Record<(typeof PROJECT_SECTION_KEYS)[number], string> = {
@@ -140,7 +140,10 @@ export default async function ProjectEditPage({
               />
               <p className={hintClass}>Shown on cards and as the case study lede.</p>
             </div>
-            <CoverImageUploader
+            <ImageField
+              name="coverMediaId"
+              label="Cover image"
+              hint="JPEG, PNG or WebP, up to 8 MB. Landscape images at least 1600 px wide look best."
               initialMediaId={draft.coverMediaId}
               initialUrl={currentCoverMedia?.storageUrl ?? null}
               libraryMedia={libraryMedia}
