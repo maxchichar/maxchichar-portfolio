@@ -7,10 +7,11 @@ import { CvSection } from "./cv-section";
 import { SettingsForm } from "./settings-form";
 
 export default async function AdminSettingsPage() {
-  const [settings, libraryMedia, cv, documentsAvailable] = await Promise.all([
+  const [settings, libraryMedia, cv, avatar, documentsAvailable] = await Promise.all([
     getPublicSiteSettings(),
     listMediaLibrary({ status: "READY", kind: "image" }),
     getSiteDocument("cv"),
+    getSiteDocument("avatar"),
     isSiteDocumentsAvailable().catch(() => true),
   ]);
 
@@ -23,6 +24,7 @@ export default async function AdminSettingsPage() {
 
       <SettingsForm
         initialSettings={settings}
+        initialAvatar={avatar ? { mediaId: avatar.mediaId, url: avatar.url } : null}
         libraryMedia={libraryMedia.map((m) => ({
           id: m.id,
           filename: m.filename,

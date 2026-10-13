@@ -81,9 +81,15 @@ export default async function NewArticlePage({
             id="excerpt"
             name="excerpt"
             required
-            rows={4}
+            rows={3}
+            maxLength={300}
             className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm outline-none"
           />
+          <p className="text-text-muted mt-1 font-sans text-xs">
+            One or two sentences (up to 300 characters), shown under the title and in
+            listings. You&apos;ll write the article itself, and add a cover image, on the
+            next screen.
+          </p>
         </div>
         {error && (
           <p className="rounded-card border-border bg-surface text-text border px-3.5 py-2.5 font-sans text-sm">

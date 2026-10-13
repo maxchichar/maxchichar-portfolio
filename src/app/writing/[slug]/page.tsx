@@ -15,6 +15,7 @@ import {
 } from "@/lib/structured-data";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { getPublicArticleDetail } from "@/server/services/articles";
+import { getSiteDocument } from "@/server/services/documents";
 import { getReadNext } from "@/server/services/related";
 import { getPublicSiteSettings } from "@/server/services/settings";
 import { PageTransition } from "@/components/motion/page-transition";
@@ -74,9 +75,10 @@ export default async function ArticleDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const [settings, readNext] = await Promise.all([
+  const [settings, readNext, avatar] = await Promise.all([
     getPublicSiteSettings(),
     getReadNext("writing", slug),
+    getSiteDocument("avatar"),
   ]);
   const next = readNext.next
     ? {
@@ -118,7 +120,12 @@ export default async function ArticleDetailPage({ params }: PageProps) {
             coverUrl={item.coverUrl}
             next={next}
             related={readNext.related}
-            author={{ name: settings.siteName, description: settings.siteDescription }}
+            author={{
+              name: settings.siteName,
+              description: settings.siteDescription,
+              // The profile photo, else the About portrait, else an initial.
+              photoUrl: avatar?.url ?? settings.aboutImage?.url ?? null,
+            }}
           />
         </main>
       </PageTransition>

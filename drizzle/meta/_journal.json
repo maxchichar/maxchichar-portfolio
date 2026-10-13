@@ -43,6 +43,13 @@
       "when": 1791756050917,
       "tag": "0005_error_events",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791889200431,
+      "tag": "0006_profile_photo",
+      "breakpoints": true
     }
   ]
 }

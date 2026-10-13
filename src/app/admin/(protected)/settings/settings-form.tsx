@@ -6,7 +6,12 @@ import { ImageField } from "@/components/admin/image-field";
 import type { MediaPickerItem } from "@/components/admin/media-picker";
 import type { PublicSiteSettings } from "@/lib/validation/settings";
 
-import { saveSettingsForm, saveSiteImage, type SettingsFormState } from "./actions";
+import {
+  saveSettingsForm,
+  saveSiteDocument,
+  saveSiteImage,
+  type SettingsFormState,
+} from "./actions";
 
 const inputClass =
   "rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none";
@@ -20,9 +25,11 @@ const initialState: SettingsFormState = {
 
 export function SettingsForm({
   initialSettings,
+  initialAvatar,
   libraryMedia,
 }: {
   initialSettings: PublicSiteSettings;
+  initialAvatar: { mediaId: string; url: string } | null;
   libraryMedia: MediaPickerItem[];
 }) {
   const [state, formAction, isPending] = useActionState(saveSettingsForm, initialState);
@@ -58,6 +65,19 @@ export function SettingsForm({
             libraryMedia={libraryMedia}
             aspect="aspect-[4/5]"
             onCommit={(id) => saveSiteImage("aboutMediaId", id)}
+          />
+        </div>
+
+        <div className="max-w-[16rem]">
+          <ImageField
+            name="avatarMediaId"
+            label="Profile photo"
+            hint="Square photo of you, shown as the author on your articles. Without one, the About portrait is used."
+            initialMediaId={initialAvatar?.mediaId ?? null}
+            initialUrl={initialAvatar?.url ?? null}
+            libraryMedia={libraryMedia}
+            aspect="aspect-square"
+            onCommit={(id) => saveSiteDocument("avatar", id)}
           />
         </div>
       </section>
