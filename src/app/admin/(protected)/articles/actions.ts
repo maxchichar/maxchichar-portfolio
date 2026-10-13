@@ -35,6 +35,15 @@ export async function ensureDraftForm(formData: FormData): Promise<void> {
   redirect(`/admin/articles/${articleId}`);
 }
 
+/** Repairs lost formatting into the draft (creating it if needed). */
+export async function fixFormattingForm(formData: FormData): Promise<void> {
+  const actor = await requireActor();
+  const articleId = requireField(formData, "articleId");
+  await articlesService.fixDraftFormatting(articleId, actor);
+  revalidatePath(`/admin/articles/${articleId}`);
+  redirect(`/admin/articles/${articleId}?fixed=1`);
+}
+
 export async function saveDraftForm(formData: FormData): Promise<void> {
   const actor = await requireActor();
   const articleId = requireField(formData, "articleId");

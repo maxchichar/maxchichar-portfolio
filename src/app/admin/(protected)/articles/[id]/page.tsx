@@ -17,6 +17,7 @@ import * as mediaService from "@/server/services/media";
 import {
   archiveArticleForm,
   ensureDraftForm,
+  fixFormattingForm,
   publishArticleForm,
   rollbackArticleForm,
   saveDraftForm,
@@ -28,16 +29,20 @@ const FORM_ID = "article-draft-form";
 
 export default async function ArticleEditPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ fixed?: string }>;
 }) {
-  const { id } = await params;
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const state = await articlesService.getArticleFullState(id);
   if (!state) notFound();
 
   const { article, draft, published, versions, tags } = state;
   const current = draft ?? published;
   if (!current) notFound();
+  const needsFix = articlesService.needsFormattingFix(current);
+  const justFixed = query.fixed === "1" && Boolean(draft) && !needsFix;
 
   // The draft's cover while editing; the live version's cover otherwise.
   const coverMediaId = draft ? draft.coverMediaId : (published?.coverMediaId ?? null);
@@ -84,6 +89,40 @@ export default async function ArticleEditPage({
         />
       }
     >
+      {needsFix ? (
+        <form
+          action={fixFormattingForm}
+          role="alert"
+          className="rounded-panel border-accent/40 bg-accent/5 mb-6 flex flex-col gap-4 border p-5 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <input type="hidden" name="articleId" value={article.id} />
+          <div>
+            <p className="text-text font-sans text-sm font-semibold">
+              This article&apos;s formatting needs fixing
+            </p>
+            <p className="text-text-muted mt-1 font-sans text-xs">
+              Its text is in the excerpt, or written as raw Markdown (#, **, ---). One
+              click moves it into the body with proper headings, emphasis and lists, and
+              writes a short excerpt. You can review it before publishing.
+            </p>
+          </div>
+          <button
+            type="submit"
+            className="bg-text text-bg hover:bg-accent shrink-0 rounded-full px-5 py-2.5 font-sans text-sm font-medium transition-colors"
+          >
+            Fix formatting
+          </button>
+        </form>
+      ) : justFixed ? (
+        <p
+          role="status"
+          className="rounded-panel border-border bg-surface text-text mb-6 border p-5 font-sans text-sm"
+        >
+          Formatting fixed in this draft. Check the excerpt and body below, add a cover
+          image if you like, then choose <strong>Publish changes</strong>.
+        </p>
+      ) : null}
+
       {draft ? (
         <form id={FORM_ID} action={saveDraftForm} className="space-y-6">
           <input type="hidden" name="articleId" value={article.id} />
