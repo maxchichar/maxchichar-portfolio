@@ -3,15 +3,15 @@
 // src/lib/db, since that module imports the `server-only` marker package,
 // which unconditionally throws when resolved outside Next's bundler.
 // This file builds its own minimal, disposable connection instead.
-import { Pool, neonConfig } from "@neondatabase/serverless";
+import { Pool } from "@neondatabase/serverless";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
 
 import { hashPassword } from "../src/lib/auth/password";
+import { configureNeon } from "../src/lib/db/configure-neon";
 import * as schema from "../src/lib/db/schema";
 
-neonConfig.webSocketConstructor = ws;
+configureNeon();
 
 async function main() {
   const connectionString = process.env.DATABASE_URL;

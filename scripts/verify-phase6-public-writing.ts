@@ -1,12 +1,12 @@
-import { Pool, neonConfig } from "@neondatabase/serverless";
+import { Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { eq } from "drizzle-orm";
-import ws from "ws";
 import { spawn } from "node:child_process";
+import { configureNeon } from "../src/lib/db/configure-neon";
 import * as schema from "../src/lib/db/schema";
 import { plainTextToTiptapDoc } from "../src/lib/validation/project";
 
-neonConfig.webSocketConstructor = ws;
+configureNeon();
 
 async function main() {
   console.log("==================================================");

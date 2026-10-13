@@ -15,14 +15,14 @@
 //                       configured database and succeeded.
 //   FAIL <check> <reason> — actually ran and failed.
 // Exit code is 0 only if every check PASSed.
-import { Pool, neonConfig } from "@neondatabase/serverless";
+import { Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { migrate } from "drizzle-orm/neon-serverless/migrator";
-import ws from "ws";
 
+import { configureNeon } from "../src/lib/db/configure-neon";
 import * as schema from "../src/lib/db/schema";
 
-neonConfig.webSocketConstructor = ws;
+configureNeon();
 
 const EXPECTED_TABLES = [
   "users",
@@ -44,8 +44,12 @@ const EXPECTED_TABLES = [
   "project_evidence",
   "research_evidence",
   "site_settings",
+  "site_documents",
+  "testimonials",
+  "error_events",
   "contact_submissions",
   "audit_logs",
+  "page_views",
 ].sort();
 
 const PARTIAL_UNIQUE_INDEXES = [

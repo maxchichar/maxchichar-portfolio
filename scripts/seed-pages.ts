@@ -10,11 +10,11 @@
 // only place that does, and it's safe to run repeatedly (checks before
 // inserting, both for the page row and for whether it already has any
 // version at all).
-import { Pool, neonConfig } from "@neondatabase/serverless";
+import { Pool } from "@neondatabase/serverless";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
 
+import { configureNeon } from "../src/lib/db/configure-neon";
 import * as schema from "../src/lib/db/schema";
 import {
   type PageSlug,
@@ -22,7 +22,7 @@ import {
   PAGE_SLUGS,
 } from "../src/lib/validation/page";
 
-neonConfig.webSocketConstructor = ws;
+configureNeon();
 
 // home's hero fields are the actual copy already live on the homepage —
 // not placeholder text, just migrated into the CMS row it'll eventually

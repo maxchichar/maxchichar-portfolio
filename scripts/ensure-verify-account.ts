@@ -9,13 +9,13 @@
 // Next.js bundler and throws when run under plain tsx).
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import ws from "ws";
+import { Pool } from "@neondatabase/serverless";
 
 import { hashPassword } from "../src/lib/auth/password";
+import { configureNeon } from "../src/lib/db/configure-neon";
 import * as schema from "../src/lib/db/schema";
 
-neonConfig.webSocketConstructor = ws;
+configureNeon();
 
 async function main() {
   const connectionString = process.env.DATABASE_URL;

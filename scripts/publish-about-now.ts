@@ -1,12 +1,12 @@
-import { Pool, neonConfig } from "@neondatabase/serverless";
+import { Pool } from "@neondatabase/serverless";
 import { eq, and, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
 
+import { configureNeon } from "../src/lib/db/configure-neon";
 import * as schema from "../src/lib/db/schema";
 import { aboutPageContentSchema, nowPageContentSchema } from "../src/lib/validation/page";
 
-neonConfig.webSocketConstructor = ws;
+configureNeon();
 
 const ABOUT_CONTENT = aboutPageContentSchema.parse({
   slug: "about",

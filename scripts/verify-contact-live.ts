@@ -1,7 +1,8 @@
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import ws from "ws";
+import { Pool } from "@neondatabase/serverless";
 
-neonConfig.webSocketConstructor = ws;
+import { configureNeon } from "../src/lib/db/configure-neon";
+
+configureNeon();
 const TARGET = "https://chibuezemaxwell.vercel.app";
 
 async function main() {

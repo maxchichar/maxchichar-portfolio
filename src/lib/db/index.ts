@@ -1,15 +1,15 @@
 import "server-only";
 
-import { Pool, neonConfig } from "@neondatabase/serverless";
+import { Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
-
+import { configureNeon } from "./configure-neon";
 import * as schema from "./schema";
 
 // Node.js runtime needs a WebSocket polyfill for the pooled/transaction-
 // capable Neon driver (native WebSocket only exists in edge runtimes).
-neonConfig.webSocketConstructor = ws;
-neonConfig.poolQueryViaFetch = true;
+// configureNeon ensures WebSocket and fetch connections use IPv4 to avoid
+// IPv6 routing timeouts in containerized and cloud dev environments.
+configureNeon();
 
 type Database = ReturnType<typeof drizzle<typeof schema>>;
 
