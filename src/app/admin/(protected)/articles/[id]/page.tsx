@@ -10,6 +10,7 @@ import {
   textareaClass,
 } from "@/components/admin/editor/styles";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { ImageField } from "@/components/admin/image-field";
 import * as articlesService from "@/server/services/articles";
 import * as mediaService from "@/server/services/media";
 
@@ -21,7 +22,6 @@ import {
   saveDraftForm,
   unarchiveArticleForm,
 } from "../actions";
-import { CoverImageUploader } from "./cover-image-uploader";
 
 const FORM_ID = "article-draft-form";
 
@@ -38,8 +38,10 @@ export default async function ArticleEditPage({
   const current = draft ?? published;
   if (!current) notFound();
 
-  const currentCoverMedia = draft?.coverMediaId
-    ? await articlesService.getMediaById(draft.coverMediaId)
+  // The draft's cover while editing; the live version's cover otherwise.
+  const coverMediaId = draft ? draft.coverMediaId : (published?.coverMediaId ?? null);
+  const currentCoverMedia = coverMediaId
+    ? await articlesService.getMediaById(coverMediaId)
     : null;
 
   // Same existing service /admin/media itself uses — no new query.
@@ -84,6 +86,20 @@ export default async function ArticleEditPage({
       {draft ? (
         <form id={FORM_ID} action={saveDraftForm} className="space-y-6">
           <input type="hidden" name="articleId" value={article.id} />
+
+          <EditorSection
+            title="Cover image"
+            description="Shown at the top of the article, in the Writing list and on share cards."
+          >
+            <ImageField
+              name="coverMediaId"
+              label="Image"
+              hint="JPEG, PNG or WebP, up to 8 MB. Landscape images at least 1600 px wide look best."
+              initialMediaId={draft.coverMediaId}
+              initialUrl={currentCoverMedia?.storageUrl ?? null}
+              libraryMedia={libraryMedia}
+            />
+          </EditorSection>
 
           <EditorSection title="Article">
             <div>
@@ -152,19 +168,22 @@ export default async function ArticleEditPage({
                 <p className={hintClass}>Comma-separated.</p>
               </div>
             </div>
-            <CoverImageUploader
-              initialMediaId={draft.coverMediaId}
-              initialUrl={currentCoverMedia?.storageUrl ?? null}
-              libraryMedia={libraryMedia}
-            />
           </EditorSection>
         </form>
       ) : (
         <div className="rounded-panel border-border bg-surface border border-dashed p-8 text-center">
+          {currentCoverMedia ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={currentCoverMedia.storageUrl}
+              alt="Current cover image"
+              className="rounded-card border-border mx-auto mb-5 aspect-[16/9] w-full max-w-md border object-cover"
+            />
+          ) : null}
           <p className="text-text font-sans text-sm font-medium">This article is live.</p>
           <p className="text-text-muted mt-1 font-serif text-sm">
-            Choose “Edit article” to start a new draft. The live page won&apos;t change
-            until you publish.
+            Choose “Edit article” to start a new draft, including a new cover image. The
+            live page won&apos;t change until you publish.
           </p>
         </div>
       )}

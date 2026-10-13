@@ -10,6 +10,7 @@ import {
   textareaClass,
 } from "@/components/admin/editor/styles";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { ImageField } from "@/components/admin/image-field";
 import { RESEARCH_SECTION_KEYS, RESEARCH_TYPES } from "@/lib/validation/research";
 import * as mediaService from "@/server/services/media";
 import * as researchService from "@/server/services/research";
@@ -22,7 +23,6 @@ import {
   saveDraftForm,
   unarchiveResearchForm,
 } from "../actions";
-import { CoverImageUploader } from "./cover-image-uploader";
 import { EvidencePanel } from "./evidence-panel";
 
 const SECTION_LABELS: Record<(typeof RESEARCH_SECTION_KEYS)[number], string> = {
@@ -167,7 +167,10 @@ export default async function ResearchEditPage({
                 className={textareaClass}
               />
             </div>
-            <CoverImageUploader
+            <ImageField
+              name="coverMediaId"
+              label="Cover image"
+              hint="JPEG, PNG or WebP, up to 8 MB. Landscape images at least 1600 px wide look best."
               initialMediaId={draft.coverMediaId}
               initialUrl={currentCoverMedia?.storageUrl ?? null}
               libraryMedia={libraryMedia}
