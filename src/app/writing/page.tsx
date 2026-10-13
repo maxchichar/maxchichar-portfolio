@@ -130,7 +130,7 @@ export default async function WritingListingPage({
                 <h2 className="text-h2 text-text group-hover:text-accent mt-5 font-sans font-semibold transition-colors">
                   {featured.published.title}
                 </h2>
-                <p className="text-lede text-text-muted mt-5 line-clamp-3 font-serif">
+                <p className="text-lede text-text-muted mt-5 font-serif">
                   {featured.published.excerpt}
                 </p>
                 <p className="text-text-muted mt-6 font-mono text-xs">
@@ -167,7 +167,7 @@ export default async function WritingListingPage({
                         <span className="text-text group-hover:text-accent block font-sans text-2xl font-semibold tracking-tight transition-colors md:text-[1.75rem]">
                           {item.published.title}
                         </span>
-                        <span className="text-text-muted mt-3 line-clamp-2 block font-serif text-base leading-relaxed">
+                        <span className="text-text-muted mt-3 block font-serif text-base leading-relaxed">
                           {item.published.excerpt}
                         </span>
                       </span>

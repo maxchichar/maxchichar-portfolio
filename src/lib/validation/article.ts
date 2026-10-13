@@ -11,10 +11,9 @@ export const articleCreateSchema = z.object({
   slug: z
     .string()
     .min(1)
-    .max(120)
     .regex(slugPattern, "lowercase letters, numbers, and hyphens only"),
-  title: z.string().min(1).max(200),
-  excerpt: z.string().min(1).max(300),
+  title: z.string().min(1),
+  excerpt: z.string().min(1),
 });
 export type ArticleCreateInput = z.infer<typeof articleCreateSchema>;
 
@@ -22,11 +21,11 @@ export type ArticleCreateInput = z.infer<typeof articleCreateSchema>;
 // single Tiptap document instead of a sections array") rather than the
 // sections array Projects/Research use — reflected directly here.
 export const articleDraftUpdateSchema = z.object({
-  title: z.string().min(1).max(200),
-  excerpt: z.string().min(1).max(300),
-  category: z.string().max(80).optional().nullable(),
+  title: z.string().min(1),
+  excerpt: z.string().min(1),
+  category: z.string().optional().nullable(),
   content: tiptapDocSchema,
-  tags: z.array(z.string().min(1).max(40)).max(20).default([]),
+  tags: z.array(z.string().min(1)).default([]),
   coverMediaId: z.uuid().optional().nullable(),
 });
 export type ArticleDraftUpdateInput = z.infer<typeof articleDraftUpdateSchema>;
