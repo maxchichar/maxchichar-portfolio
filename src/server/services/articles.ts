@@ -9,6 +9,7 @@ import type {
 } from "@/lib/validation/article";
 
 import { publicUrlFor } from "@/lib/storage/r2";
+import { repairArticleContent } from "@/lib/markdown-doc";
 import * as articlesRepo from "../repositories/articles";
 import * as mediaRepo from "../repositories/media";
 import * as tagsRepo from "../repositories/tags";
@@ -35,6 +36,30 @@ function estimateReadingTime(content: unknown): number {
   const text = tiptapDocToPlainText(content);
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.ceil(words / WORDS_PER_MINUTE));
+}
+
+/**
+ * The published version as visitors should see it: an article whose text was
+ * stuck in the excerpt, or saved as literal Markdown, is shown formatted (see
+ * repairArticleContent). Stored rows are not changed; the admin's "Fix
+ * formatting" saves the same repair as a draft.
+ */
+function presentPublished<
+  T extends {
+    title: string;
+    excerpt: string;
+    content: unknown;
+    readingTime: number | null;
+  },
+>(published: T): T {
+  const fixed = repairArticleContent(published);
+  if (!fixed) return published;
+  return {
+    ...published,
+    excerpt: fixed.excerpt,
+    content: fixed.content,
+    readingTime: estimateReadingTime(fixed.content),
+  };
 }
 
 /** Creates a new article + its first DRAFT version, in one transaction. */
@@ -188,6 +213,33 @@ export async function saveDraft(
 }
 
 /** DRAFT -> PUBLISHED; any existing PUBLISHED version -> SUPERSEDED. Atomic. */
+/** Whether a version's text needs the formatting repair. */
+export function needsFormattingFix(version: {
+  title: string;
+  excerpt: string;
+  content: unknown;
+}): boolean {
+  return repairArticleContent(version) !== null;
+}
+
+/**
+ * Saves the formatting repair (see repairArticleContent) into the article's
+ * draft, creating the draft from the live version first if there isn't one.
+ * The live page doesn't change until the draft is published.
+ */
+export async function fixDraftFormatting(articleId: string, actor: Actor) {
+  const draft = await ensureDraft(articleId, actor);
+  const fixed = repairArticleContent(draft);
+  if (!fixed) return draft;
+  return db.transaction((tx) =>
+    articlesRepo.updateDraftVersion(tx, draft.id, {
+      excerpt: fixed.excerpt,
+      content: fixed.content,
+      readingTime: estimateReadingTime(fixed.content),
+    }),
+  );
+}
+
 export async function publishArticle(articleId: string, actor: Actor) {
   return db.transaction(async (tx) => {
     const draft = await articlesRepo.getDraftVersion(tx, articleId);
@@ -324,7 +376,7 @@ export async function listPublicArticlesOverview() {
 
       return {
         article,
-        published,
+        published: presentPublished(published),
         tags,
         coverUrl,
       };
@@ -350,7 +402,7 @@ export async function getPublicArticleDetail(slug: string) {
 
   return {
     article,
-    published,
+    published: presentPublished(published),
     tags,
     coverUrl,
   };
