@@ -133,9 +133,10 @@ export default async function PreviewPage({ params }: { params: Params }) {
     const state = await safe(getArticleFullState(id));
     const picked = state && pick(state);
     if (!state || !picked) notFound();
-    const [coverUrl, settings] = await Promise.all([
+    const [coverUrl, settings, avatar] = await Promise.all([
       resolveReadyMediaUrl(picked.version.coverMediaId),
       getPublicSiteSettings(),
+      getSiteDocument("avatar"),
     ]);
     return (
       <Shell
@@ -154,7 +155,11 @@ export default async function PreviewPage({ params }: { params: Params }) {
           tags={state.tags}
           coverUrl={coverUrl}
           next={null}
-          author={{ name: settings.siteName, description: settings.siteDescription }}
+          author={{
+            name: settings.siteName,
+            description: settings.siteDescription,
+            photoUrl: avatar?.url ?? settings.aboutImage?.url ?? null,
+          }}
         />
       </Shell>
     );

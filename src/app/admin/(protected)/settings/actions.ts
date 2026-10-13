@@ -75,16 +75,16 @@ export async function saveSiteImage(
   return result;
 }
 
-/** Sets or clears the CV (a validated PDF) immediately. */
+/** Sets or clears the CV (a PDF) or the profile photo (an image) immediately. */
 export async function saveSiteDocument(
-  key: "cv",
+  key: "cv" | "avatar",
   mediaId: string | null,
 ): Promise<SettingsFormState> {
   const session = await auth();
   if (!session?.user?.id) {
     return { success: false, error: "Not authenticated." };
   }
-  if (key !== "cv") {
+  if (key !== "cv" && key !== "avatar") {
     return { success: false, error: "Unknown document." };
   }
   const result = await setSiteDocument(key, mediaId, { id: session.user.id });

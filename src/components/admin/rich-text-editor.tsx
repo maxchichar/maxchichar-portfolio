@@ -10,9 +10,16 @@ import {
   type JSONContent,
 } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { MediaPicker, type MediaPickerItem } from "@/components/admin/media-picker";
+import {
+  hasRichHtml,
+  INSERT_MARKDOWN_EVENT,
+  looksLikeMarkdown,
+  markdownToEditorHtml,
+  type InsertMarkdownDetail,
+} from "@/lib/markdown-paste";
 import { safeHref } from "@/lib/rich-text";
 
 /**
@@ -20,6 +27,9 @@ import { safeHref } from "@/lib/rich-text";
  * database already stores, and posts it through a hidden input named
  * `name` (parsed server-side by parseRichTextField). Public rendering is
  * allow-listed separately, so nothing typed here is trusted as markup.
+ *
+ * Pasting Markdown (from a notes app, an AI chat, a .md file) turns it into
+ * real headings, emphasis, lists and dividers instead of literal symbols.
  */
 export function RichTextEditor({
   name,
@@ -39,6 +49,7 @@ export function RichTextEditor({
   const [json, setJson] = useState(() => JSON.stringify(initialContent ?? ""));
   const [pickerOpen, setPickerOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<Editor | null>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -61,6 +72,15 @@ export function RichTextEditor({
         class: `rich-text max-w-none px-5 py-4 outline-none ${minHeight}`,
         ...(label ? { "aria-label": label } : {}),
       },
+      handlePaste: (_view, event) => {
+        const text = event.clipboardData?.getData("text/plain") ?? "";
+        const html = event.clipboardData?.getData("text/html") ?? "";
+        if (!editorRef.current || hasRichHtml(html) || !looksLikeMarkdown(text)) {
+          return false; // the editor's normal paste
+        }
+        editorRef.current.chain().focus().insertContent(markdownToEditorHtml(text)).run();
+        return true;
+      },
     },
     onUpdate: ({ editor }) => {
       setJson(JSON.stringify(editor.getJSON()));
@@ -68,6 +88,23 @@ export function RichTextEditor({
       wrapperRef.current?.dispatchEvent(new Event("input", { bubbles: true }));
     },
   });
+
+  useEffect(() => {
+    editorRef.current = editor;
+    if (!editor) return;
+    // Another field can hand Markdown over (e.g. moving an over-long excerpt
+    // into the body): it replaces an empty body, or is added at the end.
+    const onInsert = (e: Event) => {
+      const { target, markdown } = (e as CustomEvent<InsertMarkdownDetail>).detail;
+      if (target !== name || !markdown.trim()) return;
+      const html = markdownToEditorHtml(markdown);
+      if (editor.isEmpty) editor.chain().setContent(html).focus("start").run();
+      else editor.chain().focus("end").insertContent(html).run();
+      wrapperRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    window.addEventListener(INSERT_MARKDOWN_EVENT, onInsert);
+    return () => window.removeEventListener(INSERT_MARKDOWN_EVENT, onInsert);
+  }, [editor, name]);
 
   return (
     <div

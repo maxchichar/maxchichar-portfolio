@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { DetailHero } from "@/components/detail/detail-hero";
+import { MediaImage } from "@/components/media-image";
 import { NextUp } from "@/components/detail/next-up";
 import { RelatedContent } from "@/components/detail/related";
 import { Toc } from "@/components/detail/toc";
@@ -36,7 +37,7 @@ export function ArticleDetailView({
   coverUrl: string | null;
   next: NextArticle | null;
   related?: ContentCard[];
-  author: { name: string; description: string | null };
+  author: { name: string; description: string | null; photoUrl?: string | null };
 }) {
   // Only top-level sections (h2) go in the contents list; it's shown once an
   // article is long enough to need one.
@@ -98,12 +99,24 @@ export function ArticleDetailView({
 
             <div className="rounded-panel bg-surface mt-10 flex flex-col gap-6 p-7 sm:flex-row sm:items-center sm:justify-between md:p-8">
               <div className="flex items-center gap-4">
-                <span
-                  aria-hidden="true"
-                  className="bg-accent-purple text-bg flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-sans text-base font-bold"
-                >
-                  {author.name.slice(0, 1)}
-                </span>
+                {author.photoUrl ? (
+                  <span className="border-border relative h-12 w-12 shrink-0 overflow-hidden rounded-full border">
+                    <MediaImage
+                      src={author.photoUrl}
+                      alt={author.name}
+                      fill
+                      sizes="48px"
+                      className="object-cover"
+                    />
+                  </span>
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="bg-accent-purple text-bg flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-sans text-base font-bold"
+                  >
+                    {author.name.slice(0, 1)}
+                  </span>
+                )}
                 <div>
                   <p className="text-text font-sans text-sm font-semibold">
                     Written by {author.name}

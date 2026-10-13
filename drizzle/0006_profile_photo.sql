@@ -1,0 +1,2 @@
+ALTER TABLE "site_documents" DROP CONSTRAINT "site_documents_key_check";--> statement-breakpoint
+ALTER TABLE "site_documents" ADD CONSTRAINT "site_documents_key_check" CHECK ("site_documents"."key" IN ('cv', 'avatar'));

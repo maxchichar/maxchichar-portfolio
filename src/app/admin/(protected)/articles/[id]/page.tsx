@@ -22,6 +22,7 @@ import {
   saveDraftForm,
   unarchiveArticleForm,
 } from "../actions";
+import { ExcerptField } from "./excerpt-field";
 
 const FORM_ID = "article-draft-form";
 
@@ -114,20 +115,11 @@ export default async function ArticleEditPage({
                 className={`${inputClass} text-lg font-semibold`}
               />
             </div>
-            <div>
-              <label htmlFor="excerpt" className={labelClass}>
-                Excerpt
-              </label>
-              <textarea
-                id="excerpt"
-                name="excerpt"
-                defaultValue={draft.excerpt}
-                required
-                rows={2}
-                className={textareaClass}
-              />
-              <p className={hintClass}>Shown in listings and as the article lede.</p>
-            </div>
+            <ExcerptField
+              defaultValue={draft.excerpt}
+              className={textareaClass}
+              hintClassName={hintClass}
+            />
             <div>
               <p className={`${labelClass} mb-1.5`}>Body</p>
               <RichTextEditor
@@ -138,6 +130,10 @@ export default async function ArticleEditPage({
                 libraryMedia={libraryMedia}
                 minHeight="min-h-[28rem]"
               />
+              <p className={hintClass}>
+                Use the toolbar for headings, bold, lists and images, or paste Markdown (#
+                Heading, **bold**, - list, ---) and it&apos;s formatted for you.
+              </p>
             </div>
           </EditorSection>
 

@@ -19,6 +19,16 @@ export interface SiteDocument {
   updatedAt: Date;
 }
 
+function pgCode(err: unknown): string | undefined {
+  let current: unknown = err;
+  for (let i = 0; i < 3 && current && typeof current === "object"; i++) {
+    const code = (current as { code?: unknown }).code;
+    if (typeof code === "string") return code;
+    current = (current as { cause?: unknown }).cause;
+  }
+  return undefined;
+}
+
 let warnedMissing = false;
 function warnMissingTable() {
   if (warnedMissing) return;
@@ -80,8 +90,15 @@ export async function setSiteDocument(
           error: "That file hasn't finished uploading and validating yet.",
         };
       }
-      if (mediaKindOf(media.mimeType) !== "document") {
-        return { success: false, error: "The CV must be a PDF." };
+      const expected = key === "cv" ? "document" : "image";
+      if (mediaKindOf(media.mimeType) !== expected) {
+        return {
+          success: false,
+          error:
+            key === "cv"
+              ? "The CV must be a PDF."
+              : "The profile photo must be an image.",
+        };
       }
       await documentsRepo.setDocument(db, key, mediaId, actor.id);
     } else {
@@ -95,14 +112,18 @@ export async function setSiteDocument(
     });
     return { success: true };
   } catch (err) {
-    if (isMissingTableError(err)) {
+    const what = key === "cv" ? "The CV" : "The profile photo";
+    // 42P01: table missing; 23514: the slot isn't allowed yet (older schema).
+    if (isMissingTableError(err) || pgCode(err) === "23514") {
       return {
         success: false,
-        error:
-          "The CV needs a database update first. Run `npm run db:push`, then try again.",
+        error: `${what} needs a database update first. Run \`npm run db:push\`, then try again.`,
       };
     }
     console.error("setSiteDocument error:", err);
-    return { success: false, error: "Couldn't save the CV. Please try again." };
+    return {
+      success: false,
+      error: `Couldn't save ${what.toLowerCase()}. Please try again.`,
+    };
   }
 }

@@ -585,11 +585,11 @@ export const siteSettings = pgTable(
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// Site documents: downloadable files the site offers (currently the CV),
-// keyed by slot. Kept out of site_settings on purpose: if this table hasn't
+// Site documents: single files the site offers, keyed by slot: the CV (a
+// PDF) and the profile photo used for author bylines (an image). Kept out of site_settings on purpose: if this table hasn't
 // been migrated yet, only the CV feature is unavailable, not every setting.
 // ---------------------------------------------------------------------------
-export const SITE_DOCUMENT_KEYS = ["cv"] as const;
+export const SITE_DOCUMENT_KEYS = ["cv", "avatar"] as const;
 export type SiteDocumentKey = (typeof SITE_DOCUMENT_KEYS)[number];
 
 export const siteDocuments = pgTable(
@@ -602,7 +602,7 @@ export const siteDocuments = pgTable(
     updatedBy: uuid("updated_by").references(() => users.id),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [check("site_documents_key_check", sql`${table.key} IN ('cv')`)],
+  (table) => [check("site_documents_key_check", sql`${table.key} IN ('cv', 'avatar')`)],
 );
 
 // ---------------------------------------------------------------------------
