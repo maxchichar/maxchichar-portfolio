@@ -118,3 +118,21 @@ export async function unarchiveArticleForm(formData: FormData): Promise<void> {
   revalidatePath(`/admin/articles/${articleId}`);
   redirect(`/admin/articles/${articleId}`);
 }
+
+export async function deleteArticleForm(formData: FormData): Promise<void> {
+  const actor = await requireActor();
+  const articleId = requireField(formData, "articleId");
+  if (formData.get("confirmDelete") !== "delete") {
+    throw new Error("Confirm permanent deletion first.");
+  }
+  const article = await articlesService.deleteArchivedArticle(articleId, actor);
+  revalidatePath("/admin/articles");
+  revalidatePath(`/admin/articles/${articleId}`);
+  revalidatePath(`/writing/${article.slug}`);
+  revalidatePath("/writing");
+  revalidatePath("/");
+  revalidatePath("/api/search");
+  revalidatePath("/feed.xml");
+  revalidatePath("/sitemap.xml");
+  redirect("/admin/articles");
+}

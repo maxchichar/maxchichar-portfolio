@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { richDocToHtml } from "../src/lib/rich-text-html";
 
 import {
   docPlainText,
@@ -68,9 +69,71 @@ describe("markdownToTiptapDoc", () => {
   it("decodes entities and keeps apostrophes", () => {
     assert.strictEqual(docPlainText(markdownToTiptapDoc("I've & <you>")), "I've & <you>");
   });
+
+  it("keeps Markdown images as blocks and renders their source and caption", () => {
+    const doc = markdownToTiptapDoc(
+      'Before ![Photo &amp; detail](/uploads/photo.png "Caption") after',
+    );
+    assert.deepStrictEqual(
+      doc.content.map((n) => n.type),
+      ["paragraph", "image", "paragraph"],
+    );
+    assert.deepStrictEqual(doc.content[1]?.attrs, {
+      src: "/uploads/photo.png",
+      alt: "Photo & detail",
+      title: "Caption",
+    });
+    const html = richDocToHtml(doc, "https://example.com");
+    assert.ok(html.includes('src="https://example.com/uploads/photo.png"'));
+    assert.ok(html.includes("<figcaption>Caption</figcaption>"));
+    assert.ok(!html.includes("<p><figure>"));
+  });
+
+  it("drops unsafe image sources instead of creating image nodes", () => {
+    for (const src of [
+      "javascript:alert",
+      "data:image/png;base64,abc",
+      "//evil.test/a.png",
+    ]) {
+      const doc = markdownToTiptapDoc(`![Photo](${src})`);
+      assert.ok(!JSON.stringify(doc).includes('"type":"image"'));
+    }
+  });
 });
 
 describe("repairArticleContent", () => {
+  it("preserves an image in a body repaired from literal Markdown", () => {
+    const fixed = repairArticleContent({
+      title: "T",
+      excerpt: "Summary",
+      content: {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              { type: "text", text: "![Photo](https://media.example.com/photo.png)" },
+            ],
+          },
+        ],
+      },
+    });
+    assert.strictEqual(fixed?.content.content[0]?.type, "image");
+  });
+
+  it("does not replace an image-only body with a long excerpt", () => {
+    assert.strictEqual(
+      repairArticleContent({
+        title: "T",
+        excerpt: "Summary ".repeat(45),
+        content: {
+          type: "doc",
+          content: [{ type: "image", attrs: { src: "/photo.png" } }],
+        },
+      }),
+      null,
+    );
+  });
   it("moves a whole essay out of the excerpt into the body", () => {
     const fixed = repairArticleContent({
       title: "The World Is Not a Finished Product.",

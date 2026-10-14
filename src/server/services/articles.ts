@@ -1,6 +1,6 @@
 import "server-only";
 
-import { db } from "@/lib/db";
+import { db, schema } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { plainTextToTiptapDoc, tiptapDocToPlainText } from "@/lib/validation/project";
 import type {
@@ -341,6 +341,23 @@ export async function unarchiveArticle(articleId: string, actor: Actor) {
     action: "article.unarchived",
     resourceType: "article",
     resourceId: articleId,
+  });
+}
+
+export async function deleteArchivedArticle(articleId: string, actor: Actor) {
+  return db.transaction(async (tx) => {
+    const deleted = await articlesRepo.deleteArchivedArticle(tx, articleId);
+    if (!deleted) {
+      throw new ArticleServiceError("Archive the article before deleting it.");
+    }
+    await tx.insert(schema.auditLogs).values({
+      userId: actor.id,
+      action: "article.deleted",
+      resourceType: "article",
+      resourceId: articleId,
+      metadata: { slug: deleted.slug },
+    });
+    return deleted;
   });
 }
 
