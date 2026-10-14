@@ -1,7 +1,7 @@
 import { marked, type Token, type Tokens } from "marked";
 
 import { looksLikeMarkdown } from "@/lib/markdown-paste";
-import { safeHref } from "@/lib/rich-text";
+import { safeHref, safeImageSrc } from "@/lib/rich-text";
 
 /**
  * Markdown to the Tiptap JSON the site stores and renders, without a DOM, so
@@ -47,6 +47,17 @@ function inline(tokens: Token[] | undefined, marks: Mark[] = []): JSONNode[] {
       case "br":
         out.push({ type: "hardBreak" });
         break;
+      case "image": {
+        const image = t as Tokens.Image;
+        const src = safeImageSrc(image.href);
+        if (src) {
+          out.push({
+            type: "image",
+            attrs: { src, alt: decode(image.text), title: image.title ?? null },
+          });
+        }
+        break;
+      }
       case "text": {
         const tt = t as Tokens.Text;
         if (tt.tokens?.length) out.push(...inline(tt.tokens, marks));
@@ -81,6 +92,24 @@ function paragraph(content: JSONNode[]): JSONNode {
   return content.length ? { type: "paragraph", content } : { type: "paragraph" };
 }
 
+// Tiptap images are block nodes. Keep them outside paragraphs so both the
+// editor and public renderer retain them when repaired content is saved.
+function paragraphs(content: JSONNode[]): JSONNode[] {
+  const out: JSONNode[] = [];
+  let text: JSONNode[] = [];
+  for (const node of content) {
+    if (node.type === "image") {
+      if (text.length) out.push(paragraph(text));
+      text = [];
+      out.push(node);
+    } else {
+      text.push(node);
+    }
+  }
+  if (text.length) out.push(paragraph(text));
+  return out.length ? out : [paragraph([])];
+}
+
 function blocks(tokens: Token[]): JSONNode[] {
   const out: JSONNode[] = [];
   for (const t of tokens) {
@@ -95,7 +124,7 @@ function blocks(tokens: Token[]): JSONNode[] {
         break;
       }
       case "paragraph":
-        out.push(paragraph(inline((t as Tokens.Paragraph).tokens)));
+        out.push(...paragraphs(inline((t as Tokens.Paragraph).tokens)));
         break;
       case "list": {
         const l = t as Tokens.List;
@@ -130,7 +159,7 @@ function blocks(tokens: Token[]): JSONNode[] {
         // Loose text inside list items.
         const tt = t as Tokens.Text;
         out.push(
-          paragraph(tt.tokens?.length ? inline(tt.tokens) : [textNode(tt.text, [])]),
+          ...paragraphs(tt.tokens?.length ? inline(tt.tokens) : [textNode(tt.text, [])]),
         );
         break;
       }
@@ -231,7 +260,7 @@ export function repairArticleContent({
   const body = docPlainText(content);
 
   let markdown: string | null = null;
-  if (!body && excerpt.trim().length > EXCERPT_MAX) {
+  if (!body && isPlainParagraphs(content) && excerpt.trim().length > EXCERPT_MAX) {
     markdown = excerpt;
   } else if (body && isPlainParagraphs(content) && looksLikeMarkdown(body)) {
     markdown = body;

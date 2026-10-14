@@ -183,6 +183,15 @@ export async function setItemStatus(
     .where(eq(schema.articles.id, articleId));
 }
 
+/** Cascades to versions and article tags; shared media remains in the library. */
+export async function deleteArchivedArticle(tx: Tx, articleId: string) {
+  const [deleted] = await tx
+    .delete(schema.articles)
+    .where(and(eq(schema.articles.id, articleId), eq(schema.articles.status, "ARCHIVED")))
+    .returning();
+  return deleted ?? null;
+}
+
 export async function listPublishedActiveArticles(tx: Tx) {
   return tx
     .select({

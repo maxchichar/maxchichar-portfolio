@@ -16,6 +16,7 @@ import * as mediaService from "@/server/services/media";
 
 import {
   archiveArticleForm,
+  deleteArticleForm,
   ensureDraftForm,
   fixFormattingForm,
   publishArticleForm,
@@ -85,6 +86,7 @@ export default async function ArticleEditPage({
           rollbackAction={rollbackArticleForm}
           archiveAction={archiveArticleForm}
           unarchiveAction={unarchiveArticleForm}
+          deleteAction={deleteArticleForm}
           noun="article"
         />
       }

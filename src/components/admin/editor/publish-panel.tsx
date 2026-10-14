@@ -55,6 +55,7 @@ export function PublishPanel({
   rollbackAction,
   archiveAction,
   unarchiveAction,
+  deleteAction,
   noun,
 }: {
   idName: string;
@@ -72,6 +73,7 @@ export function PublishPanel({
   rollbackAction: Action;
   archiveAction: Action;
   unarchiveAction: Action;
+  deleteAction?: Action;
   noun: string;
 }) {
   const hidden = <input type="hidden" name={idName} value={id} />;
@@ -207,6 +209,24 @@ export function PublishPanel({
           {itemStatus === "ACTIVE" ? `Archive ${noun}` : `Unarchive ${noun}`}
         </button>
       </form>
+      {itemStatus === "ARCHIVED" && deleteAction ? (
+        <form action={deleteAction} className="border-border space-y-3 border-t pt-4">
+          {hidden}
+          <label className="text-text-muted flex items-start gap-2 font-sans text-xs">
+            <input type="checkbox" name="confirmDelete" value="delete" required />
+            <span>
+              Permanently delete this {noun} and all its versions. This cannot be undone.
+              Uploaded images stay in the media library.
+            </span>
+          </label>
+          <button
+            type="submit"
+            className="rounded-card border-border text-text hover:border-text w-full border px-4 py-2.5 font-sans text-sm font-medium"
+          >
+            Delete {noun} permanently
+          </button>
+        </form>
+      ) : null}
     </div>
   );
 }
