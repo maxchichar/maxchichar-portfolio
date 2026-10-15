@@ -44,11 +44,11 @@ export async function fixFormattingForm(formData: FormData): Promise<void> {
   redirect(`/admin/articles/${articleId}?fixed=1`);
 }
 
-export async function saveDraftForm(formData: FormData): Promise<void> {
+async function saveSubmittedDraft(formData: FormData) {
   const actor = await requireActor();
   const articleId = requireField(formData, "articleId");
 
-  const content = parseRichTextField(formData.get("content"));
+  const content = parseRichTextField(requireField(formData, "content"));
 
   const tags = String(formData.get("tags") ?? "")
     .split(",")
@@ -80,15 +80,30 @@ export async function saveDraftForm(formData: FormData): Promise<void> {
 
   await articlesService.saveDraft(articleId, parsed.data, actor);
   revalidatePath(`/admin/articles/${articleId}`);
+  return { articleId, actor };
+}
+
+export async function saveDraftForm(formData: FormData): Promise<void> {
+  const { articleId } = await saveSubmittedDraft(formData);
   redirect(`/admin/articles/${articleId}`);
 }
 
+export async function previewArticleForm(formData: FormData): Promise<void> {
+  const { articleId } = await saveSubmittedDraft(formData);
+  redirect(`/preview/writing/${articleId}`);
+}
+
 export async function publishArticleForm(formData: FormData): Promise<void> {
-  const actor = await requireActor();
-  const articleId = requireField(formData, "articleId");
-  await articlesService.publishArticle(articleId, actor);
+  const { articleId, actor } = await saveSubmittedDraft(formData);
+  try {
+    await articlesService.publishArticle(articleId, actor);
+  } catch (error) {
+    if (!(error instanceof articlesService.ArticleServiceError)) throw error;
+    redirect(`/admin/articles/${articleId}?error=${encodeURIComponent(error.message)}`);
+  }
   revalidatePath(`/admin/articles/${articleId}`);
   revalidatePath("/admin/articles");
+  revalidatePath("/", "layout");
   redirect(`/admin/articles/${articleId}`);
 }
 

@@ -56,6 +56,8 @@ export function PublishPanel({
   archiveAction,
   unarchiveAction,
   deleteAction,
+  saveAndPreviewAction,
+  publishFromDraftForm = false,
   noun,
 }: {
   idName: string;
@@ -74,6 +76,8 @@ export function PublishPanel({
   archiveAction: Action;
   unarchiveAction: Action;
   deleteAction?: Action;
+  saveAndPreviewAction?: Action;
+  publishFromDraftForm?: boolean;
   noun: string;
 }) {
   const hidden = <input type="hidden" name={idName} value={id} />;
@@ -131,16 +135,38 @@ export function PublishPanel({
               >
                 Save draft
               </button>
-              {previewHref ? <PreviewButton href={previewHref} formId={formId} /> : null}
-              <form action={publishAction} data-needs-saved>
-                {hidden}
+              {saveAndPreviewAction ? (
                 <button
                   type="submit"
+                  form={formId}
+                  formAction={saveAndPreviewAction}
+                  className="rounded-card border-border text-text hover:border-text/40 w-full border px-4 py-2.5 font-sans text-sm font-medium transition-colors"
+                >
+                  Save and preview
+                </button>
+              ) : previewHref ? (
+                <PreviewButton href={previewHref} formId={formId} />
+              ) : null}
+              {publishFromDraftForm ? (
+                <button
+                  type="submit"
+                  form={formId}
+                  formAction={publishAction}
                   className="rounded-card bg-accent text-bg w-full px-4 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90"
                 >
-                  {published ? "Publish changes" : "Publish"}
+                  {published ? "Save and publish changes" : "Save and publish"}
                 </button>
-              </form>
+              ) : (
+                <form action={publishAction} data-needs-saved>
+                  {hidden}
+                  <button
+                    type="submit"
+                    className="rounded-card bg-accent text-bg w-full px-4 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90"
+                  >
+                    {published ? "Publish changes" : "Publish"}
+                  </button>
+                </form>
+              )}
             </>
           ) : (
             <form action={ensureDraftAction}>

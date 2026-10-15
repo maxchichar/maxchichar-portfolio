@@ -20,6 +20,7 @@ import {
   ensureDraftForm,
   fixFormattingForm,
   publishArticleForm,
+  previewArticleForm,
   rollbackArticleForm,
   saveDraftForm,
   unarchiveArticleForm,
@@ -33,7 +34,7 @@ export default async function ArticleEditPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ fixed?: string }>;
+  searchParams: Promise<{ fixed?: string; error?: string }>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const state = await articlesService.getArticleFullState(id);
@@ -83,6 +84,8 @@ export default async function ArticleEditPage({
           previewHref={`/preview/writing/${article.id}`}
           ensureDraftAction={ensureDraftForm}
           publishAction={publishArticleForm}
+          publishFromDraftForm
+          saveAndPreviewAction={previewArticleForm}
           rollbackAction={rollbackArticleForm}
           archiveAction={archiveArticleForm}
           unarchiveAction={unarchiveArticleForm}
@@ -91,6 +94,14 @@ export default async function ArticleEditPage({
         />
       }
     >
+      {query.error ? (
+        <p
+          role="alert"
+          className="rounded-panel border-border text-text mb-6 border p-5 font-sans text-sm"
+        >
+          {query.error}
+        </p>
+      ) : null}
       {needsFix ? (
         <form
           action={fixFormattingForm}
