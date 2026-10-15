@@ -7,6 +7,7 @@ import type {
   ArticleCreateInput,
   ArticleDraftUpdateInput,
 } from "@/lib/validation/article";
+import { hasArticleBody } from "@/lib/validation/article";
 
 import { publicUrlFor } from "@/lib/storage/r2";
 import { repairArticleContent } from "@/lib/markdown-doc";
@@ -196,12 +197,14 @@ export async function saveDraft(
       coverMediaId = media.id;
     }
 
+    const repaired = repairArticleContent(patch);
+    const content = repaired?.content ?? patch.content;
     const updated = await articlesRepo.updateDraftVersion(tx, draft.id, {
       title: patch.title,
-      excerpt: patch.excerpt,
+      excerpt: repaired?.excerpt ?? patch.excerpt,
       category: patch.category ?? null,
-      content: patch.content,
-      readingTime: estimateReadingTime(patch.content),
+      content,
+      readingTime: estimateReadingTime(content),
       ...(patch.coverMediaId !== undefined ? { coverMediaId } : {}),
     });
 
@@ -245,6 +248,12 @@ export async function publishArticle(articleId: string, actor: Actor) {
     const draft = await articlesRepo.getDraftVersion(tx, articleId);
     if (!draft) {
       throw new ArticleServiceError("No open draft to publish.");
+    }
+
+    if (!hasArticleBody(draft.content)) {
+      throw new ArticleServiceError(
+        "Add article text or an image in Body before publishing. Your draft has been saved.",
+      );
     }
 
     const currentPublished = await articlesRepo.getPublishedVersion(tx, articleId);
