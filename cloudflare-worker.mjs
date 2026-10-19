@@ -1,9 +1,12 @@
 import worker from "./.open-next/worker.js";
+import { routeVercelAdmin } from "./src/lib/cloudflare-admin.ts";
 import { isStaticShareImage } from "./src/lib/cloudflare-static.ts";
 import { createRequestDatabase, databaseScope } from "./src/lib/db/request.ts";
 
 const portfolioWorker = {
   async fetch(request, env, ctx) {
+    const adminResponse = routeVercelAdmin(request, env.ADMIN_ORIGIN);
+    if (adminResponse) return adminResponse;
     if (isStaticShareImage(request)) {
       const assetUrl = new URL("/og-default.png", request.url);
       return env.ASSETS.fetch(new Request(assetUrl, { method: request.method }));

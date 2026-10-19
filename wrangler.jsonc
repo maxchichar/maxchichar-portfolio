@@ -4,6 +4,7 @@
   "main": "cloudflare-worker.mjs",
   "compatibility_date": "2026-10-12",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "vars": { "ADMIN_ORIGIN": "https://chibuezemaxwell.vercel.app" },
   "workers_dev": true,
   "preview_urls": true,
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },

@@ -1,62 +1,95 @@
-# Cloudflare Workers migration (staged; no traffic cutover)
+# Public portfolio on Cloudflare; admin on Vercel
 
-Target custom domain: `chibuezemaxwell.com` (provided by the owner). DNS attachment
-and apex/www policy remain pending explicit approval.
-
-This branch adds OpenNext for Cloudflare Workers while retaining `npm run build`,
-`npm start`, the existing Vercel integration, native password hashing in Node,
-and the same Neon database/schema and R2 storage. Do not delete the Vercel project.
-
-## Deployment status and free-tier gate
-
-The full application is **not approved for a Workers Free production cutover**.
-Cloudflare currently documents 100,000 Worker requests/day, 10 ms CPU/request,
-128 MB memory, and a 64 MiB Worker size limit. Static asset delivery is separate.
-Check these limits again in the target account before deploying.
-
-Password authentication uses Argon2id with existing database hashes. The Workers
-build substitutes a portable verifier for the native Rust binary. A local default
-hash verification used approximately 502 ms CPU; local CPU is not a hosted Workers
-measurement, but the margin over 10 ms is substantial. No hash parameters or
-password policy have been weakened. Cold SSR also needs hosted CPU measurements. A successful build or local preview does
-not establish Free-plan CPU compatibility.
-
-For a strict Free-only launch, resolve this gate first: move expensive password
-verification to an approved external authentication service, or agree a separate
-public-site/admin architecture. Either needs a deliberate follow-up change and
-end-to-end authentication testing. A paid Workers plan is an alternative only
-with explicit owner approval; this branch does not subscribe to one.
+Target public domain: `chibuezemaxwell.com`. Admin/login remain at
+`https://chibuezemaxwell.vercel.app/admin`. DNS and production cutover require
+separate owner approval. Do not remove the Vercel project or change mail DNS.
 
 ## Architecture
 
-- OpenNext `@opennextjs/cloudflare`, pinned through the lockfile. Next.js is updated
-  to 16.4.2 to meet the adapter's supported-version range.
-- `build:cloudflare` uses webpack and an explicit Cloudflare-only native Argon2
-  alias; ordinary Vercel builds retain native Argon2. Seed scripts still run in Node.
-- The entrypoint creates a separate Neon pool for each request, runs Next inside
-  AsyncLocalStorage, and closes the pool after the response stream completes or
-  is cancelled. Transactions remain supported. Pools are never shared across
-  Worker requests. Node retains its existing pooled driver.
-- Existing native Argon2id PHC hashes (version 19) are verified with their stored
-  memory/time/parallelism parameters. Unsupported or excessive stored parameters
-  fail closed; audit actual production parameters before cutover.
-- Immutable Next assets receive a one-year cache lifetime and are delivered via
-  Cloudflare's distributed asset cache. Images use the existing R2 public URLs
-  directly on Workers, avoiding a Cloudflare Images transformation subscription.
-  The existing Vercel image optimizer remains available on Vercel.
-- Dynamic HTML stays dynamic. Admin, auth, previews, actions and personalized
-  responses are not placed in a shared response cache. Existing public API cache
-  headers are preserved, but headers alone do not guarantee Worker response
-  caching. No R2 ISR bucket, KV, Durable Objects or queues are provisioned.
-- Workers serve the existing branded `public/og-default.png` at public share-image
-  endpoints, cached for one hour. This avoids the dynamic renderer's local workerd
-  failure and CPU cost. Page-specific dynamic share cards remain on Vercel;
-  Workers use one generic branded image. Metadata titles/descriptions remain
-  page-specific. No private/admin endpoint is matched by the static image rule.
+- Cloudflare Workers uses OpenNext 1.20.12 and supported Next.js 16.4.2.
+- On Workers, GET/HEAD requests to `/admin` and `/preview` redirect to the same
+  path on Vercel. POST requests to those paths are rejected, never forwarded.
+  `/api/auth` and `/api/media` are unavailable on Workers. Sessions, sign-in,
+  lockout, password hashing, protected mutations, uploads and drafts stay on Vercel.
+- A Cloudflare-only auth module always returns no session and refuses sign-in.
+  This also denies protected Server Actions invoked through public URLs, rather
+  than relying only on redirects. Native Argon2 and Auth.js login remain on Node.
+- Both hosts use the same Neon database and R2 objects. Content published on
+  Vercel is read by Cloudflare; this migration does not copy data or change schema.
+- Workers use one Neon transaction pool per request, propagated through
+  AsyncLocalStorage and closed when the response stream completes or is cancelled.
+  Vercel retains its existing Node pool.
+- Immutable Next assets use Cloudflare's globally distributed asset cache with a
+  one-year lifetime. Workers serve existing R2 original images directly, without a
+  Cloudflare Images subscription. Public share-image endpoints serve the existing
+  branded `og-default.png`, cached for one hour. Vercel keeps dynamic share images.
+- Dynamic HTML remains dynamic; admin, auth, drafts and personalized responses
+  are never placed in a shared cache. Existing API cache headers alone do not
+  guarantee Worker response caching. No R2 ISR, KV, queues or Durable Objects are
+  provisioned.
 
-## Local checks
+## Free-plan gate
 
-Use Node 22 or newer and install development dependencies:
+The password CPU blocker is removed from Workers by keeping authentication on
+Vercel. Hosted public SSR CPU, cold starts, memory and account limits still need
+measurement before production traffic moves. A local build/preview does not prove
+Free-plan compatibility. Current documented limits include 100,000 Worker
+requests/day, 10 ms CPU/request, 128 MB memory and a 64 MiB Worker bundle. Recheck
+limits in the target account. Static asset delivery has separate limits.
+
+No paid plan is enabled by this branch.
+
+## One-time admin account setup
+
+An Auth.js Credentials form does not automatically create an account. The admin
+email and an Argon2id password hash must exist in `users` in the database used by
+Vercel. Adding ADMIN_EMAIL/ADMIN_PASSWORD to Vercel alone does not create that row.
+
+For an operator running locally with database access in ignored `.env.local`:
+
+```sh
+npm ci
+npm run setup:admin
+```
+
+The setup asks for an email and a password twice in a hidden terminal prompt.
+It requires at least 16 password characters, stores only an Argon2id hash, and
+refuses to overwrite any existing account. The password is never printed or saved
+to an environment file. Use the chosen credentials at the Vercel admin login.
+Never deploy a public bootstrap/signup endpoint for this single-admin site.
+
+The older `seed:admin` script can reset an existing password and clear lockout.
+Use it only for an explicitly requested reset, not routine deployment. Do not run
+any account or schema seed automatically as part of builds.
+
+## Configuration
+
+`wrangler.jsonc` sets `ADMIN_ORIGIN` to the verified Vercel production origin.
+Keep it as a separate HTTPS origin to avoid a redirect loop. There are no custom
+DNS routes in this configuration. Preview deployment initially uses workers.dev.
+
+Build configuration for the public Worker:
+
+- `NEXT_PUBLIC_SITE_URL`: the approved preview URL initially, then
+  `https://chibuezemaxwell.com` at final cutover.
+- `STORAGE_PUBLIC_URL`: the existing public R2 delivery origin (also used in CSP).
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, if the contact form uses Turnstile.
+
+Workers need the existing `DATABASE_URL` and optional contact/Resend/Turnstile/error
+alert settings for public functionality. Consult `.env.example`. Keep admin auth
+and storage-upload credentials on Vercel; do not transfer ADMIN_PASSWORD or
+AUTH_SECRET to the public Worker for this split. Vercel retains its current
+DATABASE_URL, AUTH_SECRET, R2 credentials and any other required settings.
+
+On Vercel, Auth.js uses its Vercel origin for login/cookies (or an explicit
+`AUTH_URL=https://chibuezemaxwell.vercel.app` if needed). The public canonical site
+URL and the authentication origin are separate settings. Cookies are host-specific;
+Cloudflare does not proxy admin requests or receive Vercel session cookies.
+
+`.dev.vars` and `.env.local` are ignored. Use only test secrets locally. Never put
+credentials in Git, a PR, or chat.
+
+## Validation and deployment
 
 ```sh
 npm ci
@@ -67,69 +100,32 @@ npm test
 npm run build:cloudflare
 npm run check:cloudflare
 npm run preview:cloudflare
-# In another terminal:
 SMOKE_BASE_URL=http://localhost:8787 npm run test:e2e
 ```
 
-`check:cloudflare` is a Wrangler dry run: it packages code without deploying.
-`preview:cloudflare` requires a successful Cloudflare build and runs locally in
-workerd. For the Vercel fallback, run `npm run build` separately; the two builds
-share `.next`, so rebuild for the target you intend to run.
+`check:cloudflare` packages without uploading. The compatibility workflow builds
+and dry-runs PRs with no Cloudflare deployment credentials. Vercel workflows stay
+in place. Verify the Vercel fallback separately with `npm run build`. The builds
+share `.next`, so do not rebuild while a local preview smoke test is running.
 
-The Cloudflare GitHub workflow builds and packages pull requests without any
-Cloudflare credentials or deployment step. Existing Vercel workflows remain.
+Before cutover:
 
-## Configuration and secrets
-
-Before building a real preview, supply non-secret build configuration:
-
-- `NEXT_PUBLIC_SITE_URL`: `https://chibuezemaxwell.com` for the final domain; use
-  the approved preview URL when testing a preview.
-- `STORAGE_PUBLIC_URL`: the existing R2 delivery URL, used in CSP/image configuration.
-- `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, if using Turnstile.
-
-Set runtime secrets in the target Worker, keeping their values out of Git and chat:
-`DATABASE_URL`, `AUTH_SECRET`, `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY`,
-`STORAGE_SECRET_KEY`, `STORAGE_BUCKET`, and `TURNSTILE_SECRET_KEY` if enabled.
-Reuse the existing database, storage and required service credentials; do not run
-schema push or seed commands as a hosting migration. Optional Resend/contact/error
-alert settings are listed in `.env.example`. Keep `AUTH_SECRET` stable for the
-existing auth setup. Browser sessions remain hostname-specific.
-
-Runtime settings must also include the approved site URL and storage public URL.
-Auth.js already sets `trustHost: true`. Configure `AUTH_URL` if the final deployment
-needs an explicit canonical auth URL. For local preview, put test-only values in
-`.dev.vars` (ignored by Git). Never use the test secret in production.
-
-## Owner approval and deployment sequence
-
-1. Obtain the newly purchased domain, intended apex/www hostname, and confirm the
-   Workers account is on Free. Inventory DNS, email/MX records and the current
-   Vercel deployment URL without editing anything.
-2. Resolve the Free CPU/auth gate above. Review the draft PR and verify both
-   Cloudflare and Vercel builds. Do not merge while the Free requirement is unresolved.
-3. Obtain Cloudflare authorization through Wrangler OAuth (`npx wrangler login`)
-   or a securely supplied scoped API token. Do not paste tokens in the PR or chat.
-   A Workers deployment token needs access to the selected account and Workers
-   scripts; grant additional DNS/zone access only for a separately approved cutover.
-4. After explicit approval, provision secrets for the selected preview Worker and
-   deploy to `workers.dev`. The configuration deliberately contains no DNS routes
-   or custom domains. Confirm the worker name and self-reference service match.
-5. Test real Neon reads and transactions in an isolated test database, existing
-   password login/wrong password/lockout/signout, protected-route denial, drafts,
-   contact submission and Turnstile, R2 upload/confirm, downloads, CSP, images,
-   SEO URLs, and streamed responses. Local tests without credentials only cover
-   fallback pages and the auth boundary, not real database/auth integration.
-6. Inspect hosted CPU/startup/memory/error metrics, verify the account's Free
-   limits, asset cache headers and geographic performance. A preview that exceeds
-   Free limits must not receive production traffic.
-7. Request explicit approval for the exact domain/DNS/traffic change. Update
-   canonical URLs, Turnstile allowed hosts and verified mail sender settings as
-   needed, rebuild, then attach the approved custom domain. Preserve mail DNS.
-8. Monitor after cutover. Retain the Vercel deployment and access credentials.
-   Rollback: restore the captured domain routing to Vercel, restore canonical and
-   Turnstile settings if changed, and verify production. Shared Neon/R2 data needs
-   no reverse migration; this branch changes no schema or stored password hashes.
+1. Review the PR, create the owner admin account, and verify sign-in on Vercel.
+2. Obtain Cloudflare authorization securely through Wrangler OAuth or a scoped
+   token. The previously available authorization was expired. Never paste tokens
+   in chat. Confirm the selected Workers account is on Free.
+3. With explicit preview approval, provision required public runtime settings and
+   deploy to workers.dev. Do not attach the custom domain yet.
+4. Verify real public database reads/contact functionality, Vercel admin login,
+   published content appearing publicly, drafts/uploads remaining on Vercel,
+   API/private-route denial on Workers, canonical URLs, CSP, share images and
+   geographic performance. Inspect hosted CPU/memory/startup/error metrics.
+5. Obtain approval for the exact DNS/domain and traffic change. Capture original
+   routing, preserve mail records, update public canonical/Turnstile host settings,
+   rebuild, then attach `chibuezemaxwell.com` using the approved apex/www policy.
+6. Keep Vercel available. Roll back by restoring captured domain routing and any
+   changed canonical/Turnstile settings. Shared Neon/R2 data needs no reverse
+   migration, and Vercel admin remains usable during a public-site rollback.
 
 ## References
 
