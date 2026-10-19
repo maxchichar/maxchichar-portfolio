@@ -5,6 +5,29 @@ import { createEdgeWorker } from "../cloudflare-edge.mjs";
 const base = "https://chibuezemaxwell.com";
 const env = { ADMIN_ORIGIN: "https://chibuezemaxwell.vercel.app" };
 
+test("www redirects to the canonical domain without fetching the origin", async () => {
+  const worker = createEdgeWorker(async () => {
+    throw new Error("Unexpected origin request");
+  });
+  const response = await worker.fetch(
+    new Request("https://www.chibuezemaxwell.com/writing/example?source=share"),
+    env,
+    { waitUntil: () => {} },
+  );
+  assert.equal(response.status, 308);
+  assert.equal(
+    response.headers.get("location"),
+    "https://chibuezemaxwell.com/writing/example?source=share",
+  );
+  const insecure = await worker.fetch(
+    new Request("http://chibuezemaxwell.com/about"),
+    env,
+    { waitUntil: () => {} },
+  );
+  assert.equal(insecure.status, 308);
+  assert.equal(insecure.headers.get("location"), "https://chibuezemaxwell.com/about");
+});
+
 test("edge cache isolates HTML from RSC and never forwards admin credentials", async () => {
   const entries = new Map<string, Response>();
   Object.assign(globalThis, {

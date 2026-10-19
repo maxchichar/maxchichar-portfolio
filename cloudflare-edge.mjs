@@ -26,9 +26,22 @@ const noStore = (message, status) =>
 export function createEdgeWorker(fetchOrigin = fetch) {
   return {
     async fetch(request, env, ctx) {
+      const url = new URL(request.url);
+      if (
+        url.hostname === "www.chibuezemaxwell.com" ||
+        (url.hostname === "chibuezemaxwell.com" && url.protocol === "http:")
+      ) {
+        const canonical = new URL(url);
+        canonical.protocol = "https:";
+        canonical.hostname = "chibuezemaxwell.com";
+        canonical.port = "";
+        return new Response(null, {
+          status: 308,
+          headers: { Location: canonical.href, "Cache-Control": "public, max-age=300" },
+        });
+      }
       const admin = routeVercelAdmin(request, env.ADMIN_ORIGIN);
       if (admin) return admin;
-      const url = new URL(request.url);
       const reading = request.method === "GET" || request.method === "HEAD";
       if (
         reading
