@@ -1,10 +1,10 @@
+import { hashIp } from "../src/lib/contact-ip";
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import {
   contactSubmissionSchema,
   CONTACT_REASONS,
-  hashIp,
   RATE_LIMIT_MAX_COUNT,
   RATE_LIMIT_WINDOW_MS,
 } from "../src/lib/validation/contact";
