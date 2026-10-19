@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import { resolve } from "node:path";
 
 import { buildSecurityHeaders } from "./src/lib/security-headers";
 import { storageRemotePatterns } from "./src/lib/storage/image";
@@ -7,21 +6,10 @@ import { storageRemotePatterns } from "./src/lib/storage/image";
 const cloudflare = process.env.PORTFOLIO_CLOUDFLARE_BUILD === "1";
 
 const nextConfig: NextConfig = {
-  turbopack: {},
-  // Override Next's automatic native-package externalization for this alias.
-  transpilePackages: cloudflare ? ["@node-rs/argon2"] : [],
+  env: { PORTFOLIO_AUTH_HOST: cloudflare ? "cloudflare" : "vercel" },
 
   // Disable X-Powered-By: Next.js to eliminate framework fingerprinting
   poweredByHeader: false,
-
-  webpack(config) {
-    if (cloudflare) {
-      config.resolve.alias["@node-rs/argon2"] = resolve(
-        "src/lib/auth/argon2-cloudflare.ts",
-      );
-    }
-    return config;
-  },
 
   images: {
     // Serve originals from R2; transformations are an optional Cloudflare product.
