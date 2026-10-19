@@ -22,6 +22,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - run: npm run check:edge
       - run: npm run build:cloudflare
+        env:
+          NEXT_PUBLIC_SITE_URL: https://chibuezemaxwell.com
+          STORAGE_PUBLIC_URL: https://pub-be5b26d4fdc14d42a7bfa1843c84c207.r2.dev
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: 0x4AAAAAAFUGnPMVpoAs1uxW
       - run: npm run check:cloudflare
       # Intentionally no deployment: DNS, secrets and production cutover need approval.

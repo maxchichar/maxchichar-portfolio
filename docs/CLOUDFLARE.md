@@ -4,7 +4,42 @@ Target public domain: `chibuezemaxwell.com`. Admin/login remain at
 `https://chibuezemaxwell.vercel.app/admin`. DNS and production cutover require
 separate owner approval. Do not remove the Vercel project or change mail DNS.
 
-## Architecture
+## Free production launch: Cloudflare edge + Vercel origin
+
+The selected Free-plan configuration is `wrangler.edge.jsonc`, with entry point
+`cloudflare-edge.mjs`. It uses a small standalone Worker rather than running the
+Next.js renderer. Vercel remains the required origin for uncached pages, API
+requests, contact submissions, and admin. This is a hybrid deployment, not a
+complete removal of Vercel.
+
+- Ordinary anonymous HTML navigation is cached for 60 seconds at each Cloudflare
+  location. RSC/client navigation, query variants, contact pages, cookies,
+  authorization, APIs and mutations bypass this HTML cache.
+- Admin/preview navigation redirects to Vercel. Auth and upload APIs are blocked
+  on the public domain. The proxy strips cookies and authorization from every
+  upstream request and never shares responses that set cookies.
+- Only contact, analytics, and error-report POSTs are forwarded. Their browser
+  Origin must exactly match the public request origin before the proxy translates
+  it to the fixed Vercel origin. Other mutation paths are blocked.
+- Database, mail, storage-upload and Turnstile secrets stay exclusively on Vercel.
+  Enable the public domain in the existing Turnstile widget before cutover.
+- Live edge preflight measured 0–2 ms CPU per request for cache hits, misses,
+  contact navigation and admin redirects. 170 tests passed, including cache
+  isolation and cross-origin mutation rejection.
+- Set Vercel production `NEXT_PUBLIC_SITE_URL` and `SITE_URL` to
+  `https://chibuezemaxwell.com`, then redeploy so metadata uses the custom domain.
+  Keep the admin authentication origin at Vercel.
+- After explicit owner approval, attach only `chibuezemaxwell.com` as a custom
+  domain to `maxchichar-portfolio-edge`. Preserve all mail DNS records. No `www`
+  domain or paid product is provisioned by this configuration.
+
+Commands: `npm run check:edge`, then `npm run deploy:edge`. No Next.js build or
+Cloudflare database secret is needed for the edge Worker. Custom-domain binding
+is a separately approved action; do not accidentally deploy the experimental
+OpenNext Worker as production. Rollback: detach the custom domain from the edge
+Worker; the original Vercel URL remains operational throughout.
+
+## Experimental OpenNext architecture
 
 - Cloudflare Workers uses OpenNext 1.20.12 and supported Next.js 16.4.2.
 - On Workers, GET/HEAD requests to `/admin` and `/preview` redirect to the same
@@ -70,10 +105,17 @@ DNS routes in this configuration. Preview deployment initially uses workers.dev.
 
 Build configuration for the public Worker:
 
-- `NEXT_PUBLIC_SITE_URL`: the approved preview URL initially, then
-  `https://chibuezemaxwell.com` at final cutover.
+- `NEXT_PUBLIC_SITE_URL`: `https://chibuezemaxwell.com`. The workers.dev test
+  deployment intentionally uses the final canonical domain.
 - `STORAGE_PUBLIC_URL`: the existing public R2 delivery origin (also used in CSP).
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, if the contact form uses Turnstile.
+
+The non-secret production values are recorded in `wrangler.jsonc`. Export the
+same values in the build environment before `npm run build:cloudflare`; Wrangler
+runtime variables alone do not replace Next.js build-time configuration. The
+Cloudflare compatibility workflow includes these public build values. Keep the
+existing Turnstile secret and allow the final domain in the widget settings
+before production cutover.
 
 Workers need the existing `DATABASE_URL` and optional contact/Resend/Turnstile/error
 alert settings for public functionality. Consult `.env.example`. Keep admin auth
@@ -90,6 +132,16 @@ Cloudflare does not proxy admin requests or receive Vercel session cookies.
 credentials in Git, a PR, or chat.
 
 ## Validation and deployment
+
+Launch preflight (19 October 2026): the OpenNext deployment on
+`https://maxchichar-portfolio.maxwellchibuezecharles.workers.dev` successfully
+served database-backed public pages and redirected admin navigation to Vercel.
+However, live request traces measured roughly 40–70 ms CPU for server-rendered
+pages, exceeding the documented Workers Free 10 ms allowance. Successful HTTP
+responses do not establish Free-plan suitability: occasional overruns have
+runtime flexibility. Do not connect production traffic to this dynamic build
+until the CPU issue is resolved or the hosting approach is explicitly changed.
+See https://developers.cloudflare.com/workers/platform/limits/#cpu-time.
 
 ```sh
 npm ci
