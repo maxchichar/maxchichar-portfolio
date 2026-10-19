@@ -7,6 +7,7 @@ import { Nav } from "@/components/layout/nav";
 import { AboutView } from "@/components/pages/about-view";
 import { UnavailableView } from "@/components/pages/unavailable-view";
 import { constructPageMetadata, withNoIndex } from "@/lib/metadata";
+import { buildProfilePageJsonLd, JsonLdScript } from "@/lib/structured-data";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { getPublishedAboutPage } from "@/server/services/pages";
 import { getSiteDocument } from "@/server/services/documents";
@@ -69,8 +70,23 @@ export default async function AboutPage() {
   }
   if (!about) notFound();
 
+  const profile = buildProfilePageJsonLd({
+    name: settings.siteName,
+    description: about.content.intro,
+    image: settings.aboutImage?.url,
+    socialLinks: [
+      settings.socialGithub,
+      settings.socialX,
+      settings.socialLinkedin,
+      settings.socialYoutube,
+      settings.socialInstagram,
+      settings.socialTiktok,
+    ],
+  });
+
   return (
     <>
+      <JsonLdScript data={profile} />
       <Nav />
       <PageTransition>
         <main>
