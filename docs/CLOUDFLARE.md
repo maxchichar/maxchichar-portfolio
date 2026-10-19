@@ -29,9 +29,10 @@ complete removal of Vercel.
 - Set Vercel production `NEXT_PUBLIC_SITE_URL` and `SITE_URL` to
   `https://chibuezemaxwell.com`, then redeploy so metadata uses the custom domain.
   Keep the admin authentication origin at Vercel.
-- After explicit owner approval, attach only `chibuezemaxwell.com` as a custom
-  domain to `maxchichar-portfolio-edge`. Preserve all mail DNS records. No `www`
-  domain or paid product is provisioned by this configuration.
+- After explicit owner approval, attach `chibuezemaxwell.com` and
+  `www.chibuezemaxwell.com` as custom domains to `maxchichar-portfolio-edge`.
+  Preserve all mail DNS records. No paid product is provisioned. The approved `www`
+  hostname redirects to the apex with HTTP 308, preserving the path and query.
 
 Commands: `npm run check:edge`, then `npm run deploy:edge`. No Next.js build or
 Cloudflare database secret is needed for the edge Worker. Custom-domain binding

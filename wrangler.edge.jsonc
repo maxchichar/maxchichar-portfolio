@@ -6,6 +6,9 @@
   "vars": { "ADMIN_ORIGIN": "https://chibuezemaxwell.vercel.app" },
   "workers_dev": true,
   "preview_urls": true,
-  "routes": [{ "pattern": "chibuezemaxwell.com", "custom_domain": true }],
+  "routes": [
+    { "pattern": "chibuezemaxwell.com", "custom_domain": true },
+    { "pattern": "www.chibuezemaxwell.com", "custom_domain": true },
+  ],
   "observability": { "enabled": true, "head_sampling_rate": 0.1 },
 }
