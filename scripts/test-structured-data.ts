@@ -11,6 +11,7 @@ import {
   buildBreadcrumbJsonLd,
   buildJsonLdGraph,
   buildPersonJsonLd,
+  buildProfilePageJsonLd,
   buildResearchJsonLd,
   buildWebSiteJsonLd,
   buildWorkJsonLd,
@@ -30,6 +31,23 @@ describe("JSON-LD Structured Data (Level 9.6)", () => {
 
   afterEach(() => {
     process.env = { ...originalEnv };
+  });
+
+  it("links the About profile to the canonical Person without inventing identity", () => {
+    assert.strictEqual(buildProfilePageJsonLd({ name: "" }), null);
+    const profile = buildProfilePageJsonLd({
+      name: "Chibueze Maxwell",
+      siteUrl: "https://chibuezemaxwell.com/",
+      description: "Engineer and entrepreneur.",
+      socialLinks: ["https://github.com/maxchichar"],
+    })!;
+    assert.strictEqual(profile["@type"], "ProfilePage");
+    assert.strictEqual(profile.url, "https://chibuezemaxwell.com/about");
+    const person = profile.mainEntity as Record<string, unknown>;
+    assert.strictEqual(person["@id"], "https://chibuezemaxwell.com/#person");
+    assert.strictEqual(person.name, "Chibueze Maxwell");
+    assert.strictEqual(person.image, undefined);
+    assert.deepStrictEqual(person.sameAs, ["https://github.com/maxchichar"]);
   });
 
   describe("1. WebSite JSON-LD", () => {

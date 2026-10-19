@@ -20,6 +20,11 @@ export interface PersonJsonLdOptions {
   socialLinks?: Array<string | null | undefined> | null;
 }
 
+export interface ProfilePageJsonLdOptions extends PersonJsonLdOptions {
+  description?: string | null;
+  image?: string | null;
+}
+
 export interface WorkJsonLdOptions {
   title: string;
   description: string;
@@ -170,8 +175,32 @@ export function buildPersonJsonLd(
 }
 
 /**
- * Builds Schema.org CreativeWork (or SoftwareApplication if supported) structured data for Work detail.
+ * Connects the published About page to the same Person entity used by articles
+ * and the home page, using only configured public profile information.
  */
+export function buildProfilePageJsonLd(
+  options: ProfilePageJsonLdOptions,
+): Record<string, unknown> | null {
+  const person = buildPersonJsonLd(options);
+  if (!person) return null;
+  const siteUrl = (options.siteUrl?.trim() || resolveCanonicalUrl("/")).replace(
+    /\/+$/,
+    "",
+  );
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "@id": `${siteUrl}/about#profile`,
+    url: `${siteUrl}/about`,
+    mainEntity: {
+      ...person,
+      ...(options.description?.trim() ? { description: options.description.trim() } : {}),
+      ...(options.image?.trim() ? { image: options.image.trim() } : {}),
+    },
+  };
+}
+
+/** Builds structured data for a published work detail page. */
 export function buildWorkJsonLd(options: WorkJsonLdOptions): Record<string, unknown> {
   const canonicalUrl = resolveCanonicalUrl(`/work/${options.slug}`);
   const siteUrl = resolveCanonicalUrl("/").replace(/\/+$/, "");
