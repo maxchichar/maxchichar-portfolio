@@ -5,15 +5,14 @@ import { drizzle } from "drizzle-orm/neon-serverless";
 import ws from "ws";
 
 import * as schema from "./schema";
-
-// Node.js runtime needs a WebSocket polyfill for the pooled/transaction-
-// capable Neon driver (native WebSocket only exists in edge runtimes).
-neonConfig.webSocketConstructor = ws;
-neonConfig.poolQueryViaFetch = true;
+import { databaseScope } from "./request";
 
 type Database = ReturnType<typeof drizzle<typeof schema>>;
 
 function createDb(): Database {
+  // Vercel/Node fallback only. Workers use the request scope and native WebSocket.
+  neonConfig.webSocketConstructor = ws;
+  neonConfig.poolQueryViaFetch = true;
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
@@ -39,5 +38,12 @@ function createDb(): Database {
   return drizzle(pool, { schema });
 }
 
-export const db = createDb();
+let nodeDatabase: Database | undefined;
+export const db = new Proxy({} as Database, {
+  get(_target, property) {
+    const database = databaseScope.getStore() ?? (nodeDatabase ??= createDb());
+    const value = Reflect.get(database, property);
+    return typeof value === "function" ? value.bind(database) : value;
+  },
+});
 export * as schema from "./schema";

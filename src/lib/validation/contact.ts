@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { z } from "zod";
 
 export const CONTACT_REASONS = [
@@ -14,13 +13,6 @@ export type ContactReason = (typeof CONTACT_REASONS)[number];
 // Rate limit: maximum 5 submissions per 60 minutes per IP hash
 export const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 export const RATE_LIMIT_MAX_COUNT = 5;
-
-/**
- * Hashes raw IP using SHA-256 so raw IP addresses are never persisted in the database.
- */
-export function hashIp(ip: string): string {
-  return createHash("sha256").update(ip.trim()).digest("hex");
-}
 
 export const contactSubmissionSchema = z.object({
   name: z

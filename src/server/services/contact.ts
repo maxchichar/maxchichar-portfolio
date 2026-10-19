@@ -1,3 +1,4 @@
+import { hashIp } from "@/lib/contact-ip";
 import "server-only";
 
 import { after } from "next/server";
@@ -6,7 +7,6 @@ import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import {
   contactSubmissionSchema,
-  hashIp,
   RATE_LIMIT_MAX_COUNT,
   RATE_LIMIT_WINDOW_MS,
   type ContactSubmissionInput,

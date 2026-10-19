@@ -44,3 +44,8 @@ next-env.d.ts
 # Playwright smoke-test output
 /playwright-report/
 /test-results/
+
+.open-next/
+.wrangler/
+.cloudflare-dry-run/
+.dev.vars*
