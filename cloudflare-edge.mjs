@@ -27,7 +27,10 @@ export function createEdgeWorker(fetchOrigin = fetch) {
   return {
     async fetch(request, env, ctx) {
       const url = new URL(request.url);
-      if (url.hostname === "www.chibuezemaxwell.com") {
+      if (
+        url.hostname === "www.chibuezemaxwell.com" ||
+        (url.hostname === "chibuezemaxwell.com" && url.protocol === "http:")
+      ) {
         const canonical = new URL(url);
         canonical.protocol = "https:";
         canonical.hostname = "chibuezemaxwell.com";

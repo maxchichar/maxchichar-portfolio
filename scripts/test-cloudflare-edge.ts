@@ -19,6 +19,13 @@ test("www redirects to the canonical domain without fetching the origin", async 
     response.headers.get("location"),
     "https://chibuezemaxwell.com/writing/example?source=share",
   );
+  const insecure = await worker.fetch(
+    new Request("http://chibuezemaxwell.com/about"),
+    env,
+    { waitUntil: () => {} },
+  );
+  assert.equal(insecure.status, 308);
+  assert.equal(insecure.headers.get("location"), "https://chibuezemaxwell.com/about");
 });
 
 test("edge cache isolates HTML from RSC and never forwards admin credentials", async () => {
