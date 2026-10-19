@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "maxchichar-portfolio-edge",
+  "main": "cloudflare-edge.mjs",
+  "compatibility_date": "2026-10-12",
+  "vars": { "ADMIN_ORIGIN": "https://chibuezemaxwell.vercel.app" },
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 },
+}
