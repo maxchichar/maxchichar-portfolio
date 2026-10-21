@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
+    "generate:social-preview": "tsx scripts/generate-social-preview.tsx",
+    "verify:social-preview": "tsx scripts/verify-social-preview.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "tsx --conditions=react-server --test \"scripts/test-*.ts\"",
