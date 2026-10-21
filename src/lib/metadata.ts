@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { DEFAULT_SITE_SETTINGS } from "@/lib/validation/settings";
 
 export const DEFAULT_SITE_TITLE = DEFAULT_SITE_SETTINGS.siteName; // "CHIBUEZE MAXWELL"
+export const PRODUCTION_SITE_URL = "https://chibuezemaxwell.com";
 export const DEFAULT_SITE_DESCRIPTION =
   "Super Intelligence Engineer & Entrepreneur. I build intelligent systems for real-world problems.";
 
@@ -12,16 +13,17 @@ export const DEFAULT_SITE_DESCRIPTION =
  * Evaluation order:
  * 1. NEXT_PUBLIC_SITE_URL (explicit public site URL)
  * 2. SITE_URL (server-side environment variable)
- * 3. VERCEL_PROJECT_PRODUCTION_URL (Vercel production domain)
- * 4. VERCEL_URL (Vercel deployment preview domain)
+ * 3. The confirmed custom domain in production (including preview builds)
+ * 4. Vercel URL hints outside production
  * 5. Local development fallback: http://localhost:${PORT:-3000}
  *
- * Never hardcodes a guessed production domain.
+ * Deployment hostnames must never become production canonical URLs.
  */
 export function getSiteUrl(): string {
   const envUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.SITE_URL ||
+    (process.env.NODE_ENV === "production" ? PRODUCTION_SITE_URL : undefined) ||
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
       : undefined) ||
@@ -46,9 +48,9 @@ export function getMetadataBase(): URL {
 }
 
 /**
- * Static fallback image (structured data, external checks). Social cards come
- * from the generated `opengraph-image` routes, so metadata no longer names an
- * image unless a page passes one explicitly.
+ * Static homepage card, also used by structured data and external checks.
+ * The root opengraph-image route serves this asset; other segments generate
+ * their own cards. Explicit page images still override those cards.
  */
 export const DEFAULT_OG_IMAGE = "/og-default.png";
 
@@ -186,6 +188,8 @@ export function constructPageMetadata(options: PageMetadataOptions): Metadata {
     openGraph: {
       title,
       description,
+      siteName: DEFAULT_SITE_TITLE,
+      locale: "en_US",
       type,
       ...(cleanPath ? { url: cleanPath } : {}),
       ...(image ? { images: [image] } : {}),

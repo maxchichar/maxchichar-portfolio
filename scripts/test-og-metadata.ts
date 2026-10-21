@@ -35,6 +35,11 @@ describe("Open Graph & Twitter Metadata (Level 9.4)", () => {
 
       const stats = fs.statSync(imgPath);
       assert.ok(stats.size > 0, "public/og-default.png must not be empty");
+      const png = fs.readFileSync(imgPath);
+      assert.strictEqual(png.subarray(1, 4).toString(), "PNG");
+      assert.strictEqual(png.readUInt32BE(16), 1200);
+      assert.strictEqual(png.readUInt32BE(20), 630);
+      assert.ok(stats.size < 1_000_000, "Preview should stay below 1 MB");
     });
 
     it("default image path constant matches /og-default.png", () => {

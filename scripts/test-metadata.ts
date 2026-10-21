@@ -25,6 +25,20 @@ describe("Base Metadata helper logic (Level 9.1)", () => {
   });
 
   describe("Site URL resolution", () => {
+    it("uses the confirmed custom domain in production, even on preview hosts", () => {
+      Object.assign(process.env, { NODE_ENV: "production" });
+      process.env.VERCEL_URL = "preview.vercel.app";
+      process.env.VERCEL_PROJECT_PRODUCTION_URL = "portfolio.vercel.app";
+      assert.strictEqual(getSiteUrl(), "https://chibuezemaxwell.com");
+      assert.strictEqual(getMetadataBase().origin, "https://chibuezemaxwell.com");
+    });
+
+    it("preserves an explicit public URL override in production", () => {
+      Object.assign(process.env, { NODE_ENV: "production" });
+      process.env.NEXT_PUBLIC_SITE_URL = "https://custom-public-domain.com";
+      assert.strictEqual(getSiteUrl(), "https://custom-public-domain.com");
+    });
+
     it("falls back safely to localhost:3000 when no environment variables are set", () => {
       const url = getSiteUrl();
       assert.strictEqual(url, "http://localhost:3000");

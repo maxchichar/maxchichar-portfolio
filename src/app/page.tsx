@@ -7,7 +7,7 @@ export const revalidate = 0;
 
 export const metadata: Metadata = {
   ...constructPageMetadata({
-    title: "Chibueze Maxwell",
+    title: "Chibueze Maxwell | Super Intelligence Engineer & Entrepreneur",
     description:
       "Chibueze Maxwell is a Super Intelligence engineer and entrepreneur building intelligent systems. Explore his work, research, and writing.",
     path: "/",
