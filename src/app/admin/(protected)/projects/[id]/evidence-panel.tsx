@@ -1,3 +1,5 @@
+import { ImageField } from "@/components/admin/image-field";
+import type { MediaPickerItem } from "@/components/admin/media-picker";
 import { EVIDENCE_TYPES } from "@/lib/validation/evidence";
 
 import { addEvidenceForm, removeEvidenceForm } from "../actions";
@@ -15,10 +17,12 @@ export function EvidencePanel({
   projectId,
   evidence,
   error,
+  libraryMedia,
 }: {
   projectId: string;
   evidence: EvidenceRow[];
   error?: string;
+  libraryMedia: MediaPickerItem[];
 }) {
   return (
     <section className="rounded-panel border-border bg-surface border p-6">
@@ -90,6 +94,14 @@ export function EvidencePanel({
           name="url"
           placeholder="URL (optional)"
           className="rounded-card border-border bg-bg text-text focus-visible:border-accent w-full border px-3 py-2 font-sans text-sm outline-none"
+        />
+        <ImageField
+          name="mediaId"
+          label="Evidence image"
+          hint="Attach a screenshot or diagram from your media library, or upload one."
+          initialMediaId={null}
+          initialUrl={null}
+          libraryMedia={libraryMedia}
         />
         {/* metric/before/after/unit only matter for measurement/before_after types;
             harmless to always render them — the action ignores extras for other types. */}

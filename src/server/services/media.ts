@@ -173,15 +173,17 @@ export async function listMediaLibrary(options?: {
   kind?: MediaKind;
 }) {
   const status = options?.status ?? "READY";
-  return mediaRepo.listMedia(db, {
+  const rows = await mediaRepo.listMedia(db, {
     status: status === "ALL" ? undefined : status,
     filenameQuery: options?.filenameQuery,
     kind: options?.kind,
   });
+  return rows.map((media) => ({ ...media, storageUrl: publicUrlFor(media.storageKey) }));
 }
 
 export async function getMediaById(mediaId: string) {
-  return mediaRepo.findById(db, mediaId);
+  const media = await mediaRepo.findById(db, mediaId);
+  return media ? { ...media, storageUrl: publicUrlFor(media.storageKey) } : null;
 }
 
 export async function updateAltText(

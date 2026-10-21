@@ -1,3 +1,4 @@
+import { publicStorageBase } from "./storage/image";
 import { TURNSTILE_ORIGIN, turnstileSiteKey } from "./turnstile";
 
 export interface SecurityHeaderOptions {
@@ -58,9 +59,7 @@ export function buildCspHeader(options?: SecurityHeaderOptions): string {
   const storageOrigin = extractStorageOrigin(
     options?.storageEndpoint ?? process.env.STORAGE_ENDPOINT,
   );
-  const publicStorageOrigin = extractStorageOrigin(
-    process.env.STORAGE_PUBLIC_URL || process.env.NEXT_PUBLIC_STORAGE_URL,
-  );
+  const publicStorageOrigin = publicStorageBase()?.origin ?? null;
 
   const scriptSrc = ["'self'", "'unsafe-inline'"];
   if (isDev) {

@@ -79,12 +79,4 @@ export async function deleteObject(storageKey: string): Promise<void> {
   await client().send(new DeleteObjectCommand({ Bucket: bucket(), Key: storageKey }));
 }
 
-export function publicUrlFor(storageKey: string): string {
-  const publicBase =
-    process.env.STORAGE_PUBLIC_URL?.trim() || process.env.NEXT_PUBLIC_STORAGE_URL?.trim();
-  if (publicBase) {
-    return `${publicBase.replace(/\/$/, "")}/${storageKey.replace(/^\//, "")}`;
-  }
-  const endpoint = process.env.STORAGE_ENDPOINT ?? "";
-  return `${endpoint.replace(/\/$/, "")}/${bucket()}/${storageKey}`;
-}
+export { storagePublicUrlFor as publicUrlFor } from "./image";

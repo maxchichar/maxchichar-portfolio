@@ -5,13 +5,8 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth/config";
 import { evidenceCreateSchema } from "@/lib/validation/evidence";
-import {
-  parseRichTextField,
-  PROJECT_SECTION_KEYS,
-  projectCreateSchema,
-  projectDraftUpdateSchema,
-  tiptapDocToPlainText,
-} from "@/lib/validation/project";
+import { projectCreateSchema } from "@/lib/validation/project";
+import { parseProjectDraftForm } from "@/lib/validation/project-form";
 import * as projectService from "@/server/services/projects";
 
 // Every action re-checks auth() itself, server-side — the route-group
@@ -77,65 +72,29 @@ export async function ensureDraftForm(formData: FormData): Promise<void> {
   redirect(`/admin/projects/${projectId}`);
 }
 
-export async function saveDraftForm(formData: FormData): Promise<void> {
+async function saveSubmittedDraft(formData: FormData) {
   const actor = await requireActor();
   const projectId = requireField(formData, "projectId");
 
-  const sections = PROJECT_SECTION_KEYS.map((key) => {
-    const content = parseRichTextField(formData.get(`section_${key}`));
-    if (!tiptapDocToPlainText(content).trim()) return null;
-    return {
-      key,
-      heading: String(formData.get(`heading_${key}`) ?? key),
-      content,
-    };
-  }).filter((s): s is NonNullable<typeof s> => s !== null);
+  const patch = parseProjectDraftForm(formData);
 
-  const technologies = String(formData.get("technologies") ?? "")
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
-  const tags = String(formData.get("tags") ?? "")
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
-
-  // Tri-state: field absent -> undefined (don't touch existing cover);
-  // present but empty -> null (explicit clear); present with a value ->
-  // that value (set/keep, verified server-side in the service layer).
-  const coverMediaIdRaw = formData.get("coverMediaId");
-  const coverMediaId =
-    coverMediaIdRaw === null
-      ? undefined
-      : coverMediaIdRaw === ""
-        ? null
-        : String(coverMediaIdRaw);
-
-  const parsed = projectDraftUpdateSchema.safeParse({
-    title: formData.get("title"),
-    shortDescription: formData.get("shortDescription"),
-    category: formData.get("category") || null,
-    year: formData.get("year") ? Number(formData.get("year")) : null,
-    technologies,
-    githubUrl: formData.get("githubUrl") || null,
-    liveUrl: formData.get("liveUrl") || null,
-    documentationUrl: formData.get("documentationUrl") || null,
-    sections,
-    tags,
-    coverMediaId,
-  });
-  if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Invalid input.");
-  }
-
-  await projectService.saveDraft(projectId, parsed.data, actor);
+  await projectService.saveDraft(projectId, patch, actor);
   revalidatePath(`/admin/projects/${projectId}`);
+  return { projectId, actor };
+}
+
+export async function saveDraftForm(formData: FormData): Promise<void> {
+  const { projectId } = await saveSubmittedDraft(formData);
   redirect(`/admin/projects/${projectId}`);
 }
 
+export async function previewProjectForm(formData: FormData): Promise<void> {
+  const { projectId } = await saveSubmittedDraft(formData);
+  redirect(`/preview/work/${projectId}`);
+}
+
 export async function publishProjectForm(formData: FormData): Promise<void> {
-  const actor = await requireActor();
-  const projectId = requireField(formData, "projectId");
+  const { projectId, actor } = await saveSubmittedDraft(formData);
   await projectService.publishProject(projectId, actor);
   revalidatePath(`/admin/projects/${projectId}`);
   revalidatePath("/admin/projects");
@@ -175,6 +134,7 @@ export async function addEvidenceForm(formData: FormData): Promise<void> {
 
   const type = String(formData.get("type") ?? "");
   const base = {
+    mediaId: formData.get("mediaId") || null,
     label: String(formData.get("label") ?? ""),
     description: String(formData.get("description") ?? "") || undefined,
     url: String(formData.get("url") ?? "") || undefined,
