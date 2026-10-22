@@ -5,6 +5,8 @@ import { INBOX_STATUSES, type InboxStatus } from "@/server/repositories/contact"
 import { getSubmission, listInbox } from "@/server/services/contact";
 import { isEmailConfigured } from "@/server/services/email";
 
+import { DeleteMessageButton } from "./delete-message-button";
+
 import { setInboxStatusForm } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -28,9 +30,9 @@ function when(date: Date) {
 export default async function InboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; id?: string }>;
+  searchParams: Promise<{ view?: string; id?: string; deleted?: string }>;
 }) {
-  const { view, id } = await searchParams;
+  const { view, id, deleted } = await searchParams;
   const status = INBOX_STATUSES.includes(view as InboxStatus)
     ? (view as InboxStatus)
     : null;
@@ -56,6 +58,12 @@ export default async function InboxPage({
             : "Messages from your contact form."
         }
       />
+
+      {deleted === "1" ? (
+        <p role="status" className="text-text mb-6 font-sans text-sm">
+          Message deleted.
+        </p>
+      ) : null}
 
       {!isEmailConfigured() ? (
         <p className="border-border bg-surface text-text-muted mb-6 rounded-lg border px-4 py-3 font-sans text-sm">
@@ -196,12 +204,22 @@ export default async function InboxPage({
                     </button>
                   </form>
                 ))}
+                <DeleteMessageButton
+                  key={selected.id}
+                  id={selected.id}
+                  name={selected.name}
+                  view={status ?? ""}
+                />
               </div>
             </article>
           ) : (
             <div className="flex h-full min-h-80 items-center justify-center p-8 text-center">
               <p className="text-text-muted font-serif text-sm">
-                Select a message to read it.
+                {id
+                  ? "This message is no longer available. Select another message."
+                  : items.length === 0
+                    ? "No messages in this folder."
+                    : "Select a message to read it."}
               </p>
             </div>
           )}

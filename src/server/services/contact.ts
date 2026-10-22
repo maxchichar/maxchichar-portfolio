@@ -2,6 +2,10 @@ import { hashIp } from "@/lib/contact-ip";
 import "server-only";
 
 import { after } from "next/server";
+import { eq } from "drizzle-orm";
+import { auth } from "@/lib/auth/config";
+import { schema } from "@/lib/db";
+import { z } from "zod";
 
 import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
@@ -153,5 +157,34 @@ export async function setSubmissionStatus(
     resourceType: "contact_submission",
     resourceId: id,
     metadata: { status },
+  });
+}
+
+/** Authenticate here too so callers cannot supply their own actor or role. */
+export async function deleteSubmission(id: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new ContactServiceError("Please sign in again.");
+  if (!z.uuid().safeParse(id).success) {
+    throw new ContactServiceError("Invalid message.");
+  }
+  await db.transaction(async (tx) => {
+    // Check the current database role, including for sessions issued before a demotion.
+    const [actor] = await tx
+      .select({ role: schema.users.role })
+      .from(schema.users)
+      .where(eq(schema.users.id, session.user.id))
+      .limit(1);
+    if (actor?.role !== "ADMIN") {
+      throw new ContactServiceError("Only admins can delete messages.");
+    }
+    const deleted = await contactRepo.deleteSubmission(tx, id);
+    // A concurrent/repeated deletion is already the desired outcome.
+    if (!deleted) return;
+    await tx.insert(schema.auditLogs).values({
+      userId: session.user.id,
+      action: "contact.deleted",
+      resourceType: "contact_submission",
+      resourceId: deleted.id,
+    });
   });
 }
