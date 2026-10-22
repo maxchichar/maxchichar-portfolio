@@ -1,6 +1,6 @@
 import "server-only";
 
-import { db } from "@/lib/db";
+import { db, schema } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import type { EvidenceCreateInput } from "@/lib/validation/evidence";
 import type {
@@ -390,4 +390,26 @@ export async function getPublicWorkCaseStudy(slug: string) {
     tags,
     coverUrl,
   };
+}
+
+export async function deleteArchivedProject(projectId: string, actor: Actor) {
+  return db.transaction(async (tx) => {
+    const evidence = await evidenceRepo.listEvidenceForProject(tx, projectId);
+    const deleted = await projectsRepo.deleteArchivedProject(tx, projectId);
+    if (!deleted) {
+      throw new ProjectServiceError("Archive the project before deleting it.");
+    }
+    await evidenceRepo.deleteUnlinkedEvidence(
+      tx,
+      evidence.map((item) => item.id),
+    );
+    await tx.insert(schema.auditLogs).values({
+      userId: actor.id,
+      action: "project.deleted",
+      resourceType: "project",
+      resourceId: projectId,
+      metadata: { slug: deleted.slug },
+    });
+    return deleted;
+  });
 }

@@ -17,6 +17,7 @@ import * as projectService from "@/server/services/projects";
 
 import {
   archiveProjectForm,
+  deleteProjectForm,
   ensureDraftForm,
   publishProjectForm,
   previewProjectForm,
@@ -104,6 +105,7 @@ export default async function ProjectEditPage({
           publishFromDraftForm
           rollbackAction={rollbackProjectForm}
           archiveAction={archiveProjectForm}
+          deleteAction={deleteProjectForm}
           unarchiveAction={unarchiveProjectForm}
           noun="project"
         />
