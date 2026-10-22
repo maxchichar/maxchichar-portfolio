@@ -1,3 +1,4 @@
+import { ConfirmForm } from "@/components/admin/confirm-form";
 import Link from "next/link";
 
 import { AdminPageHeader } from "@/components/admin/page-header";
@@ -148,15 +149,15 @@ export default async function ErrorsPage({
                       {e.resolvedAt ? "Reopen" : "Mark resolved"}
                     </button>
                   </form>
-                  <form action={deleteErrorForm}>
+                  <ConfirmForm
+                    action={deleteErrorForm}
+                    title="Delete error log?"
+                    description="Permanently delete this error log and its recorded details? This cannot be undone."
+                    label="Delete"
+                    confirmLabel="Delete error log"
+                  >
                     <input type="hidden" name="id" value={e.id} />
-                    <button
-                      type="submit"
-                      className="text-text-muted hover:text-text px-2 py-1.5 font-sans text-xs"
-                    >
-                      Delete
-                    </button>
-                  </form>
+                  </ConfirmForm>
                   {!e.resolvedAt ? (
                     <p className="text-text-muted font-sans text-xs">
                       Resolved errors that happen again reopen and alert you.

@@ -1,24 +1,16 @@
 "use client";
-
+import { ConfirmForm } from "@/components/admin/confirm-form";
 import { deleteTestimonialForm } from "../actions";
-
 export function DeleteTestimonialButton({ id, author }: { id: string; author: string }) {
   return (
-    <form
+    <ConfirmForm
       action={deleteTestimonialForm}
-      onSubmit={(e) => {
-        if (!confirm(`Delete the testimonial from ${author}? This can't be undone.`)) {
-          e.preventDefault();
-        }
-      }}
+      title="Delete testimonial?"
+      description={`Permanently delete the testimonial from ${author}? This cannot be undone.`}
+      label="Delete"
+      confirmLabel="Delete testimonial"
     >
       <input type="hidden" name="id" value={id} />
-      <button
-        type="submit"
-        className="rounded-card border-border text-text-muted hover:border-text hover:text-text border px-3 py-1.5 font-sans text-xs transition-colors"
-      >
-        Delete
-      </button>
-    </form>
+    </ConfirmForm>
   );
 }
