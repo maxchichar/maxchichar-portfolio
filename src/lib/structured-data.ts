@@ -151,8 +151,8 @@ export function buildPersonJsonLd(
     /\/+$/,
     "",
   );
-  const jobTitle =
-    options?.jobTitle?.trim() || "Super Intelligence Engineer & Entrepreneur";
+  const jobTitle = options?.jobTitle?.trim() || "AI Engineer";
+  const isCanonicalPerson = name.toLowerCase() === "chibueze maxwell";
 
   const sameAs = (options?.socialLinks || [])
     .filter(
@@ -168,6 +168,7 @@ export function buildPersonJsonLd(
     "@type": "Person",
     "@id": `${siteUrl}/#person`,
     name,
+    ...(isCanonicalPerson ? { alternateName: "MAXCHICHAR" } : {}),
     url: `${siteUrl}/`,
     jobTitle,
     ...(sameAs.length > 0 ? { sameAs } : {}),
