@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth/config";
 import { INBOX_STATUSES, type InboxStatus } from "@/server/repositories/contact";
-import { setSubmissionStatus } from "@/server/services/contact";
+import {
+  ContactServiceError,
+  deleteSubmission,
+  setSubmissionStatus,
+} from "@/server/services/contact";
 
 export async function setInboxStatusForm(formData: FormData): Promise<void> {
   const session = await auth();
@@ -20,4 +24,29 @@ export async function setInboxStatusForm(formData: FormData): Promise<void> {
   revalidatePath("/admin");
   const back = String(formData.get("back") ?? "/admin/inbox");
   redirect(back.startsWith("/admin/inbox") ? back : "/admin/inbox");
+}
+
+export async function deleteInboxMessageForm(
+  _previous: { error: string },
+  formData: FormData,
+): Promise<{ error: string }> {
+  if (formData.get("confirmDelete") !== "delete") {
+    return { error: "Confirm deletion before continuing." };
+  }
+  try {
+    await deleteSubmission(String(formData.get("id") ?? ""));
+  } catch (error) {
+    return {
+      error:
+        error instanceof ContactServiceError
+          ? error.message
+          : "Unable to delete this message. Please try again.",
+    };
+  }
+  revalidatePath("/admin/inbox");
+  revalidatePath("/admin");
+  const view = String(formData.get("view") ?? "");
+  const query = new URLSearchParams({ deleted: "1" });
+  if (INBOX_STATUSES.includes(view as InboxStatus)) query.set("view", view);
+  redirect(`/admin/inbox?${query}`);
 }

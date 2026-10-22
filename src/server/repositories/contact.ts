@@ -76,3 +76,12 @@ export async function updateSubmissionStatus(tx: Tx, id: string, status: InboxSt
     .set({ status })
     .where(eq(schema.contactSubmissions.id, id));
 }
+
+/** Return only the deleted ID; message content never enters the audit log. */
+export async function deleteSubmission(tx: Tx, id: string) {
+  const [row] = await tx
+    .delete(schema.contactSubmissions)
+    .where(eq(schema.contactSubmissions.id, id))
+    .returning({ id: schema.contactSubmissions.id });
+  return row ?? null;
+}
