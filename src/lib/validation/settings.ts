@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const DEFAULT_SITE_SETTINGS = {
   siteName: "CHIBUEZE MAXWELL",
-  siteDescription: "Super Intelligence Engineer & Entrepreneur",
+  siteDescription: "AI Engineer, entrepreneur, researcher, and writer",
   primaryEmail: null,
   socialGithub: null,
   socialX: null,
