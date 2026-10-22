@@ -27,6 +27,12 @@ async function requireActor() {
   return { id: session.user.id, type: "HUMAN" as const };
 }
 
+// Clear public routes after every publication lifecycle change, including prefetched pages.
+function revalidatePublicResearch() {
+  revalidatePath("/");
+  revalidatePath("/research", "layout");
+}
+
 function requireField(formData: FormData, name: string): string {
   const value = formData.get(name);
   if (typeof value !== "string" || value.length === 0) {
@@ -95,6 +101,7 @@ export async function publishResearchForm(formData: FormData): Promise<void> {
   const actor = await requireActor();
   const researchId = requireField(formData, "researchId");
   await researchService.publishResearch(researchId, actor);
+  revalidatePublicResearch();
   revalidatePath(`/admin/research/${researchId}`);
   revalidatePath("/admin/research");
   redirect(`/admin/research/${researchId}`);
@@ -105,6 +112,7 @@ export async function rollbackResearchForm(formData: FormData): Promise<void> {
   const researchId = requireField(formData, "researchId");
   const targetVersionId = requireField(formData, "targetVersionId");
   await researchService.rollbackResearch(researchId, targetVersionId, actor);
+  revalidatePublicResearch();
   revalidatePath(`/admin/research/${researchId}`);
   redirect(`/admin/research/${researchId}`);
 }
@@ -113,6 +121,7 @@ export async function archiveResearchForm(formData: FormData): Promise<void> {
   const actor = await requireActor();
   const researchId = requireField(formData, "researchId");
   await researchService.archiveResearch(researchId, actor);
+  revalidatePublicResearch();
   revalidatePath("/admin/research");
   revalidatePath(`/admin/research/${researchId}`);
   redirect(`/admin/research/${researchId}`);
@@ -122,6 +131,7 @@ export async function unarchiveResearchForm(formData: FormData): Promise<void> {
   const actor = await requireActor();
   const researchId = requireField(formData, "researchId");
   await researchService.unarchiveResearch(researchId, actor);
+  revalidatePublicResearch();
   revalidatePath("/admin/research");
   revalidatePath(`/admin/research/${researchId}`);
   redirect(`/admin/research/${researchId}`);

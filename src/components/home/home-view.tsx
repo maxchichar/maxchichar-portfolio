@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ViewTransition } from "react";
 
-import { selectHomepageWork } from "@/lib/home-work";
+import { selectHomepageResearch, selectHomepageWork } from "@/lib/home-work";
+import { ResearchCard } from "@/components/research/research-card";
 import { Hero } from "@/components/home/hero";
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
@@ -27,7 +28,7 @@ import { TestimonialsShowcase } from "@/components/testimonials/testimonials";
 // Homepage sections reuse the same public overview services /work, /research,
 // and /writing already call — no new database queries.
 // Work keeps featured projects first and fills remaining slots with recently
-// published work. Research is featured-only; Writing is ordered by publish date.
+// published work. Research uses the same curation and recency policy; Writing follows publication date.
 //
 // Hero copy and the "Currently" section come from the published `home`
 // page (Pages CMS) once one exists. Pages are seeded as DRAFTs, so until
@@ -108,10 +109,10 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
     : DEFAULT_HERO;
   const homepageWork = selectHomepageWork(workOverview, HOMEPAGE_SECTION_LIMIT);
 
-  const featuredResearch = researchOverview
-    .filter(({ research }) => research.featured)
-    .sort((a, b) => a.research.sortOrder - b.research.sortOrder)
-    .slice(0, HOMEPAGE_SECTION_LIMIT);
+  const homepageResearch = selectHomepageResearch(
+    researchOverview,
+    HOMEPAGE_SECTION_LIMIT,
+  );
 
   const latestWriting = [...articlesOverview]
     .sort((a, b) => {
@@ -194,16 +195,20 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
             emptyBody={research.failed ? UNAVAILABLE : "Research is being documented."}
             viewAllHref="/research"
             viewAllLabel="All research"
-            hasItems={featuredResearch.length > 0}
+            hasItems={homepageResearch.length > 0}
           >
-            <ul className="border-border border-t">
-              {featuredResearch.map(({ research, published }) => (
-                <IndexRow
-                  key={research.id}
-                  href={`/research/${research.slug}`}
-                  title={published.title}
-                  body={published.abstract}
-                />
+            <ul className="grid gap-x-6 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+              {homepageResearch.map(({ research, published, coverUrl }, i) => (
+                <li key={research.id}>
+                  <ResearchCard
+                    headingLevel="h3"
+                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    slug={research.slug}
+                    published={published}
+                    coverUrl={coverUrl}
+                    number={i + 1}
+                  />
+                </li>
               ))}
             </ul>
           </HomeSection>
