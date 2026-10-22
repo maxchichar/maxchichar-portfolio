@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 
 import { hasRichContent } from "@/lib/rich-text";
 import { auth } from "@/lib/auth/config";
-import { evidenceCreateSchema } from "@/lib/validation/evidence";
+import {
+  parseResearchEvidenceForm,
+  evidenceFieldErrors,
+} from "@/lib/validation/evidence";
 import { parseRichTextField } from "@/lib/validation/project";
 import {
   RESEARCH_SECTION_KEYS,
@@ -124,43 +127,20 @@ export async function unarchiveResearchForm(formData: FormData): Promise<void> {
   redirect(`/admin/research/${researchId}`);
 }
 
-export async function addEvidenceForm(formData: FormData): Promise<void> {
+export async function addEvidenceForm(
+  formData: FormData,
+): Promise<{ error?: string; fieldErrors?: Record<string, string> }> {
   await requireActor();
   const researchId = requireField(formData, "researchId");
 
-  const type = String(formData.get("type") ?? "");
-  const base = {
-    label: String(formData.get("label") ?? ""),
-    description: String(formData.get("description") ?? "") || undefined,
-    url: String(formData.get("url") ?? "") || undefined,
-  };
-
-  let candidate: unknown;
-  if (type === "measurement" || type === "before_after") {
-    candidate = {
-      type,
-      ...base,
-      data: {
-        metric: String(formData.get("metric") ?? ""),
-        before: String(formData.get("before") ?? ""),
-        after: String(formData.get("after") ?? ""),
-        unit: String(formData.get("unit") ?? "") || undefined,
-      },
-    };
-  } else {
-    candidate = { type, ...base };
-  }
-
-  const parsed = evidenceCreateSchema.safeParse(candidate);
+  const parsed = parseResearchEvidenceForm(formData);
   if (!parsed.success) {
-    redirect(
-      `/admin/research/${researchId}?evidenceError=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid evidence.")}`,
-    );
+    return { fieldErrors: evidenceFieldErrors(parsed.error.issues) };
   }
 
   await researchService.addEvidence(researchId, parsed.data);
   revalidatePath(`/admin/research/${researchId}`);
-  redirect(`/admin/research/${researchId}`);
+  return {};
 }
 
 export async function removeEvidenceForm(formData: FormData): Promise<void> {
@@ -169,5 +149,4 @@ export async function removeEvidenceForm(formData: FormData): Promise<void> {
   const evidenceId = requireField(formData, "evidenceId");
   await researchService.removeEvidence(researchId, evidenceId);
   revalidatePath(`/admin/research/${researchId}`);
-  redirect(`/admin/research/${researchId}`);
 }

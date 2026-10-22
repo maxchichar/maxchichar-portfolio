@@ -1,6 +1,7 @@
-import { EVIDENCE_TYPES } from "@/lib/validation/evidence";
+import { EvidenceForm } from "@/components/admin/editor/evidence-form";
+import { ResearchEvidenceForm } from "./research-evidence-form";
 
-import { addEvidenceForm, removeEvidenceForm } from "../actions";
+import { removeEvidenceForm } from "../actions";
 
 type EvidenceRow = {
   id: string;
@@ -42,7 +43,7 @@ export function EvidencePanel({
                   </p>
                 ) : null}
               </div>
-              <form action={removeEvidenceForm}>
+              <EvidenceForm action={removeEvidenceForm}>
                 <input type="hidden" name="researchId" value={researchId} />
                 <input type="hidden" name="evidenceId" value={e.id} />
                 <button
@@ -51,78 +52,14 @@ export function EvidencePanel({
                 >
                   Remove
                 </button>
-              </form>
+              </EvidenceForm>
             </div>
           ))
         )}
       </div>
 
-      <form
-        action={addEvidenceForm}
-        className="rounded-panel border-border bg-bg mt-4 space-y-3 border p-4"
-      >
-        <input type="hidden" name="researchId" value={researchId} />
-        <div className="grid grid-cols-2 gap-3">
-          <select
-            name="type"
-            defaultValue="repository"
-            className="rounded-card border-border bg-bg text-text focus-visible:border-accent border px-3 py-2 font-sans text-sm outline-none"
-          >
-            {EVIDENCE_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <input
-            name="label"
-            placeholder="Label"
-            required
-            className="rounded-card border-border bg-bg text-text focus-visible:border-accent border px-3 py-2 font-sans text-sm outline-none"
-          />
-        </div>
-        <input
-          name="description"
-          placeholder="Description (optional)"
-          className="rounded-card border-border bg-bg text-text focus-visible:border-accent w-full border px-3 py-2 font-sans text-sm outline-none"
-        />
-        <input
-          name="url"
-          placeholder="URL (optional)"
-          className="rounded-card border-border bg-bg text-text focus-visible:border-accent w-full border px-3 py-2 font-sans text-sm outline-none"
-        />
-        {/* metric/before/after/unit only matter for measurement/before_after types;
-            harmless to always render them — the action ignores extras for other types. */}
-        <div className="grid grid-cols-4 gap-3">
-          <input
-            name="metric"
-            placeholder="Metric (measurement/before-after only)"
-            className="rounded-card border-border bg-bg text-text focus-visible:border-accent border px-3 py-2 font-sans text-sm outline-none"
-          />
-          <input
-            name="before"
-            placeholder="Before"
-            className="rounded-card border-border bg-bg text-text focus-visible:border-accent border px-3 py-2 font-sans text-sm outline-none"
-          />
-          <input
-            name="after"
-            placeholder="After"
-            className="rounded-card border-border bg-bg text-text focus-visible:border-accent border px-3 py-2 font-sans text-sm outline-none"
-          />
-          <input
-            name="unit"
-            placeholder="Unit"
-            className="rounded-card border-border bg-bg text-text focus-visible:border-accent border px-3 py-2 font-sans text-sm outline-none"
-          />
-        </div>
-        {error && <p className="text-text font-sans text-sm">{error}</p>}
-        <button
-          type="submit"
-          className="rounded-card border-border text-text hover:border-accent border px-4 py-2 font-sans text-sm transition-colors"
-        >
-          Add evidence
-        </button>
-      </form>
+      {error ? <p role="alert">{error}</p> : null}
+      <ResearchEvidenceForm researchId={researchId} />
     </section>
   );
 }

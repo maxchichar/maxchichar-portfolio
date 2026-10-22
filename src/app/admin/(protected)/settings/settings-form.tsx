@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { ImageField } from "@/components/admin/image-field";
 import type { MediaPickerItem } from "@/components/admin/media-picker";
@@ -32,6 +32,9 @@ export function SettingsForm({
   initialAvatar: { mediaId: string; url: string } | null;
   libraryMedia: MediaPickerItem[];
 }) {
+  // Controlled text survives React action resets, including validation failures
+  // and independent image/document saves that refresh server props.
+  const [values, setValues] = useState(initialSettings);
   const [state, formAction, isPending] = useActionState(saveSettingsForm, initialState);
 
   return (
@@ -95,7 +98,10 @@ export function SettingsForm({
             type="text"
             required
             maxLength={100}
-            defaultValue={initialSettings.siteName}
+            value={values.siteName}
+            onChange={(event) =>
+              setValues((previous) => ({ ...previous, siteName: event.target.value }))
+            }
             className={inputClass}
           />
           <p className="text-text-muted mt-1 font-sans text-xs">
@@ -112,7 +118,13 @@ export function SettingsForm({
             name="siteDescription"
             rows={2}
             maxLength={300}
-            defaultValue={initialSettings.siteDescription ?? ""}
+            value={values.siteDescription ?? ""}
+            onChange={(event) =>
+              setValues((previous) => ({
+                ...previous,
+                siteDescription: event.target.value,
+              }))
+            }
             className={textareaClass}
           />
           <p className="text-text-muted mt-1 font-sans text-xs">
@@ -129,7 +141,10 @@ export function SettingsForm({
             name="primaryEmail"
             type="email"
             maxLength={255}
-            defaultValue={initialSettings.primaryEmail ?? ""}
+            value={values.primaryEmail ?? ""}
+            onChange={(event) =>
+              setValues((previous) => ({ ...previous, primaryEmail: event.target.value }))
+            }
             placeholder="e.g. hello@example.com"
             className={inputClass}
           />
@@ -152,7 +167,13 @@ export function SettingsForm({
               name="socialGithub"
               type="url"
               maxLength={255}
-              defaultValue={initialSettings.socialGithub ?? ""}
+              value={values.socialGithub ?? ""}
+              onChange={(event) =>
+                setValues((previous) => ({
+                  ...previous,
+                  socialGithub: event.target.value,
+                }))
+              }
               placeholder="https://github.com/..."
               className={inputClass}
             />
@@ -167,7 +188,10 @@ export function SettingsForm({
               name="socialX"
               type="url"
               maxLength={255}
-              defaultValue={initialSettings.socialX ?? ""}
+              value={values.socialX ?? ""}
+              onChange={(event) =>
+                setValues((previous) => ({ ...previous, socialX: event.target.value }))
+              }
               placeholder="https://x.com/..."
               className={inputClass}
             />
@@ -182,7 +206,13 @@ export function SettingsForm({
               name="socialLinkedin"
               type="url"
               maxLength={255}
-              defaultValue={initialSettings.socialLinkedin ?? ""}
+              value={values.socialLinkedin ?? ""}
+              onChange={(event) =>
+                setValues((previous) => ({
+                  ...previous,
+                  socialLinkedin: event.target.value,
+                }))
+              }
               placeholder="https://linkedin.com/in/..."
               className={inputClass}
             />
@@ -197,7 +227,13 @@ export function SettingsForm({
               name="socialYoutube"
               type="url"
               maxLength={255}
-              defaultValue={initialSettings.socialYoutube ?? ""}
+              value={values.socialYoutube ?? ""}
+              onChange={(event) =>
+                setValues((previous) => ({
+                  ...previous,
+                  socialYoutube: event.target.value,
+                }))
+              }
               placeholder="https://youtube.com/@..."
               className={inputClass}
             />
@@ -212,7 +248,13 @@ export function SettingsForm({
               name="socialInstagram"
               type="url"
               maxLength={255}
-              defaultValue={initialSettings.socialInstagram ?? ""}
+              value={values.socialInstagram ?? ""}
+              onChange={(event) =>
+                setValues((previous) => ({
+                  ...previous,
+                  socialInstagram: event.target.value,
+                }))
+              }
               placeholder="https://instagram.com/..."
               className={inputClass}
             />
@@ -227,7 +269,13 @@ export function SettingsForm({
               name="socialTiktok"
               type="url"
               maxLength={255}
-              defaultValue={initialSettings.socialTiktok ?? ""}
+              value={values.socialTiktok ?? ""}
+              onChange={(event) =>
+                setValues((previous) => ({
+                  ...previous,
+                  socialTiktok: event.target.value,
+                }))
+              }
               placeholder="https://tiktok.com/@..."
               className={inputClass}
             />
@@ -247,7 +295,10 @@ export function SettingsForm({
             name="footerText"
             rows={2}
             maxLength={300}
-            defaultValue={initialSettings.footerText ?? ""}
+            value={values.footerText ?? ""}
+            onChange={(event) =>
+              setValues((previous) => ({ ...previous, footerText: event.target.value }))
+            }
             placeholder="e.g. Built with Portfolio OS."
             className={textareaClass}
           />

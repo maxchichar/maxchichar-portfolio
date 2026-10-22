@@ -1,3 +1,4 @@
+import { EvidenceForm } from "@/components/admin/editor/evidence-form";
 import { ImageField } from "@/components/admin/image-field";
 import type { MediaPickerItem } from "@/components/admin/media-picker";
 import { EVIDENCE_TYPES } from "@/lib/validation/evidence";
@@ -46,7 +47,7 @@ export function EvidencePanel({
                   </p>
                 ) : null}
               </div>
-              <form action={removeEvidenceForm}>
+              <EvidenceForm action={removeEvidenceForm}>
                 <input type="hidden" name="projectId" value={projectId} />
                 <input type="hidden" name="evidenceId" value={e.id} />
                 <button
@@ -55,13 +56,13 @@ export function EvidencePanel({
                 >
                   Remove
                 </button>
-              </form>
+              </EvidenceForm>
             </div>
           ))
         )}
       </div>
 
-      <form
+      <EvidenceForm
         action={addEvidenceForm}
         className="rounded-panel border-border bg-bg mt-4 space-y-3 border p-4"
       >
@@ -134,7 +135,7 @@ export function EvidencePanel({
         >
           Add evidence
         </button>
-      </form>
+      </EvidenceForm>
     </section>
   );
 }

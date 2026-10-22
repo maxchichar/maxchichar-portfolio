@@ -133,7 +133,7 @@ export async function unarchiveProjectForm(formData: FormData): Promise<void> {
   redirect(`/admin/projects/${projectId}`);
 }
 
-export async function addEvidenceForm(formData: FormData): Promise<void> {
+export async function addEvidenceForm(formData: FormData): Promise<{ error?: string }> {
   await requireActor();
   const projectId = requireField(formData, "projectId");
 
@@ -163,14 +163,12 @@ export async function addEvidenceForm(formData: FormData): Promise<void> {
 
   const parsed = evidenceCreateSchema.safeParse(candidate);
   if (!parsed.success) {
-    redirect(
-      `/admin/projects/${projectId}?evidenceError=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid evidence.")}`,
-    );
+    return { error: parsed.error.issues[0]?.message ?? "Invalid evidence." };
   }
 
   await projectService.addEvidence(projectId, parsed.data);
   revalidatePath(`/admin/projects/${projectId}`);
-  redirect(`/admin/projects/${projectId}`);
+  return {};
 }
 
 export async function removeEvidenceForm(formData: FormData): Promise<void> {
@@ -179,7 +177,6 @@ export async function removeEvidenceForm(formData: FormData): Promise<void> {
   const evidenceId = requireField(formData, "evidenceId");
   await projectService.removeEvidence(projectId, evidenceId);
   revalidatePath(`/admin/projects/${projectId}`);
-  redirect(`/admin/projects/${projectId}`);
 }
 
 export async function deleteProjectForm(formData: FormData): Promise<void> {
