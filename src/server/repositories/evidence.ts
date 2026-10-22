@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray, notExists } from "drizzle-orm";
 import type { NeonDatabase } from "drizzle-orm/neon-serverless";
 
 import { schema } from "@/lib/db";
@@ -106,4 +106,28 @@ export async function deleteEvidenceForResearch(
 
   await tx.delete(schema.evidence).where(eq(schema.evidence.id, evidenceId));
   return true;
+}
+
+/** Preserve evidence shared with another project or research item. */
+export async function deleteUnlinkedEvidence(tx: Tx, evidenceIds: string[]) {
+  if (evidenceIds.length === 0) return;
+  await tx
+    .delete(schema.evidence)
+    .where(
+      and(
+        inArray(schema.evidence.id, evidenceIds),
+        notExists(
+          tx
+            .select({ id: schema.projectEvidence.evidenceId })
+            .from(schema.projectEvidence)
+            .where(eq(schema.projectEvidence.evidenceId, schema.evidence.id)),
+        ),
+        notExists(
+          tx
+            .select({ id: schema.researchEvidence.evidenceId })
+            .from(schema.researchEvidence)
+            .where(eq(schema.researchEvidence.evidenceId, schema.evidence.id)),
+        ),
+      ),
+    );
 }

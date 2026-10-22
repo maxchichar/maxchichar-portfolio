@@ -61,6 +61,7 @@ export async function createProjectFromForm(formData: FormData): Promise<void> {
     throw err;
   }
   revalidatePath("/admin/projects");
+  revalidatePath("/", "layout");
   redirect(`/admin/projects/${projectId}`);
 }
 
@@ -98,6 +99,7 @@ export async function publishProjectForm(formData: FormData): Promise<void> {
   await projectService.publishProject(projectId, actor);
   revalidatePath(`/admin/projects/${projectId}`);
   revalidatePath("/admin/projects");
+  revalidatePath("/", "layout");
   redirect(`/admin/projects/${projectId}`);
 }
 
@@ -106,6 +108,7 @@ export async function rollbackProjectForm(formData: FormData): Promise<void> {
   const projectId = requireField(formData, "projectId");
   const targetVersionId = requireField(formData, "targetVersionId");
   await projectService.rollbackProject(projectId, targetVersionId, actor);
+  revalidatePath("/", "layout");
   revalidatePath(`/admin/projects/${projectId}`);
   redirect(`/admin/projects/${projectId}`);
 }
@@ -114,6 +117,7 @@ export async function archiveProjectForm(formData: FormData): Promise<void> {
   const actor = await requireActor();
   const projectId = requireField(formData, "projectId");
   await projectService.archiveProject(projectId, actor);
+  revalidatePath("/", "layout");
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${projectId}`);
   redirect(`/admin/projects/${projectId}`);
@@ -123,6 +127,7 @@ export async function unarchiveProjectForm(formData: FormData): Promise<void> {
   const actor = await requireActor();
   const projectId = requireField(formData, "projectId");
   await projectService.unarchiveProject(projectId, actor);
+  revalidatePath("/", "layout");
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${projectId}`);
   redirect(`/admin/projects/${projectId}`);
@@ -175,4 +180,16 @@ export async function removeEvidenceForm(formData: FormData): Promise<void> {
   await projectService.removeEvidence(projectId, evidenceId);
   revalidatePath(`/admin/projects/${projectId}`);
   redirect(`/admin/projects/${projectId}`);
+}
+
+export async function deleteProjectForm(formData: FormData): Promise<void> {
+  const actor = await requireActor();
+  const projectId = requireField(formData, "projectId");
+  if (formData.get("confirmDelete") !== "delete") {
+    throw new Error("Confirm permanent deletion first.");
+  }
+  const project = await projectService.deleteArchivedProject(projectId, actor);
+  revalidatePath(`/work/${project.slug}`);
+  revalidatePath("/", "layout");
+  redirect("/admin/projects");
 }

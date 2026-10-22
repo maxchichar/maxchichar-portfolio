@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ViewTransition } from "react";
 
+import { selectHomepageWork } from "@/lib/home-work";
 import { Hero } from "@/components/home/hero";
 import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
@@ -24,11 +25,9 @@ import { MediaImage } from "@/components/media-image";
 import { TestimonialsShowcase } from "@/components/testimonials/testimonials";
 
 // Homepage sections reuse the same public overview services /work, /research,
-// and /writing already call — no new database queries. Selection criteria
-// per original spec §7: Work and Research are "featured" only, ordered by
-// sort_order (not publication date, per §59); Writing is "latest", ordered
-// by publish date. A section with nothing to show keeps its own empty
-// state rather than inventing fallback content — §D.13 / original spec §38.
+// and /writing already call — no new database queries.
+// Work keeps featured projects first and fills remaining slots with recently
+// published work. Research is featured-only; Writing is ordered by publish date.
 //
 // Hero copy and the "Currently" section come from the published `home`
 // page (Pages CMS) once one exists. Pages are seeded as DRAFTs, so until
@@ -107,10 +106,7 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
         },
       }
     : DEFAULT_HERO;
-  const featuredWork = workOverview
-    .filter(({ project }) => project.featured)
-    .sort((a, b) => a.project.sortOrder - b.project.sortOrder)
-    .slice(0, HOMEPAGE_SECTION_LIMIT);
+  const homepageWork = selectHomepageWork(workOverview, HOMEPAGE_SECTION_LIMIT);
 
   const featuredResearch = researchOverview
     .filter(({ research }) => research.featured)
@@ -158,10 +154,10 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
             emptyBody={work.failed ? UNAVAILABLE : "Work is being documented."}
             viewAllHref="/work"
             viewAllLabel="All work"
-            hasItems={featuredWork.length > 0}
+            hasItems={homepageWork.length > 0}
           >
             <div className="grid gap-x-6 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
-              {featuredWork.map(({ project, published, coverUrl }, i) => (
+              {homepageWork.map(({ project, published, coverUrl }, i) => (
                 <WorkCard
                   key={project.id}
                   href={`/work/${project.slug}`}

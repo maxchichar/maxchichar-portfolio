@@ -212,3 +212,12 @@ export async function setItemStatus(
     .set({ status, updatedAt: new Date() })
     .where(eq(schema.projects.id, projectId));
 }
+
+/** Remove archived projects only; versions and project links cascade. */
+export async function deleteArchivedProject(tx: Tx, projectId: string) {
+  const [deleted] = await tx
+    .delete(schema.projects)
+    .where(and(eq(schema.projects.id, projectId), eq(schema.projects.status, "ARCHIVED")))
+    .returning();
+  return deleted ?? null;
+}
