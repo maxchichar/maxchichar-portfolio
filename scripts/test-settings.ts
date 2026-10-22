@@ -11,7 +11,7 @@ describe("Site Settings validation boundary", () => {
     assert.strictEqual(DEFAULT_SITE_SETTINGS.siteName, "CHIBUEZE MAXWELL");
     assert.strictEqual(
       DEFAULT_SITE_SETTINGS.siteDescription,
-      "Super Intelligence Engineer & Entrepreneur",
+      "AI Engineer, entrepreneur, researcher, and writer",
     );
     assert.strictEqual(DEFAULT_SITE_SETTINGS.socialGithub, null);
     assert.strictEqual(DEFAULT_SITE_SETTINGS.socialX, null);

@@ -7,12 +7,12 @@ export const revalidate = 0;
 
 export const metadata: Metadata = {
   ...constructPageMetadata({
-    title: "Chibueze Maxwell | Super Intelligence Engineer & Entrepreneur",
+    title: "Chibueze Maxwell (MAXCHICHAR) | AI Engineer, Research & Writing",
     description:
-      "Chibueze Maxwell is a Super Intelligence engineer and entrepreneur building intelligent systems. Explore his work, research, and writing.",
+      "Chibueze Maxwell, also known as MAXCHICHAR, is an AI engineer and entrepreneur exploring technology, research, and ideas through projects and writing.",
     path: "/",
   }),
-  title: { absolute: "Chibueze Maxwell | Super Intelligence Engineer & Entrepreneur" },
+  title: { absolute: "Chibueze Maxwell (MAXCHICHAR) | AI Engineer, Research & Writing" },
   verification: { google: "6oW8w0a8eNljvhIuI2bd51M-1GC4qctVVFECy5xtnq4" },
 };
 

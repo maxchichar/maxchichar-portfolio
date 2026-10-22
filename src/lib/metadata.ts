@@ -5,7 +5,7 @@ import { DEFAULT_SITE_SETTINGS } from "@/lib/validation/settings";
 export const DEFAULT_SITE_TITLE = DEFAULT_SITE_SETTINGS.siteName; // "CHIBUEZE MAXWELL"
 export const PRODUCTION_SITE_URL = "https://chibuezemaxwell.com";
 export const DEFAULT_SITE_DESCRIPTION =
-  "Super Intelligence Engineer & Entrepreneur. I build intelligent systems for real-world problems.";
+  "AI Engineer, entrepreneur, researcher, and writer. Explore my projects, research, and ideas under Chibueze Maxwell (MAXCHICHAR).";
 
 /**
  * Resolves the canonical base site URL for metadata, canonicals, and sitemaps.
