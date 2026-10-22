@@ -38,9 +38,9 @@ import { TestimonialsShowcase } from "@/components/testimonials/testimonials";
 const HOMEPAGE_SECTION_LIMIT = 3;
 
 const DEFAULT_HERO = {
-  eyebrow: "Super Intelligence Engineer & Entrepreneur",
+  eyebrow: "AI Engineer · Entrepreneur · Researcher",
   headline: "I build intelligent systems for real-world problems.",
-  body: "Super Intelligence engineer and entrepreneur focused on intelligent systems, software engineering, emerging technology, and problems at the intersection of technology and society.",
+  body: "I explore how technology, ideas, and institutions shape the world through engineering, research, entrepreneurship, and writing.",
   primaryCta: { label: "Explore my work", href: "/work" },
   secondaryCta: { label: "Read my research", href: "/research" },
 } as const;
