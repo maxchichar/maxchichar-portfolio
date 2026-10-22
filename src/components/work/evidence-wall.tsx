@@ -1,3 +1,4 @@
+import { readEvidenceData } from "@/lib/evidence-display";
 import type { schema } from "@/lib/db";
 import { MediaImage } from "@/components/media-image";
 
@@ -21,18 +22,6 @@ function hostOf(url: string) {
   } catch {
     return url;
   }
-}
-
-function readData(data: unknown) {
-  if (!data || typeof data !== "object") return null;
-  const d = data as Record<string, unknown>;
-  if (!("after" in d)) return null;
-  return {
-    metric: d.metric ? String(d.metric) : null,
-    before: "before" in d ? String(d.before) : null,
-    after: String(d.after),
-    unit: d.unit ? String(d.unit) : "",
-  };
 }
 
 /**
@@ -71,7 +60,7 @@ export function EvidenceWall({
 
       <ul className="mt-10 grid gap-4 md:grid-cols-2">
         {items.map((item) => {
-          const data = readData(item.data);
+          const data = readEvidenceData(item.data);
           const isWide = item.type === "screenshot" && item.mediaUrl;
           const body = (
             <>
@@ -101,7 +90,7 @@ export function EvidenceWall({
                 ) : null}
               </div>
 
-              {data ? (
+              {data?.after ? (
                 <div className="mt-6">
                   {data.metric ? (
                     <p className="text-text-muted font-sans text-sm">{data.metric}</p>
@@ -126,6 +115,17 @@ export function EvidenceWall({
                     </span>
                   </div>
                 </div>
+              ) : null}
+
+              {data?.context.length ? (
+                <dl className="text-text-muted mt-4 space-y-2 text-sm">
+                  {data.context.map(({ label, value }) => (
+                    <div key={label}>
+                      <dt className="text-text font-sans font-medium">{label}</dt>
+                      <dd className="font-serif whitespace-pre-wrap">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
               ) : null}
 
               <h3 className="text-text group-hover:text-accent mt-6 font-sans text-lg font-semibold tracking-tight transition-colors">
