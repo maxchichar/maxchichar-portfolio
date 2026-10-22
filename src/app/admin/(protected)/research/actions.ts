@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { hasRichContent } from "@/lib/rich-text";
 import { auth } from "@/lib/auth/config";
 import { evidenceCreateSchema } from "@/lib/validation/evidence";
-import { parseRichTextField, tiptapDocToPlainText } from "@/lib/validation/project";
+import { parseRichTextField } from "@/lib/validation/project";
 import {
   RESEARCH_SECTION_KEYS,
   researchDraftUpdateSchema,
@@ -45,7 +46,7 @@ export async function saveDraftForm(formData: FormData): Promise<void> {
 
   const sections = RESEARCH_SECTION_KEYS.map((key) => {
     const content = parseRichTextField(formData.get(`section_${key}`));
-    if (!tiptapDocToPlainText(content).trim()) return null;
+    if (!hasRichContent(content)) return null;
     return {
       key,
       heading: String(formData.get(`heading_${key}`) ?? key),

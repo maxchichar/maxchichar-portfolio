@@ -6,13 +6,22 @@
  */
 const UPLOADS_PREFIX = "uploads/";
 
-function publicStorageBase(): URL | null {
+export function publicStorageBase(): URL | null {
   const raw =
     process.env.STORAGE_PUBLIC_URL?.trim() || process.env.NEXT_PUBLIC_STORAGE_URL?.trim();
   if (!raw) return null;
   try {
-    const url = new URL(/^https?:\/\//.test(raw) ? raw : `https://${raw}`);
-    if (!url.pathname.endsWith("/")) url.pathname += "/";
+    const url = new URL(/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`);
+    if (
+      !["http:", "https:"].includes(url.protocol) ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      url.hostname.endsWith(".r2.cloudflarestorage.com")
+    )
+      return null;
+    url.pathname = `${url.pathname.replace(/\/+$/, "")}/`;
     return url;
   } catch {
     return null;
@@ -47,4 +56,15 @@ export function isOptimizableImage(src: string): boolean {
   } catch {
     return false;
   }
+}
+
+/** Use the same normalized base for delivery URLs and Next.js remotePatterns. */
+export function storagePublicUrlFor(storageKey: string): string {
+  const base = publicStorageBase();
+  if (!base) {
+    throw new Error(
+      "Set STORAGE_PUBLIC_URL to a public R2 delivery domain (r2.dev or a custom domain); the private S3 endpoint cannot serve public images.",
+    );
+  }
+  return `${base.href}${storageKey.replace(/^\/+/, "")}`;
 }

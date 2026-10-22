@@ -6,7 +6,7 @@ import { Toc } from "@/components/detail/toc";
 import { EvidenceWall } from "@/components/work/evidence-wall";
 import { TagLinks } from "@/components/topics/tag-links";
 import type { schema } from "@/lib/db";
-import { tiptapDocToPlainText } from "@/lib/validation/project";
+import { hasRichContent } from "@/lib/rich-text";
 import { RESEARCH_SECTION_KEYS } from "@/lib/validation/research";
 import type { ContentCard } from "@/lib/related";
 
@@ -42,7 +42,7 @@ export function ResearchDetailView({
   const sections = new Map<string, { heading: string; content: unknown }>();
   for (const s of (published.sections as
     { key: string; heading: string; content: unknown }[] | null) ?? []) {
-    if (tiptapDocToPlainText(s.content).trim().length > 0) {
+    if (hasRichContent(s.content)) {
       sections.set(s.key, { heading: s.heading, content: s.content });
     }
   }

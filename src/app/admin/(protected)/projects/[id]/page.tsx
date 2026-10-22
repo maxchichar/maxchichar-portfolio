@@ -19,6 +19,7 @@ import {
   archiveProjectForm,
   ensureDraftForm,
   publishProjectForm,
+  previewProjectForm,
   rollbackProjectForm,
   saveDraftForm,
   unarchiveProjectForm,
@@ -66,7 +67,7 @@ export default async function ProjectEditPage({
 
   // Same existing service /admin/media itself uses — no new query.
   const libraryMedia = (
-    draft ? await mediaService.listMediaLibrary({ status: "READY", kind: "image" }) : []
+    await mediaService.listMediaLibrary({ status: "READY", kind: "image" })
   ).map((m) => ({
     id: m.id,
     filename: m.filename,
@@ -99,6 +100,8 @@ export default async function ProjectEditPage({
           previewHref={`/preview/work/${project.id}`}
           ensureDraftAction={ensureDraftForm}
           publishAction={publishProjectForm}
+          saveAndPreviewAction={previewProjectForm}
+          publishFromDraftForm
           rollbackAction={rollbackProjectForm}
           archiveAction={archiveProjectForm}
           unarchiveAction={unarchiveProjectForm}
@@ -267,7 +270,12 @@ export default async function ProjectEditPage({
         </div>
       )}
 
-      <EvidencePanel projectId={project.id} evidence={evidence} error={evidenceError} />
+      <EvidencePanel
+        libraryMedia={libraryMedia}
+        projectId={project.id}
+        evidence={evidence}
+        error={evidenceError}
+      />
     </EditorLayout>
   );
 }

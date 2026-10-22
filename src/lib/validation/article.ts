@@ -4,18 +4,10 @@ import { z } from "zod";
 // project-specific fields — reused here rather than duplicated, same as
 // validation/research.ts does, per the no-duplicate-validation rule.
 import { tiptapDocSchema } from "./project";
-import { isRichDoc, safeImageSrc, type RichNode } from "@/lib/rich-text";
+import { hasRichContent } from "@/lib/rich-text";
 
 /** A divider or an empty paragraph must not become a blank published article. */
-export function hasArticleBody(content: unknown): boolean {
-  if (!isRichDoc(content)) return false;
-  const visible = (node: RichNode): boolean => {
-    if (node.type === "text") return Boolean(node.text?.trim());
-    if (node.type === "image") return safeImageSrc(node.attrs?.src) !== null;
-    return (node.content ?? []).some(visible);
-  };
-  return content.content.some(visible);
-}
+export const hasArticleBody = hasRichContent;
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 

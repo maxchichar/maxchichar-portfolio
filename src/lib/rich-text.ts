@@ -112,3 +112,14 @@ export function safeImageSrc(src: unknown): string | null {
   if (value.startsWith("/") && !value.startsWith("//")) return value;
   return null;
 }
+
+/** Text or a renderable image counts as content, including image-only sections. */
+export function hasRichContent(content: unknown): boolean {
+  if (!isRichDoc(content)) return false;
+  const visible = (node: RichNode): boolean => {
+    if (node.type === "text") return Boolean(node.text?.trim());
+    if (node.type === "image") return safeImageSrc(node.attrs?.src) !== null;
+    return (node.content ?? []).some(visible);
+  };
+  return content.content.some(visible);
+}

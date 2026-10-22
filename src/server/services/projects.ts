@@ -282,7 +282,14 @@ export async function unarchiveProject(projectId: string, actor: Actor) {
 
 export async function addEvidence(projectId: string, input: EvidenceCreateInput) {
   return db.transaction(async (tx) => {
+    if (input.mediaId) {
+      const media = await mediaRepo.findById(tx, input.mediaId);
+      if (!media || media.status !== "READY" || !media.mimeType.startsWith("image/")) {
+        throw new ProjectServiceError("Choose a validated image for the evidence.");
+      }
+    }
     return evidenceRepo.insertEvidenceForProject(tx, projectId, {
+      mediaId: input.mediaId ?? null,
       type: input.type,
       label: input.label,
       description: input.description ?? null,
@@ -304,7 +311,8 @@ export async function removeEvidence(projectId: string, evidenceId: string) {
 }
 
 export async function getMediaById(mediaId: string) {
-  return mediaRepo.findById(db, mediaId);
+  const media = await mediaRepo.findById(db, mediaId);
+  return media ? { ...media, storageUrl: publicUrlFor(media.storageKey) } : null;
 }
 
 export async function getProjectFullState(projectId: string) {
