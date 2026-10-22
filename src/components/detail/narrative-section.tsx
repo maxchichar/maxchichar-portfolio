@@ -17,7 +17,7 @@ export function NarrativeSection({
   number: string;
   heading: string;
   doc: unknown;
-  tone?: "default" | "failure" | "lead";
+  tone?: "default" | "failure" | "lead" | "references";
 }) {
   if (tone === "failure") {
     return (
@@ -48,7 +48,13 @@ export function NarrativeSection({
       <RichText
         doc={doc}
         idPrefix={`${id}-`}
-        className={tone === "lead" ? "rich-text rich-text-lead mt-6" : "rich-text mt-6"}
+        className={
+          tone === "lead"
+            ? "rich-text rich-text-lead mt-6"
+            : tone === "references"
+              ? "rich-text rich-text-sources mt-6"
+              : "rich-text mt-6"
+        }
       />
     </section>
   );

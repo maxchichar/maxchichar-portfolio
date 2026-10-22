@@ -503,6 +503,61 @@ html.lenis body {
     background: var(--border);
     margin-block: 3em;
   }
+  /* Bibliography: retain authored lists, numbering, links and rich formatting.
+     Scope row styles to top-level entries so nested annotations stay intact. */
+  .rich-text-sources {
+    max-width: 100%;
+    min-width: 0;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+  }
+  .rich-text-sources > ol,
+  .rich-text-sources > ul {
+    margin-top: 0;
+    padding-left: 2.25rem;
+  }
+  .rich-text-sources > p,
+  .rich-text-sources > ol > li,
+  .rich-text-sources > ul > li {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border);
+    padding-block: 1.25rem;
+  }
+  .rich-text-sources > ol > li,
+  .rich-text-sources > ul > li {
+    padding-left: 0.75rem;
+  }
+  .rich-text-sources > :first-child:is(p),
+  .rich-text-sources > :first-child:is(ol, ul) > li:first-child {
+    padding-top: 0;
+  }
+  .rich-text-sources > :last-child:is(p),
+  .rich-text-sources > :last-child:is(ol, ul) > li:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+  .rich-text-sources > ol > li::marker {
+    font-family: var(--font-mono-family);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .rich-text-sources li > p + p {
+    margin-top: 0.5rem;
+  }
+  .rich-text-sources a {
+    text-decoration-color: color-mix(in oklab, var(--accent) 45%, transparent);
+    text-underline-offset: 0.2em;
+  }
+  .rich-text-sources a:hover {
+    text-decoration-color: var(--accent);
+  }
+  .rich-text-sources a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: var(--radius-badge);
+  }
+
   .rich-text figure img,
   .rich-text > img {
     width: 100%;

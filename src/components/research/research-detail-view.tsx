@@ -124,7 +124,7 @@ export function ResearchDetailView({
                   number={num(i)}
                   heading={b.heading}
                   doc={b.content}
-                  tone={b.key === "research_question" ? "lead" : "default"}
+                  tone={b.key === "sources" ? "references" : "default"}
                 />
               ),
             )}
