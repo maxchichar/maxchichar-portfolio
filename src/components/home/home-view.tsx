@@ -21,7 +21,7 @@ import {
   JsonLdScript,
 } from "@/lib/structured-data";
 import { PageTransition } from "@/components/motion/page-transition";
-import { WorkCard } from "@/components/home/work-card";
+import { HomeEditorialCard } from "@/components/home/editorial-card";
 import { TestimonialsShowcase } from "@/components/testimonials/testimonials";
 
 // Homepage sections reuse the same public overview services /work, /research,
@@ -158,7 +158,7 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
           >
             <div className="grid gap-x-6 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
               {homepageWork.map(({ project, published, coverUrl }, i) => (
-                <WorkCard
+                <HomeEditorialCard
                   key={project.id}
                   href={`/work/${project.slug}`}
                   transitionName={`cover-work-${project.slug}`}
@@ -242,22 +242,32 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
             viewAllLabel="All writing"
             hasItems={latestWriting.length > 0}
           >
-            <ul className="border-border border-t">
-              {latestWriting.map(({ article, published }) => (
-                <IndexRow
-                  key={article.id}
-                  href={`/writing/${article.slug}`}
-                  title={published.title}
-                  body={published.excerpt}
-                  aside={
-                    published.publishedAt
-                      ? new Date(published.publishedAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          year: "numeric",
-                        })
-                      : null
-                  }
-                />
+            <ul className="grid gap-x-6 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+              {latestWriting.map(({ article, published, coverUrl }, i) => (
+                <li key={article.id}>
+                  <HomeEditorialCard
+                    href={`/writing/${article.slug}`}
+                    transitionName={`cover-writing-${article.slug}`}
+                    title={published.title}
+                    body={published.excerpt}
+                    coverUrl={coverUrl}
+                    number={i + 1}
+                    sectionLabel="Writing"
+                    readLabel="Read article"
+                    fallbackLabel="Notes from the work."
+                    meta={[
+                      published.category || "Essay",
+                      published.publishedAt
+                        ? new Date(published.publishedAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            year: "numeric",
+                            timeZone: "UTC",
+                          })
+                        : null,
+                      published.readingTime ? `${published.readingTime} min read` : null,
+                    ]}
+                  />
+                </li>
               ))}
             </ul>
           </HomeSection>
@@ -322,44 +332,5 @@ function HomeSection({
         </div>
       )}
     </section>
-  );
-}
-
-function IndexRow({
-  href,
-  title,
-  body,
-  aside,
-}: {
-  href: string;
-  title: string;
-  body: string;
-  aside?: string | null;
-}) {
-  return (
-    <li className="border-border reveal border-b">
-      <Link
-        href={href}
-        className="group grid gap-3 py-8 md:grid-cols-12 md:items-baseline md:gap-6"
-      >
-        <span className="text-text-muted font-mono text-xs md:col-span-3">
-          {aside ?? ""}
-        </span>
-        <span className="md:col-span-8">
-          <span className="text-text group-hover:text-accent block font-sans text-2xl font-semibold tracking-tight transition-colors md:text-3xl">
-            {title}
-          </span>
-          <span className="text-text-muted mt-3 line-clamp-2 block max-w-2xl font-serif text-base">
-            {body}
-          </span>
-        </span>
-        <span
-          aria-hidden="true"
-          className="text-text-muted group-hover:text-accent hidden text-2xl transition-all group-hover:translate-x-1 md:col-span-1 md:block md:justify-self-end"
-        >
-          →
-        </span>
-      </Link>
-    </li>
   );
 }
