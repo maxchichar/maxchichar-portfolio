@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ViewTransition } from "react";
 
 import { selectHomepageResearch, selectHomepageWork } from "@/lib/home-work";
 import { ResearchCard } from "@/components/research/research-card";
@@ -22,7 +21,7 @@ import {
   JsonLdScript,
 } from "@/lib/structured-data";
 import { PageTransition } from "@/components/motion/page-transition";
-import { MediaImage } from "@/components/media-image";
+import { WorkCard } from "@/components/home/work-card";
 import { TestimonialsShowcase } from "@/components/testimonials/testimonials";
 
 // Homepage sections reuse the same public overview services /work, /research,
@@ -323,64 +322,6 @@ function HomeSection({
         </div>
       )}
     </section>
-  );
-}
-
-function WorkCard({
-  href,
-  title,
-  body,
-  coverUrl,
-  meta,
-  number,
-  transitionName,
-}: {
-  transitionName: string;
-  href: string;
-  title: string;
-  body: string;
-  coverUrl: string | null;
-  meta: (string | null)[];
-  number: number;
-}) {
-  const metaItems = meta.filter((m): m is string => Boolean(m));
-  return (
-    <Link href={href} className="group reveal block">
-      <ViewTransition name={transitionName} share="morph" default="none">
-        <div className="rounded-panel border-border bg-surface relative aspect-[4/3] overflow-hidden border">
-          {coverUrl ? (
-            <MediaImage
-              src={coverUrl}
-              alt=""
-              fill
-              sizes="(min-width: 768px) 50vw, 100vw"
-              className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
-            />
-          ) : (
-            <div
-              aria-hidden="true"
-              className="hero-wash flex h-full w-full items-end p-6"
-            >
-              <span className="text-text/15 font-sans text-8xl font-semibold tracking-tighter">
-                {String(number).padStart(2, "0")}
-              </span>
-            </div>
-          )}
-          <span className="bg-bg/70 text-text absolute top-4 right-4 flex h-9 w-9 translate-y-1 items-center justify-center rounded-full opacity-0 backdrop-blur transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-            ↗
-          </span>
-        </div>
-      </ViewTransition>
-      {metaItems.length > 0 ? (
-        <p className="text-text-muted mt-5 font-mono text-[11px] tracking-wider uppercase">
-          {metaItems.join(" · ")}
-        </p>
-      ) : null}
-      <h3 className="text-text group-hover:text-accent mt-2 font-sans text-xl font-semibold tracking-tight transition-colors">
-        {title}
-      </h3>
-      <p className="text-text-muted mt-2 line-clamp-2 font-serif text-base">{body}</p>
-    </Link>
   );
 }
 
