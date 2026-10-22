@@ -170,7 +170,7 @@ export default async function ResearchEditPage({
             <ImageField
               name="coverMediaId"
               label="Cover image"
-              hint="JPEG, PNG or WebP, up to 8 MB. Landscape images at least 1600 px wide look best."
+              hint="Shown on the homepage and research cards after publishing. JPEG, PNG or WebP, up to 8 MB. Use a landscape image at least 1600 px wide; card previews crop to 16:10."
               initialMediaId={draft.coverMediaId}
               initialUrl={currentCoverMedia?.storageUrl ?? null}
               libraryMedia={libraryMedia}

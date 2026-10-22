@@ -17,3 +17,24 @@ export function selectHomepageWork<
     })
     .slice(0, limit);
 }
+
+/** The same published, active research used by /research, with curation first. */
+export function selectHomepageResearch<
+  T extends {
+    research: { featured: boolean; sortOrder: number };
+    published: { publishedAt: Date | string | null };
+  },
+>(research: T[], limit: number): T[] {
+  const timestamp = (row: T) =>
+    row.published.publishedAt ? new Date(row.published.publishedAt).getTime() || 0 : 0;
+  return [...research]
+    .sort((a, b) => {
+      if (a.research.featured !== b.research.featured)
+        return a.research.featured ? -1 : 1;
+      if (a.research.featured && a.research.sortOrder !== b.research.sortOrder) {
+        return a.research.sortOrder - b.research.sortOrder;
+      }
+      return timestamp(b) - timestamp(a);
+    })
+    .slice(0, limit);
+}
