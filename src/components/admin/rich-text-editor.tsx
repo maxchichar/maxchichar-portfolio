@@ -12,6 +12,7 @@ import {
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useRef, useState } from "react";
 
+import { Dialog, dialogCancelClass, dialogConfirmClass } from "@/components/admin/dialog";
 import { MediaPicker, type MediaPickerItem } from "@/components/admin/media-picker";
 import {
   hasRichHtml,
@@ -174,20 +175,30 @@ function Toolbar({ editor, onImage }: { editor: Editor; onImage: () => void }) {
     }),
   });
 
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkError, setLinkError] = useState("");
+
   function setLink() {
-    const previous = editor.getAttributes("link").href as string | undefined;
-    const url = window.prompt("Link URL (https://…, mailto:, or /path)", previous ?? "");
-    if (url === null) return;
-    if (url.trim() === "") {
+    setLinkUrl((editor.getAttributes("link").href as string | undefined) ?? "");
+    setLinkError("");
+    setLinkOpen(true);
+  }
+
+  function saveLink(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const url = linkUrl.trim();
+    if (!url) {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
-      return;
+    } else {
+      const href = safeHref(url);
+      if (!href) {
+        setLinkError("Only http(s), mailto: and site-relative links are allowed.");
+        return;
+      }
+      editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
     }
-    const href = safeHref(url.trim());
-    if (!href) {
-      window.alert("Only http(s), mailto: and site-relative links are allowed.");
-      return;
-    }
-    editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
+    setLinkOpen(false);
   }
 
   const c = () => editor.chain().focus();
@@ -284,37 +295,79 @@ function Toolbar({ editor, onImage }: { editor: Editor; onImage: () => void }) {
   ];
 
   return (
-    <div
-      role="toolbar"
-      aria-label="Formatting"
-      className="border-border bg-surface flex flex-wrap items-center gap-1 border-b px-2 py-1.5"
-    >
-      {groups.map((group, gi) => (
-        <div key={gi} className="flex items-center gap-0.5">
-          {gi > 0 ? (
-            <span aria-hidden="true" className="bg-border mx-1.5 h-5 w-px" />
+    <>
+      <div
+        role="toolbar"
+        aria-label="Formatting"
+        className="border-border bg-surface flex flex-wrap items-center gap-1 border-b px-2 py-1.5"
+      >
+        {groups.map((group, gi) => (
+          <div key={gi} className="flex items-center gap-0.5">
+            {gi > 0 ? (
+              <span aria-hidden="true" className="bg-border mx-1.5 h-5 w-px" />
+            ) : null}
+            {group.map((b) => (
+              <button
+                key={b.label}
+                type="button"
+                title={b.label}
+                aria-label={b.label}
+                aria-pressed={b.active ?? undefined}
+                disabled={b.disabled}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={b.run}
+                className={`rounded-badge flex h-8 min-w-8 items-center justify-center px-2 font-mono text-xs transition-colors disabled:opacity-30 ${
+                  b.active
+                    ? "bg-text text-bg"
+                    : "text-text-muted hover:bg-surface-2 hover:text-text"
+                }`}
+              >
+                {b.content}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+      <Dialog
+        open={linkOpen}
+        onClose={() => setLinkOpen(false)}
+        title="Edit link"
+        description="Enter a web address, email link, or site path. Leave blank to remove the link."
+      >
+        <form onSubmit={saveLink} className="mt-5">
+          <label className="text-text block font-sans text-sm">
+            Link URL
+            <input
+              autoFocus
+              value={linkUrl}
+              onChange={(event) => {
+                setLinkUrl(event.target.value);
+                setLinkError("");
+              }}
+              aria-invalid={Boolean(linkError)}
+              className="rounded-card border-border bg-bg text-text mt-2 w-full border px-3 py-2 font-sans text-sm"
+              placeholder="https://example.com"
+            />
+          </label>
+          {linkError ? (
+            <p role="alert" className="text-text-muted mt-2 font-sans text-xs">
+              {linkError}
+            </p>
           ) : null}
-          {group.map((b) => (
+          <div className="mt-6 flex flex-wrap justify-end gap-3">
             <button
-              key={b.label}
               type="button"
-              title={b.label}
-              aria-label={b.label}
-              aria-pressed={b.active ?? undefined}
-              disabled={b.disabled}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={b.run}
-              className={`rounded-badge flex h-8 min-w-8 items-center justify-center px-2 font-mono text-xs transition-colors disabled:opacity-30 ${
-                b.active
-                  ? "bg-text text-bg"
-                  : "text-text-muted hover:bg-surface-2 hover:text-text"
-              }`}
+              className={dialogCancelClass}
+              onClick={() => setLinkOpen(false)}
             >
-              {b.content}
+              Cancel
             </button>
-          ))}
-        </div>
-      ))}
-    </div>
+            <button type="submit" className={dialogConfirmClass}>
+              Save link
+            </button>
+          </div>
+        </form>
+      </Dialog>
+    </>
   );
 }

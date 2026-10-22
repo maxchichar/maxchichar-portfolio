@@ -1,3 +1,4 @@
+import { ConfirmForm } from "@/components/admin/confirm-form";
 import Link from "next/link";
 
 import { PreviewButton } from "./preview-button";
@@ -208,16 +209,16 @@ export function PublishPanel({
                 <div className="mt-1 flex items-center gap-2">
                   <StatusPill status={v.status} />
                   {v.status === "SUPERSEDED" && !draft ? (
-                    <form action={rollbackAction}>
+                    <ConfirmForm
+                      action={rollbackAction}
+                      title={`Restore version ${v.versionNumber}?`}
+                      description={`Restore version ${v.versionNumber} of this ${noun}? This immediately replaces the live version. Your version history is preserved.`}
+                      label="Restore"
+                      confirmLabel="Restore version"
+                    >
                       {hidden}
                       <input type="hidden" name="targetVersionId" value={v.id} />
-                      <button
-                        type="submit"
-                        className="text-accent font-sans text-xs hover:underline"
-                      >
-                        Restore
-                      </button>
-                    </form>
+                    </ConfirmForm>
                   ) : null}
                 </div>
               </div>
@@ -226,32 +227,39 @@ export function PublishPanel({
         </ol>
       </section>
 
-      <form action={itemStatus === "ACTIVE" ? archiveAction : unarchiveAction}>
-        {hidden}
-        <button
-          type="submit"
-          className="text-text-muted hover:text-text w-full py-2 font-sans text-xs transition-colors"
+      {itemStatus === "ACTIVE" ? (
+        <ConfirmForm
+          action={archiveAction}
+          title={`Archive ${noun}?`}
+          description={`This ${noun} will be removed from the public site. You can unarchive it later.`}
+          label={`Archive ${noun}`}
+          confirmLabel="Archive"
         >
-          {itemStatus === "ACTIVE" ? `Archive ${noun}` : `Unarchive ${noun}`}
-        </button>
-      </form>
-      {itemStatus === "ARCHIVED" && deleteAction ? (
-        <form action={deleteAction} className="border-border space-y-3 border-t pt-4">
           {hidden}
-          <label className="text-text-muted flex items-start gap-2 font-sans text-xs">
-            <input type="checkbox" name="confirmDelete" value="delete" required />
-            <span>
-              Permanently delete this {noun} and all its versions. This cannot be undone.
-              Uploaded images stay in the media library.
-            </span>
-          </label>
+        </ConfirmForm>
+      ) : (
+        <form action={unarchiveAction}>
+          {hidden}
           <button
             type="submit"
-            className="rounded-card border-border text-text hover:border-text w-full border px-4 py-2.5 font-sans text-sm font-medium"
+            className="text-text-muted hover:text-text w-full py-2 font-sans text-xs"
           >
-            Delete {noun} permanently
+            Unarchive {noun}
           </button>
         </form>
+      )}
+      {itemStatus === "ARCHIVED" && deleteAction ? (
+        <ConfirmForm
+          action={deleteAction}
+          title={`Delete ${noun} permanently?`}
+          description={`Permanently delete this ${noun} and all its versions? This cannot be undone. Uploaded images stay in the media library.`}
+          label={`Delete ${noun} permanently`}
+          confirmLabel={`Delete ${noun}`}
+          className="border-border border-t pt-4"
+        >
+          {hidden}
+          <input type="hidden" name="confirmDelete" value="delete" />
+        </ConfirmForm>
       ) : null}
     </div>
   );
