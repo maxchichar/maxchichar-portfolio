@@ -90,7 +90,7 @@ describe("Base Metadata helper logic (Level 9.1)", () => {
       assert.strictEqual(DEFAULT_SITE_TITLE, "CHIBUEZE MAXWELL");
       assert.strictEqual(
         DEFAULT_SITE_DESCRIPTION,
-        "Super Intelligence Engineer & Entrepreneur. I build intelligent systems for real-world problems.",
+        "AI Engineer, entrepreneur, researcher, and writer. Explore my projects, research, and ideas under Chibueze Maxwell (MAXCHICHAR).",
       );
 
       assert.ok(meta.metadataBase instanceof URL);
