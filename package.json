@@ -37,8 +37,8 @@
     "check:edge": "wrangler deploy --config wrangler.edge.jsonc --dry-run"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1152.0",
-    "@aws-sdk/s3-request-presigner": "^3.1152.0",
+    "@aws-sdk/client-s3": "^3.1156.0",
+    "@aws-sdk/s3-request-presigner": "^3.1156.0",
     "@neondatabase/serverless": "^1.2.0",
     "@node-rs/argon2": "^2.2.2",
     "@tiptap/extension-image": "^3.32.0",
@@ -77,8 +77,8 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
-    "wrangler": "4.151.1",
-    "@opennextjs/cloudflare": "1.20.12"
+    "wrangler": "4.152.0",
+    "@opennextjs/cloudflare": "1.20.13"
   },
   "overrides": {
     "@esbuild-kit/core-utils": {
