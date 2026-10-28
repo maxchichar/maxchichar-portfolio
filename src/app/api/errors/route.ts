@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isBenignClientError } from "@/lib/benign-errors";
 import { recordError } from "@/server/services/errors";
 
 const MAX_BODY_BYTES = 8 * 1024;
@@ -36,6 +37,9 @@ export async function POST(request: NextRequest) {
     const path =
       typeof body.path === "string" && body.path.startsWith("/") ? body.path : null;
     if (!path || path.startsWith("/api/")) return noContent;
+    // Harmless browser notices (also filtered in the browser; this covers
+    // pages still running an older script).
+    if (isBenignClientError(body.message)) return noContent;
 
     await recordError({
       source: "client",
