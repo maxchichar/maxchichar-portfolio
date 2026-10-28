@@ -5,6 +5,8 @@ import { RelatedContent } from "@/components/detail/related";
 import { ProjectTestimonials } from "@/components/testimonials/testimonials";
 import { Toc } from "@/components/detail/toc";
 import { TagLinks } from "@/components/topics/tag-links";
+import { ShareBar } from "@/components/share/share-bar";
+import { resolveCanonicalUrl } from "@/lib/metadata";
 import type { schema } from "@/lib/db";
 import type { PublicTestimonial } from "@/server/services/testimonials";
 import { hasRichContent } from "@/lib/rich-text";
@@ -155,28 +157,32 @@ export function CaseStudyView({
               ),
             )}
 
-            {techs.length > 0 || tags.length > 0 ? (
-              <div className="border-border mt-4 border-t pt-10">
-                {techs.length > 0 ? (
-                  <>
-                    <p className="text-eyebrow text-text-muted font-mono uppercase">
-                      Built with
-                    </p>
-                    <ul className="mt-4 flex flex-wrap gap-2">
-                      {techs.map((t) => (
-                        <li
-                          key={t}
-                          className="border-border text-text rounded-full border px-3 py-1 font-mono text-xs"
-                        >
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ) : null}
-                <TagLinks tags={tags} className="mt-6" />
-              </div>
-            ) : null}
+            <div className="border-border mt-4 border-t pt-10 pb-12 md:pb-16">
+              {techs.length > 0 ? (
+                <>
+                  <p className="text-eyebrow text-text-muted font-mono uppercase">
+                    Built with
+                  </p>
+                  <ul className="mt-4 flex flex-wrap gap-2">
+                    {techs.map((t) => (
+                      <li
+                        key={t}
+                        className="border-border text-text rounded-full border px-3 py-1 font-mono text-xs"
+                      >
+                        {t}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+              <TagLinks tags={tags} className={techs.length > 0 ? "mt-6" : ""} />
+              <ShareBar
+                url={resolveCanonicalUrl(`/work/${project.slug}`)}
+                title={published.title}
+                text={published.shortDescription}
+                className={techs.length > 0 || tags.length > 0 ? "mt-8" : ""}
+              />
+            </div>
           </div>
         </div>
       ) : null}

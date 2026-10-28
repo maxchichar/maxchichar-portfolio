@@ -7,6 +7,8 @@ import { RelatedContent } from "@/components/detail/related";
 import { Toc } from "@/components/detail/toc";
 import { RichText } from "@/components/rich-text";
 import { TagLinks } from "@/components/topics/tag-links";
+import { ShareBar } from "@/components/share/share-bar";
+import { resolveCanonicalUrl } from "@/lib/metadata";
 import type { schema } from "@/lib/db";
 import { collectHeadings } from "@/lib/rich-text";
 import type { ContentCard } from "@/lib/related";
@@ -96,6 +98,13 @@ export function ArticleDetailView({
 
           <footer className="border-border mt-20 border-t pt-10">
             <TagLinks tags={tags} />
+
+            <ShareBar
+              url={resolveCanonicalUrl(`/writing/${article.slug}`)}
+              title={published.title}
+              text={published.excerpt}
+              className={tags.length > 0 ? "mt-8" : ""}
+            />
 
             <div className="rounded-panel bg-surface mt-10 flex flex-col gap-6 p-7 sm:flex-row sm:items-center sm:justify-between md:p-8">
               <div className="flex items-center gap-4">

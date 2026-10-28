@@ -5,6 +5,8 @@ import { RelatedContent } from "@/components/detail/related";
 import { Toc } from "@/components/detail/toc";
 import { EvidenceWall } from "@/components/work/evidence-wall";
 import { TagLinks } from "@/components/topics/tag-links";
+import { ShareBar } from "@/components/share/share-bar";
+import { resolveCanonicalUrl } from "@/lib/metadata";
 import type { schema } from "@/lib/db";
 import { hasRichContent } from "@/lib/rich-text";
 import { RESEARCH_SECTION_KEYS } from "@/lib/validation/research";
@@ -128,11 +130,15 @@ export function ResearchDetailView({
                 />
               ),
             )}
-            {tags.length > 0 ? (
-              <div className="border-border mt-4 border-t pt-10">
-                <TagLinks tags={tags} />
-              </div>
-            ) : null}
+            <div className="border-border mt-4 border-t pt-10 pb-12 md:pb-16">
+              <TagLinks tags={tags} />
+              <ShareBar
+                url={resolveCanonicalUrl(`/research/${research.slug}`)}
+                title={published.title}
+                text={published.abstract}
+                className={tags.length > 0 ? "mt-8" : ""}
+              />
+            </div>
           </div>
         </div>
       ) : null}
