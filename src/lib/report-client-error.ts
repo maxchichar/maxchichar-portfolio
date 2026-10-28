@@ -1,3 +1,5 @@
+import { isBenignClientError } from "@/lib/benign-errors";
+
 /**
  * Sends a browser-side crash to /api/errors (best effort, never throws).
  * Errors that carry a `digest` came from the server, which already reported
@@ -14,6 +16,7 @@ export function reportClientError(error: unknown) {
     if (typeof window === "undefined" || sent >= 3) return;
     const err = error as { message?: unknown; stack?: unknown; digest?: unknown };
     if (typeof err?.digest === "string" && err.digest) return;
+    if (isBenignClientError(error)) return;
     const message = typeof err?.message === "string" ? err.message : String(error);
     if (typeof error === "object" && error !== null) {
       if (seen.has(error)) return;
