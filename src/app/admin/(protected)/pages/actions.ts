@@ -7,6 +7,8 @@ import { auth } from "@/lib/auth/config";
 import { contentSchemaForSlug, PAGE_SLUGS, type PageSlug } from "@/lib/validation/page";
 import * as pagesService from "@/server/services/pages";
 
+import { pageFields } from "./fields";
+
 // Every action re-checks auth() itself, server-side — the route-group
 // layout protects page navigation, not individual mutations, matching
 // every other actions.ts in this codebase.
@@ -30,85 +32,74 @@ function isPageSlug(value: string): value is PageSlug {
   return (PAGE_SLUGS as readonly string[]).includes(value);
 }
 
-// Field lists per slug, matching validation/page.ts's three schemas
-// exactly — used to pull the right form fields for whichever page is
-// being saved, since each shape is genuinely different (Decision 2).
-const FIELDS_BY_SLUG: Record<PageSlug, readonly string[]> = {
-  home: [
-    "heroEyebrow",
-    "heroHeadline",
-    "heroBody",
-    "heroPrimaryCtaLabel",
-    "heroPrimaryCtaHref",
-    "heroSecondaryCtaLabel",
-    "heroSecondaryCtaHref",
-    "currentFocusSummary",
-  ],
-  about: [
-    "intro",
-    "bio",
-    "whatIBuild",
-    "howIThink",
-    "interests",
-    "capabilities",
-    "direction",
-  ],
-  now: [
-    "currentlyBuilding",
-    "researching",
-    "learning",
-    "interests",
-    "thesis",
-    "recentChanges",
-  ],
-};
+// The page's own slug, looked up from its id — forms from the shared
+// publish panel (Edit, Restore) only carry the id.
+async function slugOf(pageId: string): Promise<PageSlug> {
+  const state = await pagesService.getPageFullState(pageId);
+  const slug = state?.page.slug;
+  if (!slug || !isPageSlug(slug)) {
+    throw new Error("Page not found.");
+  }
+  return slug;
+}
 
 export async function ensureDraftForm(formData: FormData): Promise<void> {
   const actor = await requireActor();
   const pageId = requireField(formData, "pageId");
-  const slug = requireField(formData, "slug");
+  const slug = await slugOf(pageId);
   await pagesService.ensureDraft(pageId, actor);
   revalidatePath(`/admin/pages/${slug}`);
   redirect(`/admin/pages/${slug}`);
 }
 
-export async function saveDraftForm(formData: FormData): Promise<void> {
+// Validates the submitted fields and saves them into the open draft. An
+// invalid field sends the editor back with the message rather than throwing
+// to the error page, so nothing typed is lost to a crash screen.
+async function saveSubmittedDraft(formData: FormData) {
   const actor = await requireActor();
   const pageId = requireField(formData, "pageId");
-  const slug = requireField(formData, "slug");
-
-  if (!isPageSlug(slug)) {
-    throw new Error(`Unknown page slug: ${slug}`);
-  }
+  const slug = await slugOf(pageId);
 
   const fields = Object.fromEntries(
-    FIELDS_BY_SLUG[slug].map((name) => [name, String(formData.get(name) ?? "")]),
+    pageFields(slug).map(({ name }) => [name, String(formData.get(name) ?? "").trim()]),
   );
 
   const parsed = contentSchemaForSlug(slug).safeParse({ slug, ...fields });
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Invalid input.");
+    const issue = parsed.error.issues[0];
+    const field = pageFields(slug).find(({ name }) => name === issue?.path[0]);
+    const message = `${field ? `${field.label}: ` : ""}${issue?.message ?? "Invalid input."}`;
+    redirect(`/admin/pages/${slug}?error=${encodeURIComponent(message)}`);
   }
 
   await pagesService.saveDraft(pageId, parsed.data, actor);
   revalidatePath(`/admin/pages/${slug}`);
-  redirect(`/admin/pages/${slug}`);
+  return { actor, pageId, slug };
 }
 
+export async function saveDraftForm(formData: FormData): Promise<void> {
+  const { slug } = await saveSubmittedDraft(formData);
+  redirect(`/admin/pages/${slug}?saved=1`);
+}
+
+export async function previewPageForm(formData: FormData): Promise<void> {
+  const { slug } = await saveSubmittedDraft(formData);
+  redirect(`/preview/page/${slug}`);
+}
+
+// Saves what's on screen first, so Publish never silently drops unsaved edits.
 export async function publishPageForm(formData: FormData): Promise<void> {
-  const actor = await requireActor();
-  const pageId = requireField(formData, "pageId");
-  const slug = requireField(formData, "slug");
+  const { actor, pageId, slug } = await saveSubmittedDraft(formData);
   await pagesService.publishPage(pageId, actor);
-  revalidatePath(`/admin/pages/${slug}`);
   revalidatePath("/admin/pages");
-  redirect(`/admin/pages/${slug}`);
+  revalidatePath(slug === "home" ? "/" : `/${slug}`);
+  redirect(`/admin/pages/${slug}?published=1`);
 }
 
 export async function rollbackPageForm(formData: FormData): Promise<void> {
   const actor = await requireActor();
   const pageId = requireField(formData, "pageId");
-  const slug = requireField(formData, "slug");
+  const slug = await slugOf(pageId);
   const targetVersionId = requireField(formData, "targetVersionId");
   await pagesService.rollbackPage(pageId, targetVersionId, actor);
   revalidatePath(`/admin/pages/${slug}`);

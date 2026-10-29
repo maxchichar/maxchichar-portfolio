@@ -1,15 +1,21 @@
 import { notFound } from "next/navigation";
 
+import { EditorLayout } from "@/components/admin/editor/editor-layout";
+import { EditorSection } from "@/components/admin/editor/editor-section";
+import { PublishPanel } from "@/components/admin/editor/publish-panel";
+import { TextField } from "@/components/admin/editor/text-field";
+import { resolveCanonicalUrl } from "@/lib/metadata";
 import { contentSchemaForSlug, PAGE_SLUGS, type PageSlug } from "@/lib/validation/page";
-import { PreviewButton } from "@/components/admin/editor/preview-button";
 import * as pagesService from "@/server/services/pages";
 
 import {
   ensureDraftForm,
+  previewPageForm,
   publishPageForm,
   rollbackPageForm,
   saveDraftForm,
 } from "../actions";
+import { fieldMaxLength, PAGE_SECTIONS } from "../fields";
 
 const PAGE_LABELS: Record<PageSlug, string> = {
   home: "Home",
@@ -17,20 +23,23 @@ const PAGE_LABELS: Record<PageSlug, string> = {
   now: "Now",
 };
 
+const FORM_ID = "page-draft-form";
+
 function isPageSlug(value: string): value is PageSlug {
   return (PAGE_SLUGS as readonly string[]).includes(value);
 }
 
-const textareaClass =
-  "rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm outline-none";
-const labelClass = "text-text-muted block font-sans text-sm";
+const noticeClass =
+  "rounded-panel border-border bg-surface text-text border p-5 font-sans text-sm";
 
 export default async function PageEditPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ error?: string; saved?: string; published?: string }>;
 }) {
-  const { slug: rawSlug } = await params;
+  const [{ slug: rawSlug }, query] = await Promise.all([params, searchParams]);
   if (!isPageSlug(rawSlug)) notFound();
   const slug = rawSlug;
 
@@ -47,328 +56,95 @@ export default async function PageEditPage({
   // back through the same per-slug schema used to write it, rather than
   // trusting the shape blindly, before handing field values to the form.
   const draftContent = draft ? contentSchemaForSlug(slug).safeParse(draft.content) : null;
-  const fields = draftContent?.success ? draftContent.data : null;
+  const fields = draftContent?.success
+    ? (draftContent.data as unknown as Record<string, string>)
+    : null;
+
+  const path = slug === "home" ? "/" : `/${slug}`;
+  const label = PAGE_LABELS[slug];
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10 md:px-10 md:py-12">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-text font-sans text-3xl font-semibold tracking-tight">
-            {PAGE_LABELS[slug]}
-          </h1>
-          <p className="text-text-muted mt-1 font-mono text-xs">/{page.slug}</p>
-        </div>
-        <div className="flex gap-2">
-          {published && (
-            <span className="rounded-badge border-accent/40 text-accent border px-2 py-0.5 font-mono text-xs">
-              PUBLISHED v{published.versionNumber}
-            </span>
-          )}
-          {draft && (
-            <span className="rounded-badge border-border text-text-muted border px-2 py-0.5 font-mono text-xs">
-              DRAFT v{draft.versionNumber}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {!draft && published && (
-        <form action={ensureDraftForm} className="mt-6">
-          <input type="hidden" name="pageId" value={page.id} />
-          <input type="hidden" name="slug" value={slug} />
-          <button
-            type="submit"
-            className="rounded-card border-accent text-accent hover:bg-accent hover:text-bg border px-4 py-2 font-sans text-sm transition-colors"
-          >
-            Start editing (forks a new draft from the published version)
-          </button>
-        </form>
-      )}
-
-      {draft && fields && (
-        <form id="page-draft-form" action={saveDraftForm} className="mt-8 space-y-5">
-          <input type="hidden" name="pageId" value={page.id} />
-          <input type="hidden" name="slug" value={slug} />
-
-          {fields.slug === "home" && (
-            <>
-              <div>
-                <label className={labelClass}>Eyebrow</label>
-                <input
-                  name="heroEyebrow"
-                  defaultValue={fields.heroEyebrow}
-                  required
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Headline</label>
-                <input
-                  name="heroHeadline"
-                  defaultValue={fields.heroHeadline}
-                  required
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Body</label>
-                <textarea
-                  name="heroBody"
-                  defaultValue={fields.heroBody}
-                  required
-                  rows={3}
-                  className={textareaClass}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Primary CTA label</label>
-                  <input
-                    name="heroPrimaryCtaLabel"
-                    defaultValue={fields.heroPrimaryCtaLabel}
-                    required
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Primary CTA link</label>
-                  <input
-                    name="heroPrimaryCtaHref"
-                    defaultValue={fields.heroPrimaryCtaHref}
-                    required
-                    className={textareaClass}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Secondary CTA label</label>
-                  <input
-                    name="heroSecondaryCtaLabel"
-                    defaultValue={fields.heroSecondaryCtaLabel}
-                    required
-                    className={textareaClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Secondary CTA link</label>
-                  <input
-                    name="heroSecondaryCtaHref"
-                    defaultValue={fields.heroSecondaryCtaHref}
-                    required
-                    className={textareaClass}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className={labelClass}>Current focus summary</label>
-                <textarea
-                  name="currentFocusSummary"
-                  defaultValue={fields.currentFocusSummary}
-                  required
-                  rows={3}
-                  className={textareaClass}
-                />
-              </div>
-            </>
-          )}
-
-          {fields.slug === "about" && (
-            <>
-              <div>
-                <label className={labelClass}>Intro</label>
-                <textarea
-                  name="intro"
-                  defaultValue={fields.intro}
-                  required
-                  rows={2}
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Biography</label>
-                <textarea
-                  name="bio"
-                  defaultValue={fields.bio}
-                  required
-                  rows={4}
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>What I build</label>
-                <textarea
-                  name="whatIBuild"
-                  defaultValue={fields.whatIBuild}
-                  required
-                  rows={3}
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>How I think</label>
-                <textarea
-                  name="howIThink"
-                  defaultValue={fields.howIThink}
-                  required
-                  rows={3}
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Areas of interest</label>
-                <textarea
-                  name="interests"
-                  defaultValue={fields.interests}
-                  required
-                  rows={2}
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Capabilities</label>
-                <textarea
-                  name="capabilities"
-                  defaultValue={fields.capabilities}
-                  required
-                  rows={3}
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Current direction</label>
-                <textarea
-                  name="direction"
-                  defaultValue={fields.direction}
-                  required
-                  rows={2}
-                  className={textareaClass}
-                />
-              </div>
-            </>
-          )}
-
-          {fields.slug === "now" && (
-            <>
-              <div>
-                <label className={labelClass}>Currently building</label>
-                <textarea
-                  name="currentlyBuilding"
-                  defaultValue={fields.currentlyBuilding}
-                  required
-                  rows={2}
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Currently researching</label>
-                <textarea
-                  name="researching"
-                  defaultValue={fields.researching}
-                  required
-                  rows={2}
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Currently learning</label>
-                <textarea
-                  name="learning"
-                  defaultValue={fields.learning}
-                  required
-                  rows={2}
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Current interests</label>
-                <textarea
-                  name="interests"
-                  defaultValue={fields.interests}
-                  required
-                  rows={2}
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Current thesis</label>
-                <textarea
-                  name="thesis"
-                  defaultValue={fields.thesis}
-                  required
-                  rows={3}
-                  className={textareaClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Recent changes</label>
-                <textarea
-                  name="recentChanges"
-                  defaultValue={fields.recentChanges}
-                  required
-                  rows={2}
-                  className={textareaClass}
-                />
-              </div>
-            </>
-          )}
-
-          <button
-            type="submit"
-            className="rounded-card border-border text-text hover:border-accent border px-4 py-2.5 font-sans text-sm transition-colors"
-          >
-            Save draft
-          </button>
-        </form>
-      )}
-
-      {draft ? (
-        <div className="mt-4 max-w-xs">
-          <PreviewButton href={`/preview/page/${slug}`} formId="page-draft-form" />
-        </div>
+    <EditorLayout
+      backHref="/admin/pages"
+      backLabel="Pages"
+      title={label}
+      subtitle={path}
+      aside={
+        <PublishPanel
+          idName="pageId"
+          id={page.id}
+          formId={FORM_ID}
+          itemStatus="ACTIVE"
+          draft={draft}
+          published={published}
+          versions={versions.map((v) => ({ ...v, title: `${label} page` }))}
+          liveHref={resolveCanonicalUrl(path)}
+          ensureDraftAction={ensureDraftForm}
+          publishAction={publishPageForm}
+          publishFromDraftForm
+          saveAndPreviewAction={previewPageForm}
+          rollbackAction={rollbackPageForm}
+          noun="page"
+        />
+      }
+    >
+      {query.error ? (
+        <p role="alert" className={`${noticeClass} border-accent/40`}>
+          {query.error}
+        </p>
+      ) : query.published ? (
+        <p role="status" className={noticeClass}>
+          Published. The live {label} page now shows this version.
+        </p>
+      ) : query.saved ? (
+        <p role="status" className={noticeClass}>
+          Draft saved. Visitors still see the published version until you publish.
+        </p>
       ) : null}
 
-      {draft && (
-        <form action={publishPageForm} className="mt-4">
+      {!draft ? (
+        <p className={noticeClass}>
+          This page is showing its published version. Choose <strong>Edit page</strong> to
+          start a draft; the live page stays unchanged until you publish.
+        </p>
+      ) : !fields ? (
+        <p role="alert" className={noticeClass}>
+          This draft&apos;s saved content doesn&apos;t match the {label} page&apos;s
+          fields, so it can&apos;t be edited here. Restore a previous version from
+          History.
+        </p>
+      ) : (
+        // Keyed by the saved content so the fields reset to what's stored
+        // after a save or restore, rather than keeping stale typed text.
+        <form
+          key={`${draft.id}:${JSON.stringify(fields)}`}
+          id={FORM_ID}
+          action={saveDraftForm}
+          className="space-y-6"
+        >
           <input type="hidden" name="pageId" value={page.id} />
-          <input type="hidden" name="slug" value={slug} />
-          <button
-            type="submit"
-            className="rounded-card bg-accent text-bg px-4 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90"
-          >
-            Publish this draft
-          </button>
+          {PAGE_SECTIONS[slug].map((section) => (
+            <EditorSection
+              key={section.title}
+              title={section.title}
+              description={section.description}
+            >
+              {section.fields.map((field) => (
+                <TextField
+                  key={field.name}
+                  name={field.name}
+                  label={field.label}
+                  hint={field.hint}
+                  defaultValue={fields[field.name] ?? ""}
+                  maxLength={fieldMaxLength(slug, field.name)}
+                  multiline={!field.short}
+                  minRows={field.rows}
+                />
+              ))}
+            </EditorSection>
+          ))}
         </form>
       )}
-
-      <section className="border-border mt-10 border-t pt-6">
-        <h2 className="text-text font-sans text-sm font-medium">Version history</h2>
-        <div className="mt-3 space-y-2">
-          {versions.map((v) => (
-            <div
-              key={v.id}
-              className="rounded-card border-border bg-surface flex items-center justify-between border px-4 py-2.5"
-            >
-              <span className="text-text-muted font-mono text-xs">
-                v{v.versionNumber} · {v.status}
-              </span>
-              {v.status === "SUPERSEDED" && !draft && (
-                <form action={rollbackPageForm}>
-                  <input type="hidden" name="pageId" value={page.id} />
-                  <input type="hidden" name="slug" value={slug} />
-                  <input type="hidden" name="targetVersionId" value={v.id} />
-                  <button
-                    type="submit"
-                    className="text-accent font-sans text-xs hover:underline"
-                  >
-                    Restore this version
-                  </button>
-                </form>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-    </main>
+    </EditorLayout>
   );
 }

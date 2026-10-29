@@ -74,8 +74,9 @@ export function PublishPanel({
   ensureDraftAction: Action;
   publishAction: Action;
   rollbackAction: Action;
-  archiveAction: Action;
-  unarchiveAction: Action;
+  /** Omitted for items that can't be archived (the fixed pages). */
+  archiveAction?: Action;
+  unarchiveAction?: Action;
   deleteAction?: Action;
   saveAndPreviewAction?: Action;
   publishFromDraftForm?: boolean;
@@ -227,7 +228,7 @@ export function PublishPanel({
         </ol>
       </section>
 
-      {itemStatus === "ACTIVE" ? (
+      {!archiveAction || !unarchiveAction ? null : itemStatus === "ACTIVE" ? (
         <ConfirmForm
           action={archiveAction}
           title={`Archive ${noun}?`}
