@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 
 import { hintClass, inputClass, labelClass } from "@/components/admin/editor/styles";
-import { GRANTABLE_SCOPES, SCOPE_LABELS } from "@/lib/api-keys";
+import { GRANTABLE_SCOPES, SCOPE_LABELS } from "@/lib/api-scopes";
 
 import { createApiKeyAction, type CreateKeyState } from "./actions";
 

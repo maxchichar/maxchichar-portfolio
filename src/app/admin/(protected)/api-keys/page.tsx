@@ -1,7 +1,7 @@
 import { ConfirmForm } from "@/components/admin/confirm-form";
 import { EditorSection } from "@/components/admin/editor/editor-section";
 import { AdminPageHeader } from "@/components/admin/page-header";
-import { SCOPE_LABELS, type ApiScope } from "@/lib/api-keys";
+import { SCOPE_LABELS, type ApiScope } from "@/lib/api-scopes";
 import { listApiKeys } from "@/server/services/api-keys";
 
 import { revokeApiKeyForm } from "./actions";
