@@ -16,10 +16,10 @@ export default async function AdminSettingsPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12 md:py-16">
+    <main className="mx-auto w-full max-w-7xl px-6 py-8 md:px-10 md:py-10">
       <AdminPageHeader
         title="Settings"
-        description="Site branding, imagery, CV, social profile links, and footer configuration."
+        description="Your name and tagline, site imagery, CV, social profiles and footer. Changes apply across the whole public site."
       />
 
       <SettingsForm
@@ -32,24 +32,24 @@ export default async function AdminSettingsPage() {
           width: m.width,
           height: m.height,
         }))}
-      />
-
-      <CvSection
-        initial={
-          cv
-            ? {
-                filename: cv.filename,
-                sizeBytes: cv.sizeBytes,
-                updatedAt: cv.updatedAt.toISOString(),
-              }
-            : null
-        }
-        disabledReason={
-          documentsAvailable
-            ? null
-            : "The CV needs a one-time database update. Run `npm run db:push`, then reload this page."
-        }
-      />
+      >
+        <CvSection
+          initial={
+            cv
+              ? {
+                  filename: cv.filename,
+                  sizeBytes: cv.sizeBytes,
+                  updatedAt: cv.updatedAt.toISOString(),
+                }
+              : null
+          }
+          disabledReason={
+            documentsAvailable
+              ? null
+              : "The CV needs a one-time database update. Run `npm run db:push`, then reload this page."
+          }
+        />
+      </SettingsForm>
     </main>
   );
 }

@@ -128,22 +128,27 @@ test("evidence form prevents native navigation, duplicate writes and resets on f
 });
 
 test("Settings text survives failed actions and refreshed initial props", () => {
-  let values: Record<string, string> | undefined;
+  // useState slots persist across renders by call order, as React's do.
+  const slots: unknown[] = [];
+  let slot = 0;
   const jsx = (type: unknown, props: Record<string, unknown>) => ({ type, props });
   const { SettingsForm } = load("src/app/admin/(protected)/settings/settings-form.tsx", {
     react: {
       useActionState: () => [{ success: false, error: "Invalid input" }, () => {}, false],
-      useState: (initial: Record<string, string>) => {
-        values ??= initial;
+      useEffect: () => {},
+      useState: (initial: unknown) => {
+        const i = slot++;
+        if (!(i in slots)) slots[i] = typeof initial === "function" ? initial() : initial;
         return [
-          values,
-          (update: (previous: Record<string, string>) => Record<string, string>) => {
-            values = update(values!);
+          slots[i],
+          (update: unknown) => {
+            slots[i] = typeof update === "function" ? update(slots[i]) : update;
           },
         ];
       },
     },
     "react/jsx-runtime": { jsx, jsxs: jsx },
+    "@/components/admin/editor/editor-section": { EditorSection: "editor-section" },
     "@/components/admin/image-field": { ImageField: "image-field" },
     "@/components/admin/document-field": { DocumentField: "document-field" },
     "./actions": {},
@@ -160,28 +165,33 @@ test("Settings text survives failed actions and refreshed initial props", () => 
     "socialTiktok",
     "footerText",
   ];
-  const initialSettings = Object.fromEntries(names.map((name) => [name, "Saved"]));
+  // Renders function components too (the form's own Field), collecting inputs.
   const fields = (node: unknown): Record<string, Record<string, unknown>> => {
     if (Array.isArray(node)) return Object.assign({}, ...node.map(fields));
     if (!node || typeof node !== "object" || !("props" in node)) return {};
-    const { type, props } = node as { type: string; props: Record<string, unknown> };
+    const { type, props } = node as { type: unknown; props: Record<string, unknown> };
+    if (typeof type === "function") return fields(type(props));
     return {
       ...fields(props.children),
-      ...(["input", "textarea"].includes(type) ? { [String(props.name)]: props } : {}),
+      ...(type === "input" || type === "textarea" ? { [String(props.name)]: props } : {}),
     };
   };
-  const rendered = fields(
-    SettingsForm({ initialSettings, initialAvatar: null, libraryMedia: [] }),
-  );
+  const render = (initialSettings: Record<string, string>) => {
+    slot = 0;
+    return fields(
+      SettingsForm({ initialSettings, initialAvatar: null, libraryMedia: [] }),
+    );
+  };
+
+  const rendered = render(Object.fromEntries(names.map((name) => [name, "Saved"])));
   for (const name of names) {
     const field = rendered[name]!;
     assert.equal(field.value, "Saved");
     (field.onChange as (event: unknown) => void)({
       target: { value: `Unsaved ${name}` },
+      currentTarget: { setCustomValidity: () => {} },
     });
   }
-  const refreshed = fields(
-    SettingsForm({ initialSettings: {}, initialAvatar: null, libraryMedia: [] }),
-  );
+  const refreshed = render({});
   for (const name of names) assert.equal(refreshed[name]!.value, `Unsaved ${name}`);
 });

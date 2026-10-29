@@ -1,10 +1,21 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 
+import { EditorSection } from "@/components/admin/editor/editor-section";
+import {
+  hintClass,
+  inputClass,
+  labelClass,
+  textareaClass,
+} from "@/components/admin/editor/styles";
 import { ImageField } from "@/components/admin/image-field";
 import type { MediaPickerItem } from "@/components/admin/media-picker";
-import type { PublicSiteSettings } from "@/lib/validation/settings";
+import { withScheme } from "@/lib/social-url";
+import {
+  DEFAULT_SITE_SETTINGS,
+  type PublicSiteSettings,
+} from "@/lib/validation/settings";
 
 import {
   saveSettingsForm,
@@ -13,325 +24,363 @@ import {
   type SettingsFormState,
 } from "./actions";
 
-const inputClass =
-  "rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none";
-const textareaClass =
-  "rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm outline-none";
-const labelClass = "text-text-muted block font-sans text-sm";
-
 const initialState: SettingsFormState = {
   success: false,
 };
+
+// The text settings saved by the main form (images and documents save on
+// their own, as soon as they're picked).
+const TEXT_KEYS = [
+  "siteName",
+  "siteDescription",
+  "primaryEmail",
+  "socialGithub",
+  "socialX",
+  "socialLinkedin",
+  "socialYoutube",
+  "socialInstagram",
+  "socialTiktok",
+  "footerText",
+] as const;
+type TextKey = (typeof TEXT_KEYS)[number];
+type TextValues = Record<TextKey, string>;
+
+function textValues(settings: PublicSiteSettings): TextValues {
+  return Object.fromEntries(
+    TEXT_KEYS.map((key) => [key, settings[key] ?? ""]),
+  ) as TextValues;
+}
+
+const SOCIALS = [
+  { key: "socialGithub", label: "GitHub", placeholder: "https://github.com/…" },
+  { key: "socialX", label: "X (Twitter)", placeholder: "https://x.com/…" },
+  { key: "socialLinkedin", label: "LinkedIn", placeholder: "https://linkedin.com/in/…" },
+  { key: "socialYoutube", label: "YouTube", placeholder: "https://youtube.com/@…" },
+  { key: "socialInstagram", label: "Instagram", placeholder: "https://instagram.com/…" },
+  { key: "socialTiktok", label: "TikTok", placeholder: "https://tiktok.com/@…" },
+] as const satisfies readonly { key: TextKey; label: string; placeholder: string }[];
+
+// Same rule as the schema's safeSocialUrlSchema, checked before submitting.
+const URL_PATTERN = "https?://\\S+";
+const URL_MESSAGE = "Use a full link starting with https://";
+
+function Field({
+  id,
+  label,
+  hint,
+  value,
+  onChange,
+  maxLength,
+  multiline = false,
+  required = false,
+  ...input
+}: {
+  id: TextKey;
+  label: string;
+  hint?: string;
+  value: string;
+  onChange: (value: string) => void;
+  maxLength: number;
+  multiline?: boolean;
+  required?: boolean;
+  type?: string;
+  placeholder?: string;
+  pattern?: string;
+  onBlur?: () => void;
+}) {
+  const hintId = hint ? `${id}-hint` : undefined;
+  const near = value.length > maxLength * 0.9;
+  const shared = {
+    id,
+    name: id,
+    value,
+    required,
+    maxLength,
+    "aria-describedby": hintId,
+  };
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-4">
+        <label htmlFor={id} className={labelClass}>
+          {label}
+          {required ? <span className="text-accent"> *</span> : null}
+        </label>
+        {multiline || maxLength <= 100 ? (
+          <span
+            className={`font-mono text-[11px] tabular-nums ${near ? "text-accent font-semibold" : "text-text-muted"}`}
+          >
+            {value.length} / {maxLength}
+          </span>
+        ) : null}
+      </div>
+      {multiline ? (
+        <textarea
+          {...shared}
+          rows={2}
+          placeholder={input.placeholder}
+          onChange={(e) => onChange(e.target.value)}
+          className={textareaClass}
+        />
+      ) : (
+        <input
+          {...shared}
+          type={input.type ?? "text"}
+          placeholder={input.placeholder}
+          pattern={input.pattern}
+          title={input.pattern ? URL_MESSAGE : undefined}
+          onBlur={input.onBlur}
+          onChange={(e) => {
+            e.currentTarget.setCustomValidity("");
+            onChange(e.target.value);
+          }}
+          onInvalid={(e) => {
+            if (input.pattern && e.currentTarget.validity.patternMismatch) {
+              e.currentTarget.setCustomValidity(URL_MESSAGE);
+            }
+          }}
+          className={inputClass}
+        />
+      )}
+      {hint ? (
+        <p id={hintId} className={hintClass}>
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 export function SettingsForm({
   initialSettings,
   initialAvatar,
   libraryMedia,
+  children,
 }: {
   initialSettings: PublicSiteSettings;
   initialAvatar: { mediaId: string; url: string } | null;
   libraryMedia: MediaPickerItem[];
+  /** Extra sections for the main column (the CV), which save on their own. */
+  children?: React.ReactNode;
 }) {
   // Controlled text survives React action resets, including validation failures
   // and independent image/document saves that refresh server props.
-  const [values, setValues] = useState(initialSettings);
-  const [state, formAction, isPending] = useActionState(saveSettingsForm, initialState);
+  const [values, setValues] = useState(() => textValues(initialSettings));
+  // What's stored, to tell whether the form has unsaved edits.
+  const [saved, setSaved] = useState(values);
+  const [state, formAction, isPending] = useActionState(
+    async (previous: SettingsFormState, formData: FormData) => {
+      const result = await saveSettingsForm(previous, formData);
+      if (result.success) {
+        setSaved(
+          Object.fromEntries(
+            TEXT_KEYS.map((key) => [key, String(formData.get(key) ?? "")]),
+          ) as TextValues,
+        );
+      }
+      return result;
+    },
+    initialState,
+  );
+
+  const dirty = TEXT_KEYS.some((key) => values[key].trim() !== saved[key].trim());
+  const set = (key: TextKey) => (value: string) =>
+    setValues((previous) => ({ ...previous, [key]: value }));
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  // What the public footer will show once saved (a blank tagline falls back
+  // to the default, as the site does).
+  const name = values.siteName.trim() || DEFAULT_SITE_SETTINGS.siteName;
+  const tagline = values.siteDescription.trim() || DEFAULT_SITE_SETTINGS.siteDescription;
+  const socials = SOCIALS.filter(({ key }) => values[key].trim().length > 0);
 
   return (
-    <form action={formAction} className="space-y-8">
-      <section className="rounded-panel border-border bg-surface space-y-6 border p-6">
-        <div>
-          <h2 className="text-text font-sans text-base font-semibold">Imagery</h2>
-          <p className="text-text-muted mt-1 font-serif text-xs">
-            Photos used across the public site. JPEG, PNG or WebP. Image changes save and
-            go live immediately.
-          </p>
-        </div>
-
-        <div className="grid gap-8 md:grid-cols-[3fr_2fr]">
-          <ImageField
-            name="heroMediaId"
-            label="Homepage hero"
-            hint="Landscape photo, ideally 2400px wide or more (16:9 or wider)."
-            initialMediaId={initialSettings.heroImage?.mediaId ?? null}
-            initialUrl={initialSettings.heroImage?.url ?? null}
-            libraryMedia={libraryMedia}
-            aspect="aspect-[16/9]"
-            onCommit={(id) => saveSiteImage("heroMediaId", id)}
-          />
-          <ImageField
-            name="aboutMediaId"
-            label="About page portrait"
-            hint="Portrait photo (4:5) shown beside your About intro."
-            initialMediaId={initialSettings.aboutImage?.mediaId ?? null}
-            initialUrl={initialSettings.aboutImage?.url ?? null}
-            libraryMedia={libraryMedia}
-            aspect="aspect-[4/5]"
-            onCommit={(id) => saveSiteImage("aboutMediaId", id)}
-          />
-        </div>
-
-        <div className="max-w-[16rem]">
-          <ImageField
-            name="avatarMediaId"
-            label="Profile photo"
-            hint="Square photo of you, shown as the author on your articles. Without one, the About portrait is used."
-            initialMediaId={initialAvatar?.mediaId ?? null}
-            initialUrl={initialAvatar?.url ?? null}
-            libraryMedia={libraryMedia}
-            aspect="aspect-square"
-            onCommit={(id) => saveSiteDocument("avatar", id)}
-          />
-        </div>
-      </section>
-
-      <section className="rounded-panel border-border bg-surface space-y-6 border p-6">
-        <h2 className="text-text font-sans text-base font-semibold">Branding</h2>
-
-        <div>
-          <label htmlFor="siteName" className={labelClass}>
-            Site Name <span className="text-accent">*</span>
-          </label>
-          <input
+    <form action={formAction} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="order-2 min-w-0 space-y-6 lg:order-1">
+        <EditorSection
+          title="Identity"
+          description="How the site names and describes you. Text changes go live when you save."
+        >
+          <Field
             id="siteName"
-            name="siteName"
-            type="text"
-            required
-            maxLength={100}
+            label="Site name"
+            hint="The wordmark in the navigation and footer, the line under the homepage hero, the About page heading, and your name in search data."
             value={values.siteName}
-            onChange={(event) =>
-              setValues((previous) => ({ ...previous, siteName: event.target.value }))
-            }
-            className={inputClass}
+            onChange={set("siteName")}
+            maxLength={100}
+            required
           />
-          <p className="text-text-muted mt-1 font-sans text-xs">
-            Appears as the wordmark in navigation and footer.
-          </p>
-        </div>
-
-        <div>
-          <label htmlFor="siteDescription" className={labelClass}>
-            Positioning Statement / Tagline
-          </label>
-          <textarea
+          <Field
             id="siteDescription"
-            name="siteDescription"
-            rows={2}
+            label="Tagline"
+            hint={`Shown after your name in the footer, on the admin sign-in page and in search data. Leave blank to use the default: “${DEFAULT_SITE_SETTINGS.siteDescription}”.`}
+            value={values.siteDescription}
+            onChange={set("siteDescription")}
             maxLength={300}
-            value={values.siteDescription ?? ""}
-            onChange={(event) =>
-              setValues((previous) => ({
-                ...previous,
-                siteDescription: event.target.value,
-              }))
-            }
-            className={textareaClass}
+            multiline
+            placeholder={DEFAULT_SITE_SETTINGS.siteDescription}
           />
-          <p className="text-text-muted mt-1 font-sans text-xs">
-            Appears below the wordmark in the footer.
-          </p>
-        </div>
-
-        <div>
-          <label htmlFor="primaryEmail" className={labelClass}>
-            Primary Email
-          </label>
-          <input
+          <Field
             id="primaryEmail"
-            name="primaryEmail"
-            type="email"
+            label="Public email"
+            hint="Linked in the footer and the search menu. Contact-form messages and error alerts are sent here too, unless a notification address is set on the server."
+            value={values.primaryEmail}
+            onChange={set("primaryEmail")}
             maxLength={255}
-            value={values.primaryEmail ?? ""}
-            onChange={(event) =>
-              setValues((previous) => ({ ...previous, primaryEmail: event.target.value }))
-            }
-            placeholder="e.g. hello@example.com"
-            className={inputClass}
+            type="email"
+            placeholder="hello@example.com"
           />
-        </div>
-      </section>
+        </EditorSection>
 
-      <section className="rounded-panel border-border bg-surface space-y-6 border p-6">
-        <h2 className="text-text font-sans text-base font-semibold">Social Profiles</h2>
-        <p className="text-text-muted font-serif text-xs">
-          Configured profiles are rendered as links in the footer. Leave blank to omit.
-        </p>
-
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div>
-            <label htmlFor="socialGithub" className={labelClass}>
-              GitHub URL
-            </label>
-            <input
-              id="socialGithub"
-              name="socialGithub"
-              type="url"
-              maxLength={255}
-              value={values.socialGithub ?? ""}
-              onChange={(event) =>
-                setValues((previous) => ({
-                  ...previous,
-                  socialGithub: event.target.value,
-                }))
-              }
-              placeholder="https://github.com/..."
-              className={inputClass}
+        <EditorSection
+          title="Imagery"
+          description="Photos used across the public site. JPEG, PNG or WebP. Images save and go live as soon as you choose them."
+        >
+          <div className="grid gap-8 md:grid-cols-[3fr_2fr]">
+            <ImageField
+              name="heroMediaId"
+              label="Homepage hero"
+              hint="Landscape photo, ideally 2400px wide or more (16:9 or wider)."
+              initialMediaId={initialSettings.heroImage?.mediaId ?? null}
+              initialUrl={initialSettings.heroImage?.url ?? null}
+              libraryMedia={libraryMedia}
+              aspect="aspect-[16/9]"
+              onCommit={(id) => saveSiteImage("heroMediaId", id)}
+            />
+            <ImageField
+              name="aboutMediaId"
+              label="About page portrait"
+              hint="Portrait photo (4:5) shown beside your About intro."
+              initialMediaId={initialSettings.aboutImage?.mediaId ?? null}
+              initialUrl={initialSettings.aboutImage?.url ?? null}
+              libraryMedia={libraryMedia}
+              aspect="aspect-[4/5]"
+              onCommit={(id) => saveSiteImage("aboutMediaId", id)}
             />
           </div>
 
-          <div>
-            <label htmlFor="socialX" className={labelClass}>
-              X (Twitter) URL
-            </label>
-            <input
-              id="socialX"
-              name="socialX"
-              type="url"
-              maxLength={255}
-              value={values.socialX ?? ""}
-              onChange={(event) =>
-                setValues((previous) => ({ ...previous, socialX: event.target.value }))
-              }
-              placeholder="https://x.com/..."
-              className={inputClass}
+          <div className="max-w-[16rem]">
+            <ImageField
+              name="avatarMediaId"
+              label="Profile photo"
+              hint="Square photo of you, shown as the author on your articles. Without one, the About portrait is used."
+              initialMediaId={initialAvatar?.mediaId ?? null}
+              initialUrl={initialAvatar?.url ?? null}
+              libraryMedia={libraryMedia}
+              aspect="aspect-square"
+              onCommit={(id) => saveSiteDocument("avatar", id)}
             />
           </div>
+        </EditorSection>
 
-          <div>
-            <label htmlFor="socialLinkedin" className={labelClass}>
-              LinkedIn URL
-            </label>
-            <input
-              id="socialLinkedin"
-              name="socialLinkedin"
-              type="url"
-              maxLength={255}
-              value={values.socialLinkedin ?? ""}
-              onChange={(event) =>
-                setValues((previous) => ({
-                  ...previous,
-                  socialLinkedin: event.target.value,
-                }))
-              }
-              placeholder="https://linkedin.com/in/..."
-              className={inputClass}
-            />
+        {children}
+
+        <EditorSection
+          title="Social profiles"
+          description="Listed under “Elsewhere” in the footer and in search data. The X and Instagram links also hide in the X and I of the big footer wordmark. Leave blank to omit."
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
+            {SOCIALS.map(({ key, label, placeholder }) => (
+              <Field
+                key={key}
+                id={key}
+                label={label}
+                value={values[key]}
+                onChange={set(key)}
+                onBlur={() => set(key)(withScheme(values[key]))}
+                maxLength={255}
+                type="url"
+                pattern={URL_PATTERN}
+                placeholder={placeholder}
+              />
+            ))}
           </div>
+        </EditorSection>
 
-          <div>
-            <label htmlFor="socialYoutube" className={labelClass}>
-              YouTube URL
-            </label>
-            <input
-              id="socialYoutube"
-              name="socialYoutube"
-              type="url"
-              maxLength={255}
-              value={values.socialYoutube ?? ""}
-              onChange={(event) =>
-                setValues((previous) => ({
-                  ...previous,
-                  socialYoutube: event.target.value,
-                }))
-              }
-              placeholder="https://youtube.com/@..."
-              className={inputClass}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="socialInstagram" className={labelClass}>
-              Instagram URL
-            </label>
-            <input
-              id="socialInstagram"
-              name="socialInstagram"
-              type="url"
-              maxLength={255}
-              value={values.socialInstagram ?? ""}
-              onChange={(event) =>
-                setValues((previous) => ({
-                  ...previous,
-                  socialInstagram: event.target.value,
-                }))
-              }
-              placeholder="https://instagram.com/..."
-              className={inputClass}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="socialTiktok" className={labelClass}>
-              TikTok URL
-            </label>
-            <input
-              id="socialTiktok"
-              name="socialTiktok"
-              type="url"
-              maxLength={255}
-              value={values.socialTiktok ?? ""}
-              onChange={(event) =>
-                setValues((previous) => ({
-                  ...previous,
-                  socialTiktok: event.target.value,
-                }))
-              }
-              placeholder="https://tiktok.com/@..."
-              className={inputClass}
-            />
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-panel border-border bg-surface space-y-6 border p-6">
-        <h2 className="text-text font-sans text-base font-semibold">Footer Text</h2>
-
-        <div>
-          <label htmlFor="footerText" className={labelClass}>
-            Custom Footer Notice (optional)
-          </label>
-          <textarea
+        <EditorSection title="Footer">
+          <Field
             id="footerText"
-            name="footerText"
-            rows={2}
+            label="Footer note (optional)"
+            hint="A short line at the bottom right of every page, beside the RSS link."
+            value={values.footerText}
+            onChange={set("footerText")}
             maxLength={300}
-            value={values.footerText ?? ""}
-            onChange={(event) =>
-              setValues((previous) => ({ ...previous, footerText: event.target.value }))
-            }
-            placeholder="e.g. Built with Portfolio OS."
-            className={textareaClass}
+            multiline
+            placeholder="e.g. Built in Lagos."
           />
-        </div>
-      </section>
-
-      {state.error ? (
-        <div
-          role="alert"
-          className="rounded-card border-border bg-surface text-text border px-4 py-3 font-sans text-sm"
-        >
-          {state.error}
-        </div>
-      ) : null}
-
-      {state.success ? (
-        <div
-          role="status"
-          className="rounded-card border-accent/40 bg-surface text-accent border px-4 py-3 font-sans text-sm"
-        >
-          Settings saved successfully.
-        </div>
-      ) : null}
-
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={isPending}
-          className="rounded-card bg-accent text-bg px-6 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {isPending ? "Saving..." : "Save settings"}
-        </button>
+        </EditorSection>
       </div>
+
+      <aside className="order-1 lg:order-2">
+        <div className="space-y-4 lg:sticky lg:top-6">
+          <section className="rounded-panel border-border bg-surface border p-5">
+            <h2 className="text-text font-sans text-sm font-semibold">Save</h2>
+            <p
+              role="status"
+              className="text-text-muted mt-3 flex items-center gap-2 font-sans text-xs"
+            >
+              <span
+                aria-hidden="true"
+                className={`h-1.5 w-1.5 rounded-full ${dirty ? "bg-accent animate-pulse" : "bg-text-muted/50"}`}
+              />
+              {isPending
+                ? "Saving…"
+                : dirty
+                  ? "Unsaved changes"
+                  : state.success
+                    ? "Saved. The site is up to date."
+                    : "No unsaved changes"}
+            </p>
+            {state.error ? (
+              <p role="alert" className="text-accent mt-2 font-sans text-xs">
+                {state.error}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={isPending}
+              className="rounded-card bg-accent text-bg mt-4 w-full px-4 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {isPending ? "Saving…" : "Save settings"}
+            </button>
+            <p className="text-text-muted mt-3 font-sans text-xs">
+              Images and the CV save on their own as soon as you choose them.
+            </p>
+          </section>
+
+          <section
+            aria-label="Footer preview"
+            className="rounded-panel border-border bg-surface border p-5"
+          >
+            <h2 className="text-text font-sans text-sm font-semibold">Footer preview</h2>
+            <div className="border-border bg-bg rounded-card mt-4 space-y-3 border p-4">
+              {values.primaryEmail.trim() ? (
+                <p className="text-text-muted truncate font-sans text-xs">
+                  {values.primaryEmail.trim()}
+                </p>
+              ) : null}
+              {socials.length > 0 ? (
+                <p className="text-text font-sans text-xs">
+                  {socials.map(({ label }) => label).join(" · ")}
+                </p>
+              ) : null}
+              <p className="text-text-muted border-border border-t pt-3 font-mono text-[11px] leading-relaxed">
+                &copy; {new Date().getFullYear()} {name}. {tagline}
+              </p>
+              {values.footerText.trim() ? (
+                <p className="text-text-muted font-mono text-[11px]">
+                  {values.footerText.trim()}
+                </p>
+              ) : null}
+            </div>
+          </section>
+        </div>
+      </aside>
     </form>
   );
 }
