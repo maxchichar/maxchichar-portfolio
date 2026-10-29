@@ -20,6 +20,8 @@ export class ArticleServiceError extends Error {}
 interface Actor {
   id: string;
   type: "HUMAN" | "AI";
+  /** Where an AI actor's change came from, e.g. "content-api:<key name>". */
+  source?: string;
 }
 
 // Level 6.1 added createArticle and listArticlesOverview. Level 6.2 added
@@ -89,6 +91,7 @@ export async function createArticle(input: ArticleCreateInput, actor: Actor) {
       createdByType: actor.type,
       createdById: actor.id,
       generationMode: actor.type === "HUMAN" ? "HUMAN_CREATED" : "AI_GENERATED",
+      source: actor.source ?? null,
     });
 
     await logAudit({
@@ -150,6 +153,7 @@ export async function ensureDraft(articleId: string, actor: Actor) {
       createdByType: actor.type,
       createdById: actor.id,
       generationMode: actor.type === "HUMAN" ? "HUMAN_EDITED" : "AI_ASSISTED",
+      source: actor.source ?? null,
     });
 
     await logAudit({
@@ -165,14 +169,11 @@ export async function ensureDraft(articleId: string, actor: Actor) {
 }
 
 /** Mutates the current DRAFT version in place. Never touches PUBLISHED rows. */
-// `actor` isn't used yet — kept in the signature for when AUTHOR-scoped
-// ownership checks are added, matching services/research.ts's saveDraft.
 export async function saveDraft(
   articleId: string,
   patch: ArticleDraftUpdateInput,
-  _actor: Actor,
+  actor: Actor,
 ) {
-  void _actor;
   return db.transaction(async (tx) => {
     const draft = await articlesRepo.getDraftVersion(tx, articleId);
     if (!draft) {
@@ -215,6 +216,15 @@ export async function saveDraft(
             source: "admin-assistant",
           }
         : {}),
+      // An AI client (the Content API) editing a draft marks it AI-assisted,
+      // unless an AI client wrote it from the start.
+      ...(actor.type === "AI"
+        ? {
+            generationMode:
+              draft.generationMode === "AI_GENERATED" ? "AI_GENERATED" : "AI_ASSISTED",
+            source: actor.source ?? draft.source,
+          }
+        : {}),
     });
 
     const tagIds = await tagsRepo.ensureTags(tx, patch.tags);
@@ -253,6 +263,11 @@ export async function fixDraftFormatting(articleId: string, actor: Actor) {
 }
 
 export async function publishArticle(articleId: string, actor: Actor) {
+  // Publishing is a person's decision; API keys can't carry the publish scope
+  // (database CHECK), and this refuses any non-human actor as well.
+  if (actor.type !== "HUMAN") {
+    throw new ArticleServiceError("Only a person can publish.");
+  }
   return db.transaction(async (tx) => {
     const draft = await articlesRepo.getDraftVersion(tx, articleId);
     if (!draft) {

@@ -31,6 +31,7 @@ const SECTIONS = [
     label: "Site",
     links: [
       { href: "/admin/media", label: "Media Library", icon: "image" },
+      { href: "/admin/api-keys", label: "API keys", icon: "key" },
       { href: "/admin/settings", label: "Settings", icon: "sliders" },
     ],
   },
@@ -268,6 +269,13 @@ function NavIcon({ name, className }: { name: IconName; className?: string }) {
         <svg {...common}>
           <path d="M3 11.5l2-7h10l2 7v4a1 1 0 01-1 1H4a1 1 0 01-1-1z" />
           <path d="M3 11.5h4l1 2h4l1-2h4" />
+        </svg>
+      );
+    case "key":
+      return (
+        <svg {...common}>
+          <circle cx="7" cy="13" r="3.25" />
+          <path d="M9.4 10.6 16 4M13.5 6.5l2 2M11.75 8.25l1.5 1.5" />
         </svg>
       );
     case "sliders":

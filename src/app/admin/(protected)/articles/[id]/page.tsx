@@ -105,6 +105,17 @@ export default async function ArticleEditPage({
           {query.error}
         </p>
       ) : null}
+      {draft?.source?.startsWith("content-api:") ? (
+        <p
+          role="status"
+          className="rounded-panel border-border bg-surface text-text mb-6 border p-5 font-sans text-sm"
+        >
+          This draft was {draft.generationMode === "AI_GENERATED" ? "written" : "edited"}{" "}
+          through the Content API by{" "}
+          <strong>{draft.source.slice("content-api:".length)}</strong>. Review it before
+          you publish.
+        </p>
+      ) : null}
       {needsFix ? (
         <form
           action={fixFormattingForm}

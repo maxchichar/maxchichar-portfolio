@@ -53,7 +53,8 @@ rather than silently resolving it either direction.
   rejected outright in the minimal (Phase 3) version.
 - **Deferred, not built**: knowledge-graph relation tables, slug redirects,
   multi-role (EDITOR/AUTHOR) enforcement beyond ADMIN, Content API routes
-  (Phase 11), full media library UI (Phase 7).
+  for projects/research/pages (11.2 covers articles), full media library UI
+  (Phase 7).
 
 ## Public information architecture
 
@@ -153,20 +154,20 @@ all 14+ narrative sections and to the Evidence Wall itself.
 
 ## Implementation phases
 
-| Phase | Scope                                   | Status                                                                                  |
-| ----- | --------------------------------------- | --------------------------------------------------------------------------------------- |
-| 0     | Architecture                            | Done                                                                                    |
-| 1     | Foundation                              | Done                                                                                    |
-| 2     | Database + Auth                         | Done                                                                                    |
-| 3     | Projects CMS + Evidence + minimal media | Done                                                                                    |
-| 4     | Public Work pages                       | Done                                                                                    |
-| 5     | Research CMS + public pages             | Done                                                                                    |
-| 6     | Writing (Articles) CMS + public pages   | Done                                                                                    |
-| 7     | Full media library                      | Done                                                                                    |
-| 8     | Settings & static Pages                 | Done                                                                                    |
-| 9     | SEO/Performance/Security/Testing        | Done                                                                                    |
-| 10    | Deployment                              | Done                                                                                    |
-| 11    | AI integration (Content API)            | In progress (owner requested): 11.1 admin writing assistant done; 11.2 Content API next |
+| Phase | Scope                                   | Status                                                                                                           |
+| ----- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 0     | Architecture                            | Done                                                                                                             |
+| 1     | Foundation                              | Done                                                                                                             |
+| 2     | Database + Auth                         | Done                                                                                                             |
+| 3     | Projects CMS + Evidence + minimal media | Done                                                                                                             |
+| 4     | Public Work pages                       | Done                                                                                                             |
+| 5     | Research CMS + public pages             | Done                                                                                                             |
+| 6     | Writing (Articles) CMS + public pages   | Done                                                                                                             |
+| 7     | Full media library                      | Done                                                                                                             |
+| 8     | Settings & static Pages                 | Done                                                                                                             |
+| 9     | SEO/Performance/Security/Testing        | Done                                                                                                             |
+| 10    | Deployment                              | Done                                                                                                             |
+| 11    | AI integration (Content API)            | In progress (owner requested): 11.1 admin writing assistant, 11.2 Content API for articles (docs/CONTENT-API.md) |
 
 ### Phase 3 scope, precisely
 
