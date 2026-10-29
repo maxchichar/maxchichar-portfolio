@@ -84,20 +84,37 @@ export const PAGE_SECTIONS: Record<PageSlug, readonly PageFieldSection[]> = {
   now: [
     {
       title: "Thesis",
-      fields: [{ name: "thesis", label: "Current thesis", hint: PARAGRAPHS_HINT }],
-    },
-    {
-      title: "Right now",
+      description:
+        "Shown large as a quote at the top, and used as the page's search and share description. Publishing resets the page's \"Updated\" date.",
       fields: [
-        { name: "currentlyBuilding", label: "Currently building", hint: LIST_HINT },
-        { name: "researching", label: "Currently researching", hint: LIST_HINT },
-        { name: "learning", label: "Currently learning", hint: LIST_HINT },
-        { name: "interests", label: "Current interests", hint: LIST_HINT },
+        {
+          name: "thesis",
+          label: "Current thesis",
+          hint: "One or two sentences read best at this size. The first ~160 characters appear in search results.",
+          rows: 2,
+        },
       ],
     },
     {
-      title: "Changelog",
-      fields: [{ name: "recentChanges", label: "Recent changes", hint: LIST_HINT }],
+      title: "Right now",
+      description: "The four numbered cards 01–04, in this order.",
+      fields: [
+        { name: "currentlyBuilding", label: "01 · Building", hint: LIST_HINT },
+        { name: "researching", label: "02 · Researching", hint: LIST_HINT },
+        { name: "learning", label: "03 · Learning", hint: LIST_HINT },
+        { name: "interests", label: "04 · Interested in", hint: LIST_HINT },
+      ],
+    },
+    {
+      title: "Recent changes",
+      description: "The short log at the bottom of the page.",
+      fields: [
+        {
+          name: "recentChanges",
+          label: "Recent changes",
+          hint: `${LIST_HINT} Newest first reads best.`,
+        },
+      ],
     },
   ],
 };

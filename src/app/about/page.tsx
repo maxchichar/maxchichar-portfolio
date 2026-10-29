@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { AboutView } from "@/components/pages/about-view";
 import { UnavailableView } from "@/components/pages/unavailable-view";
-import { constructPageMetadata, withNoIndex } from "@/lib/metadata";
+import { constructPageMetadata, toDescription, withNoIndex } from "@/lib/metadata";
 import { buildProfilePageJsonLd, JsonLdScript } from "@/lib/structured-data";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { getPublishedAboutPage } from "@/server/services/pages";
@@ -16,14 +16,6 @@ import { PageTransition } from "@/components/motion/page-transition";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-// Meta descriptions read best under ~160 characters; the intro can be
-// longer than that, so trim on a word boundary.
-function toDescription(text: string): string {
-  const flat = text.replace(/\s+/g, " ").trim();
-  if (flat.length <= 160) return flat;
-  return `${flat.slice(0, 157).replace(/\s+\S*$/, "")}…`;
-}
 
 // One read per request, shared by the metadata and the page. `failed` means
 // the read itself broke (show a fallback); a null value means the page simply

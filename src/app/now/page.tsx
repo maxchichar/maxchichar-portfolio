@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { NowView } from "@/components/pages/now-view";
 import { UnavailableView } from "@/components/pages/unavailable-view";
-import { constructPageMetadata, withNoIndex } from "@/lib/metadata";
+import { constructPageMetadata, toDescription, withNoIndex } from "@/lib/metadata";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { getPublishedNowPage } from "@/server/services/pages";
 import { PageTransition } from "@/components/motion/page-transition";
@@ -35,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return constructPageMetadata({
     title: "Now",
-    description: "What I'm currently building, researching, and learning.",
+    description: toDescription(now.content.thesis),
     path: "/now",
   });
 }

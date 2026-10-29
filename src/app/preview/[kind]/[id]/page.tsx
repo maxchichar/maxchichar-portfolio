@@ -212,7 +212,12 @@ export default async function PreviewPage({ params }: { params: Params }) {
     if (!parsed.success) notFound();
     return (
       <Shell banner={banner}>
-        <NowView content={parsed.data} publishedAt={picked.version.publishedAt ?? null} />
+        {/* A draft has no publish date yet; show the badge it will get once
+            published (today), so the preview matches what visitors will see. */}
+        <NowView
+          content={parsed.data}
+          publishedAt={picked.isDraft ? new Date() : (picked.version.publishedAt ?? null)}
+        />
       </Shell>
     );
   }

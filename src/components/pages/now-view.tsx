@@ -16,7 +16,9 @@ function daysAgo(date: Date) {
   if (days === 1) return "yesterday";
   if (days < 30) return `${days} days ago`;
   const months = Math.floor(days / 30);
-  return months === 1 ? "a month ago" : `${months} months ago`;
+  if (months < 12) return months === 1 ? "a month ago" : `${months} months ago`;
+  const years = Math.floor(days / 365);
+  return years <= 1 ? "a year ago" : `${years} years ago`;
 }
 
 export function NowView({
