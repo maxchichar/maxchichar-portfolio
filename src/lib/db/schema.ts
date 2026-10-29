@@ -687,6 +687,29 @@ export const contactSubmissions = pgTable(
   ],
 );
 
+// Replies sent from the admin inbox, kept so the conversation shows in the thread.
+export const contactReplies = pgTable(
+  "contact_replies",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    submissionId: uuid("submission_id")
+      .notNull()
+      .references(() => contactSubmissions.id, { onDelete: "cascade" }),
+    fromEmail: text("from_email").notNull(),
+    toEmail: text("to_email").notNull(),
+    subject: text("subject").notNull(),
+    body: text("body").notNull(),
+    sentBy: uuid("sent_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("contact_replies_submission_created_at_idx").on(
+      table.submissionId,
+      table.createdAt,
+    ),
+  ],
+);
+
 // ---------------------------------------------------------------------------
 // AUDIT LOG
 // ---------------------------------------------------------------------------

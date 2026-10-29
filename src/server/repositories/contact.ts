@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, count, desc, eq, gte, ne } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ne } from "drizzle-orm";
 import type { NeonDatabase } from "drizzle-orm/neon-serverless";
 
 import { schema } from "@/lib/db";
@@ -84,4 +84,25 @@ export async function deleteSubmission(tx: Tx, id: string) {
     .where(eq(schema.contactSubmissions.id, id))
     .returning({ id: schema.contactSubmissions.id });
   return row ?? null;
+}
+
+export type ContactReplyRow = typeof schema.contactReplies.$inferSelect;
+
+export async function insertReply(
+  tx: Tx,
+  data: typeof schema.contactReplies.$inferInsert,
+) {
+  const [row] = await tx.insert(schema.contactReplies).values(data).returning();
+  if (!row) throw new Error("insertReply: insert returned no row");
+  return row;
+}
+
+/** Replies for one message, oldest first so the thread reads top to bottom. */
+export async function listReplies(tx: Tx, submissionId: string) {
+  const r = schema.contactReplies;
+  return tx
+    .select()
+    .from(r)
+    .where(eq(r.submissionId, submissionId))
+    .orderBy(asc(r.createdAt));
 }

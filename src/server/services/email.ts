@@ -30,6 +30,21 @@ export function configuredSender(): string | null {
   return process.env.CONTACT_FROM_EMAIL?.trim() || null;
 }
 
+/**
+ * The address replies from the admin inbox are sent as, e.g.
+ * "Chibueze Maxwell <hello@chibuezemaxwell.com>". REPLY_FROM_EMAIL wins, then
+ * CONTACT_FROM_EMAIL. Null means replying is unavailable: Resend's test sender
+ * can't deliver to anyone but the account owner.
+ */
+export function replySender(): string | null {
+  return process.env.REPLY_FROM_EMAIL?.trim() || configuredSender();
+}
+
+/** Optional Reply-To for inbox replies (REPLY_TO_EMAIL); unset means replies go to the sender. */
+export function replyToAddress(): string | null {
+  return process.env.REPLY_TO_EMAIL?.trim() || null;
+}
+
 /** Strips line breaks so user input can't reshape a header-like field. */
 export function singleLine(value: string): string {
   return value.replace(/[\r\n]+/g, " ").trim();

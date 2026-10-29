@@ -17,8 +17,8 @@ import {
 } from "@/lib/validation/contact";
 
 import * as contactRepo from "../repositories/contact";
-import { isEmailConfigured } from "./email";
-import { sendContactEmails } from "./contact-email";
+import { isEmailConfigured, replySender, replyToAddress, sendEmail } from "./email";
+import { replyEmail, sendContactEmails } from "./contact-email";
 import { verifyTurnstile } from "./turnstile";
 
 export class ContactServiceError extends Error {}
@@ -187,4 +187,94 @@ export async function deleteSubmission(id: string) {
       resourceId: deleted.id,
     });
   });
+}
+
+// ---------------------------------------------------------------------------
+// Replies from the admin inbox
+// ---------------------------------------------------------------------------
+
+export const replySchema = z.object({
+  id: z.uuid("Invalid message."),
+  subject: z
+    .string()
+    .trim()
+    .min(1, "Add a subject.")
+    .max(200, "Subject must be 200 characters or fewer."),
+  body: z
+    .string()
+    .trim()
+    .min(1, "Write a reply before sending.")
+    .max(20_000, "Reply must be 20,000 characters or fewer."),
+});
+
+/** Replying needs Resend plus a sender on a verified domain. */
+export function canReply(): boolean {
+  return isEmailConfigured() && replySender() !== null;
+}
+
+export async function listReplies(submissionId: string) {
+  return contactRepo.listReplies(db, submissionId);
+}
+
+/**
+ * Emails a reply to the person who wrote in, from the configured sender, and
+ * records it on the message. Throws ContactServiceError with a message fit to
+ * show in the composer.
+ */
+export async function sendReply(input: unknown) {
+  const session = await auth();
+  if (!session?.user?.id) throw new ContactServiceError("Please sign in again.");
+
+  const parsed = replySchema.safeParse(input);
+  if (!parsed.success) {
+    throw new ContactServiceError(parsed.error.issues[0]?.message ?? "Invalid reply.");
+  }
+  const { id, subject, body } = parsed.data;
+
+  const from = replySender();
+  if (!isEmailConfigured() || !from) {
+    throw new ContactServiceError(
+      "Replying needs RESEND_API_KEY and REPLY_FROM_EMAIL set on the server.",
+    );
+  }
+
+  const submission = await contactRepo.findSubmissionById(db, id);
+  if (!submission) throw new ContactServiceError("This message no longer exists.");
+
+  const replyTo = replyToAddress();
+  const sent = await sendEmail({
+    to: submission.email,
+    from,
+    subject,
+    ...(replyTo ? { replyTo } : {}),
+    ...replyEmail(submission, body),
+  });
+  if (!sent) {
+    throw new ContactServiceError(
+      "The email provider didn't accept the reply. Check the sender domain is verified in Resend, then try again.",
+    );
+  }
+
+  // The email is out; failing to record it must not make it look unsent.
+  try {
+    await contactRepo.insertReply(db, {
+      submissionId: id,
+      fromEmail: from,
+      toEmail: submission.email,
+      subject,
+      body,
+      sentBy: session.user.id,
+    });
+    if (submission.status === "NEW") {
+      await contactRepo.updateSubmissionStatus(db, id, "READ");
+    }
+    await logAudit({
+      userId: session.user.id,
+      action: "contact.replied",
+      resourceType: "contact_submission",
+      resourceId: id,
+    });
+  } catch (err: unknown) {
+    console.error("sendReply: reply sent but not recorded:", err);
+  }
 }

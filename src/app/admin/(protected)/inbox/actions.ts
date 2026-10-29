@@ -8,6 +8,7 @@ import { INBOX_STATUSES, type InboxStatus } from "@/server/repositories/contact"
 import {
   ContactServiceError,
   deleteSubmission,
+  sendReply,
   setSubmissionStatus,
 } from "@/server/services/contact";
 
@@ -49,4 +50,33 @@ export async function deleteInboxMessageForm(
   const query = new URLSearchParams({ deleted: "1" });
   if (INBOX_STATUSES.includes(view as InboxStatus)) query.set("view", view);
   redirect(`/admin/inbox?${query}`);
+}
+
+export interface ReplyFormState {
+  error: string;
+  sentAt: number | null;
+}
+
+export async function sendInboxReplyForm(
+  _previous: ReplyFormState,
+  formData: FormData,
+): Promise<ReplyFormState> {
+  try {
+    await sendReply({
+      id: formData.get("id"),
+      subject: formData.get("subject"),
+      body: formData.get("body"),
+    });
+  } catch (error) {
+    return {
+      error:
+        error instanceof ContactServiceError
+          ? error.message
+          : "Unable to send this reply. Please try again.",
+      sentAt: null,
+    };
+  }
+  revalidatePath("/admin/inbox");
+  revalidatePath("/admin");
+  return { error: "", sentAt: Date.now() };
 }
