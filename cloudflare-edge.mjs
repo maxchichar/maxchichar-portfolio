@@ -53,7 +53,9 @@ export function createEdgeWorker(fetchOrigin = fetch) {
       // upstream host. Never relay an anonymous cross-origin mutation.
       if (!reading && request.headers.get("origin") !== url.origin)
         return noStore("Forbidden", 403);
-      const origin = new URL(env.ADMIN_ORIGIN);
+      // ORIGIN is the Vercel deployment public pages are fetched from;
+      // ADMIN_ORIGIN (admin.chibuezemaxwell.com) is only where /admin goes.
+      const origin = new URL(env.ORIGIN || env.ADMIN_ORIGIN);
       if (
         origin.protocol !== "https:" ||
         origin.origin === url.origin ||

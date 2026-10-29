@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { resolveCanonicalUrl } from "@/lib/metadata";
 import { EditorLayout } from "@/components/admin/editor/editor-layout";
 import { EditorSection } from "@/components/admin/editor/editor-section";
 import { PublishPanel } from "@/components/admin/editor/publish-panel";
@@ -92,7 +93,7 @@ export default async function ResearchEditPage({
           draft={draft}
           published={published}
           versions={versions}
-          liveHref={`/research/${research.slug}`}
+          liveHref={resolveCanonicalUrl(`/research/${research.slug}`)}
           previewHref={`/preview/research/${research.id}`}
           ensureDraftAction={ensureDraftForm}
           publishAction={publishResearchForm}

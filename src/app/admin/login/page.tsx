@@ -4,6 +4,7 @@ import { AuthError } from "next-auth";
 
 import { LogoMark } from "@/components/brand/logo-mark";
 import { signIn } from "@/lib/auth/config";
+import { resolveCanonicalUrl } from "@/lib/metadata";
 import { getPublicSiteSettings } from "@/server/services/settings";
 import { MediaImage } from "@/components/media-image";
 
@@ -129,7 +130,7 @@ export default async function LoginPage({
           </form>
 
           <Link
-            href="/"
+            href={resolveCanonicalUrl("/")}
             className="text-text-muted hover:text-text mt-10 inline-block font-sans text-xs transition-colors"
           >
             ← Back to site

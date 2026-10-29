@@ -1,7 +1,8 @@
 # Public portfolio on Cloudflare; admin on Vercel
 
-Target public domain: `chibuezemaxwell.com`. Admin/login remain at
-`https://chibuezemaxwell.vercel.app/admin`. DNS and production cutover require
+Target public domain: `chibuezemaxwell.com`. Admin/login are served by Vercel at
+`https://admin.chibuezemaxwell.com/admin` (a Vercel custom domain; the
+`chibuezemaxwell.vercel.app` address keeps working). DNS and production cutover require
 separate owner approval. Do not remove the Vercel project or change mail DNS.
 
 ## Free production launch: Cloudflare edge + Vercel origin
@@ -100,8 +101,18 @@ any account or schema seed automatically as part of builds.
 
 ## Configuration
 
-`wrangler.jsonc` sets `ADMIN_ORIGIN` to the verified Vercel production origin.
-Keep it as a separate HTTPS origin to avoid a redirect loop. There are no custom
+`ADMIN_ORIGIN` is where `/admin` and `/preview` redirect:
+`https://admin.chibuezemaxwell.com`, a custom domain on the Vercel project. In
+`wrangler.edge.jsonc`, `ORIGIN` (`https://chibuezemaxwell.vercel.app`) is where
+public pages are fetched from; without it the edge Worker falls back to
+`ADMIN_ORIGIN`. Keep both separate HTTPS origins to avoid a redirect loop.
+
+Admin domain setup (owner, once): in Vercel → Project → Settings → Domains, add
+`admin.chibuezemaxwell.com`; in Cloudflare DNS add the CNAME record Vercel shows
+(DNS only, grey cloud). Add `https://admin.chibuezemaxwell.com` to the R2 bucket's
+CORS allowed origins so uploads work there. If Vercel has `AUTH_URL` set to the
+`.vercel.app` address, change it to the admin domain or remove it (`trustHost` is
+on). Then redeploy the edge Worker (`npm run deploy:edge`). There are no custom
 DNS routes in this configuration. Preview deployment initially uses workers.dev.
 
 Build configuration for the public Worker:
@@ -124,8 +135,8 @@ and storage-upload credentials on Vercel; do not transfer ADMIN_PASSWORD or
 AUTH_SECRET to the public Worker for this split. Vercel retains its current
 DATABASE_URL, AUTH_SECRET, R2 credentials and any other required settings.
 
-On Vercel, Auth.js uses its Vercel origin for login/cookies (or an explicit
-`AUTH_URL=https://chibuezemaxwell.vercel.app` if needed). The public canonical site
+On Vercel, Auth.js uses the host the admin is opened on for login/cookies
+(`trustHost`), normally `https://admin.chibuezemaxwell.com`. The public canonical site
 URL and the authentication origin are separate settings. Cookies are host-specific;
 Cloudflare does not proxy admin requests or receive Vercel session cookies.
 

@@ -45,10 +45,12 @@ function isActive(pathname: string, href: string) {
 
 export function AdminNav({
   siteName,
+  siteUrl,
   email,
   signOutSlot,
 }: {
   siteName: string;
+  siteUrl: string;
   email: string | null;
   signOutSlot: React.ReactNode;
 }) {
@@ -96,7 +98,7 @@ export function AdminNav({
     <div className="border-border space-y-3 border-t p-4">
       <div className="flex items-center justify-between">
         <Link
-          href="/"
+          href={siteUrl}
           target="_blank"
           className="text-text-muted hover:text-text flex items-center gap-1 font-sans text-xs transition-colors"
         >
