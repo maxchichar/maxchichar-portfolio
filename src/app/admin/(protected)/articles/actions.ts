@@ -4,8 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth/config";
-import { parseRichTextField } from "@/lib/validation/project";
+import { logAudit } from "@/lib/audit";
+import { assistRequestSchema, type AssistResult } from "@/lib/ai/article-assist";
+import { parseRichTextField, tiptapDocToPlainText } from "@/lib/validation/project";
 import { articleDraftUpdateSchema } from "@/lib/validation/article";
+import * as aiService from "@/server/services/ai";
 import * as articlesService from "@/server/services/articles";
 
 // Every action re-checks auth() itself, server-side — the route-group
@@ -73,6 +76,7 @@ async function saveSubmittedDraft(formData: FormData) {
     content,
     tags,
     coverMediaId,
+    aiGenerationId: formData.get("aiGenerationId") || undefined,
   });
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid input.");
@@ -150,4 +154,53 @@ export async function deleteArticleForm(formData: FormData): Promise<void> {
   revalidatePath("/feed.xml");
   revalidatePath("/sitemap.xml");
   redirect("/admin/articles");
+}
+
+export type AssistActionResult =
+  { ok: true; generationId: string; result: AssistResult } | { ok: false; error: string };
+
+/**
+ * The writing assistant. Returns suggestions to the editor and saves nothing;
+ * the author applies what they want and saves the draft themselves.
+ */
+export async function assistArticleAction(input: {
+  articleId: string;
+  kind: string;
+  title: string;
+  excerpt: string;
+  content: string;
+}): Promise<AssistActionResult> {
+  const actor = await requireActor();
+
+  let body = "";
+  try {
+    body = tiptapDocToPlainText(parseRichTextField(input.content));
+  } catch {
+    return {
+      ok: false,
+      error: "The body couldn't be read. Save the draft and try again.",
+    };
+  }
+
+  const parsed = assistRequestSchema.safeParse({ ...input, body });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid request." };
+  }
+
+  try {
+    const { generationId, result } = await aiService.assistArticle(parsed.data);
+    await logAudit({
+      userId: actor.id,
+      action: "ai.assist",
+      resourceType: "article",
+      resourceId: parsed.data.articleId,
+      metadata: { kind: parsed.data.kind, generationId, model: aiService.AI_MODEL },
+    });
+    return { ok: true, generationId, result };
+  } catch (error) {
+    if (error instanceof aiService.AiServiceError) {
+      return { ok: false, error: error.message };
+    }
+    throw error;
+  }
 }

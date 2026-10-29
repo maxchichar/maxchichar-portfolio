@@ -32,5 +32,10 @@ export const articleDraftUpdateSchema = z.object({
   content: tiptapDocSchema,
   tags: z.array(z.string().min(1).max(40)).max(20).default([]),
   coverMediaId: z.uuid().optional().nullable(),
+  // The writing assistant's response id, when one of its suggestions was used.
+  aiGenerationId: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{1,100}$/)
+    .optional(),
 });
 export type ArticleDraftUpdateInput = z.infer<typeof articleDraftUpdateSchema>;

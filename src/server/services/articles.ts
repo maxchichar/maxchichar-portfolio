@@ -206,6 +206,15 @@ export async function saveDraft(
       content,
       readingTime: estimateReadingTime(content),
       ...(patch.coverMediaId !== undefined ? { coverMediaId } : {}),
+      // A person saved it, so it stays HUMAN; the mode records that the
+      // writing assistant's suggestion is in it. Later saves keep the mark.
+      ...(patch.aiGenerationId
+        ? {
+            generationMode: "AI_ASSISTED",
+            generationId: patch.aiGenerationId,
+            source: "admin-assistant",
+          }
+        : {}),
     });
 
     const tagIds = await tagsRepo.ensureTags(tx, patch.tags);

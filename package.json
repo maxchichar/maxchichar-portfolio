@@ -37,6 +37,7 @@
     "check:edge": "wrangler deploy --config wrangler.edge.jsonc --dry-run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.137.0",
     "@aws-sdk/client-s3": "^3.1152.0",
     "@aws-sdk/s3-request-presigner": "^3.1152.0",
     "@neondatabase/serverless": "^1.2.0",
@@ -63,6 +64,7 @@
     "@fontsource-variable/inter-tight": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@fontsource-variable/newsreader": "^5.3.0",
+    "@opennextjs/cloudflare": "1.20.12",
     "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^26",
@@ -77,8 +79,7 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
-    "wrangler": "4.151.1",
-    "@opennextjs/cloudflare": "1.20.12"
+    "wrangler": "4.151.1"
   },
   "overrides": {
     "@esbuild-kit/core-utils": {
