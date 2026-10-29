@@ -12,6 +12,7 @@ import {
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { ImageField } from "@/components/admin/image-field";
 import * as articlesService from "@/server/services/articles";
+import * as aiService from "@/server/services/ai";
 import * as mediaService from "@/server/services/media";
 
 import {
@@ -26,6 +27,7 @@ import {
   unarchiveArticleForm,
 } from "../actions";
 import { ExcerptField } from "./excerpt-field";
+import { WritingAssistant } from "./writing-assistant";
 
 const FORM_ID = "article-draft-form";
 
@@ -188,6 +190,15 @@ export default async function ArticleEditPage({
               </p>
             </div>
           </EditorSection>
+
+          {aiService.isAiConfigured() ? (
+            <EditorSection
+              title="Writing assistant"
+              description="Suggestions from Claude, based on the draft on screen. Nothing changes until you choose Use, and you still save and publish yourself."
+            >
+              <WritingAssistant articleId={article.id} formId={FORM_ID} />
+            </EditorSection>
+          ) : null}
 
           <EditorSection title="Details">
             <div className="grid gap-5 sm:grid-cols-2">

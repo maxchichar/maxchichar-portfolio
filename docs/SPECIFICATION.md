@@ -41,6 +41,10 @@ rather than silently resolving it either direction.
   `api_keys` table exists for a future Content API (Phase 11) but has a
   DB-level CHECK barring `content:publish` from ever being a grantable
   scope — publish is human-session-only, structurally, not just by policy.
+  Phase 11.1's admin writing assistant only suggests: a draft saved with
+  one of its suggestions keeps `created_by_type = HUMAN` and is marked
+  `generation_mode = AI_ASSISTED`, `generation_id` = the Claude response
+  id, `source = admin-assistant`; every request is audit-logged (`ai.assist`).
 - **Media**: two-stage flow — presigned upload request (server validates
   declared MIME/size, creates `media` row `status=PENDING`) → client PUTs
   directly to R2 → confirm callback → server re-validates the **real**
@@ -149,20 +153,20 @@ all 14+ narrative sections and to the Evidence Wall itself.
 
 ## Implementation phases
 
-| Phase | Scope                                   | Status                                      |
-| ----- | --------------------------------------- | ------------------------------------------- |
-| 0     | Architecture                            | Done                                        |
-| 1     | Foundation                              | Done                                        |
-| 2     | Database + Auth                         | Done                                        |
-| 3     | Projects CMS + Evidence + minimal media | Done                                        |
-| 4     | Public Work pages                       | Done                                        |
-| 5     | Research CMS + public pages             | Done                                        |
-| 6     | Writing (Articles) CMS + public pages   | Done                                        |
-| 7     | Full media library                      | Done                                        |
-| 8     | Settings & static Pages                 | Done                                        |
-| 9     | SEO/Performance/Security/Testing        | Done                                        |
-| 10    | Deployment                              | Done                                        |
-| 11    | AI integration (Content API)            | Not started, only when explicitly requested |
+| Phase | Scope                                   | Status                                                                                  |
+| ----- | --------------------------------------- | --------------------------------------------------------------------------------------- |
+| 0     | Architecture                            | Done                                                                                    |
+| 1     | Foundation                              | Done                                                                                    |
+| 2     | Database + Auth                         | Done                                                                                    |
+| 3     | Projects CMS + Evidence + minimal media | Done                                                                                    |
+| 4     | Public Work pages                       | Done                                                                                    |
+| 5     | Research CMS + public pages             | Done                                                                                    |
+| 6     | Writing (Articles) CMS + public pages   | Done                                                                                    |
+| 7     | Full media library                      | Done                                                                                    |
+| 8     | Settings & static Pages                 | Done                                                                                    |
+| 9     | SEO/Performance/Security/Testing        | Done                                                                                    |
+| 10    | Deployment                              | Done                                                                                    |
+| 11    | AI integration (Content API)            | In progress (owner requested): 11.1 admin writing assistant done; 11.2 Content API next |
 
 ### Phase 3 scope, precisely
 
