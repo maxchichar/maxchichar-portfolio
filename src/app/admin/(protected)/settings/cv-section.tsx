@@ -1,5 +1,6 @@
 "use client";
 
+import { EditorSection } from "@/components/admin/editor/editor-section";
 import {
   DocumentField,
   type DocumentFieldValue,
@@ -15,14 +16,10 @@ export function CvSection({
   disabledReason: string | null;
 }) {
   return (
-    <section className="rounded-panel border-border bg-surface mt-8 space-y-6 border p-6">
-      <div>
-        <h2 className="text-text font-sans text-base font-semibold">CV / Résumé</h2>
-        <p className="text-text-muted mt-1 font-serif text-xs">
-          Shown as a Download CV button on the About and Contact pages, at /cv. PDF, up to
-          8MB. Changes go live immediately.
-        </p>
-      </div>
+    <EditorSection
+      title="CV / Résumé"
+      description="Shown as a Download CV button on the About and Contact pages, and at /cv. PDF, up to 8 MB. Changes go live as soon as you choose a file."
+    >
       <DocumentField
         label="CV (PDF)"
         initial={initial}
@@ -30,6 +27,6 @@ export function CvSection({
         disabledReason={disabledReason}
         onCommit={(id) => saveSiteDocument("cv", id)}
       />
-    </section>
+    </EditorSection>
   );
 }
