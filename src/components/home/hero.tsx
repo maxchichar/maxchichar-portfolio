@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Fragment } from "react";
 
 import { Magnetic } from "@/components/motion/magnetic";
 import { SplitText } from "@/components/motion/split-text";
+import { parseHeadline } from "@/lib/headline";
 import type { SiteImage } from "@/lib/validation/settings";
 import { MediaImage } from "@/components/media-image";
 
@@ -13,34 +15,41 @@ interface HeroCopy {
   secondaryCta: { label: string; href: string };
 }
 
-// The design accents the word "intelligent" in the headline. The CMS
-// headline is plain text, so the accent is applied wherever that word
-// appears — same look for the fallback and for CMS copy that keeps it.
-const HEADLINE_ACCENT = "intelligent";
-
 const HEADLINE_DELAY = 150;
 
 function countWords(text: string) {
   return text.split(/\s+/).filter(Boolean).length;
 }
 
+// Accented words (see lib/headline) get the italic serif treatment; the
+// word-by-word reveal keeps counting across segments so timing is unbroken.
 function Headline({ text }: { text: string }) {
-  const idx = text.indexOf(HEADLINE_ACCENT);
-  if (idx === -1) return <SplitText text={text} baseDelay={HEADLINE_DELAY} />;
-  const before = text.slice(0, idx);
-  const after = text.slice(idx + HEADLINE_ACCENT.length);
-  const beforeCount = countWords(before);
+  const segments = parseHeadline(text);
+  // Word offset of each segment, so the reveal timing runs straight through.
+  const starts = segments.map((_, i) =>
+    segments.slice(0, i).reduce((sum, s) => sum + countWords(s.text), 0),
+  );
   return (
     <>
-      <SplitText text={before} baseDelay={HEADLINE_DELAY} />
-      <span className="text-accent-purple font-serif font-normal tracking-tight italic">
-        <SplitText
-          text={HEADLINE_ACCENT}
-          baseDelay={HEADLINE_DELAY}
-          startIndex={beforeCount}
-        />
-      </span>
-      <SplitText text={after} baseDelay={HEADLINE_DELAY} startIndex={beforeCount + 1} />
+      {segments.map((segment, i) => {
+        const words = (
+          <SplitText
+            text={segment.text}
+            baseDelay={HEADLINE_DELAY}
+            startIndex={starts[i]}
+          />
+        );
+        return segment.accent ? (
+          <span
+            key={i}
+            className="text-accent-purple font-serif font-normal tracking-tight italic"
+          >
+            {words}
+          </span>
+        ) : (
+          <Fragment key={i}>{words}</Fragment>
+        );
+      })}
     </>
   );
 }

@@ -129,18 +129,25 @@ export default async function PageEditPage({
               title={section.title}
               description={section.description}
             >
-              {section.fields.map((field) => (
-                <TextField
-                  key={field.name}
-                  name={field.name}
-                  label={field.label}
-                  hint={field.hint}
-                  defaultValue={fields[field.name] ?? ""}
-                  maxLength={fieldMaxLength(slug, field.name)}
-                  multiline={!field.short}
-                  minRows={field.rows}
-                />
-              ))}
+              <div
+                className={
+                  section.columns === 2 ? "grid gap-5 sm:grid-cols-2" : "space-y-5"
+                }
+              >
+                {section.fields.map((field) => (
+                  <TextField
+                    key={field.name}
+                    name={field.name}
+                    label={field.label}
+                    hint={field.hint}
+                    defaultValue={fields[field.name] ?? ""}
+                    maxLength={fieldMaxLength(slug, field.name)}
+                    multiline={!field.short}
+                    minRows={field.rows}
+                    pattern={field.pattern}
+                  />
+                ))}
+              </div>
             </EditorSection>
           ))}
         </form>
