@@ -85,7 +85,7 @@ export function AboutView({
             key={section.key}
             className="border-border reveal grid gap-6 border-t py-12 md:grid-cols-12 md:py-16"
           >
-            <h2 className="index-label md:col-span-4 md:self-start">
+            <h2 className="index-label md:sticky md:top-28 md:col-span-4 md:self-start">
               <span>{String(i + 1).padStart(2, "0")}</span>
               <span>{section.title}</span>
             </h2>
