@@ -144,6 +144,6 @@ The repository provides automated verification suites covering every tier:
 
 ## 10. Phase 11 Prohibition & Boundaries
 
-- **Phase 11 (AI Integration / Content API)** was started at the site owner's request. 11.1, the admin writing assistant, is built; the Content API (11.2) is not.
+- **Phase 11 (AI Integration / Content API)** was started at the site owner's request. 11.1 (admin writing assistant) and 11.2 (Content API for articles, see `docs/CONTENT-API.md`) are built. API keys are created in the admin; none can publish.
 - The assistant needs `ANTHROPIC_API_KEY` (server-only, Production and Preview in Vercel). Without it the assistant is hidden and nothing else changes. It suggests an excerpt, titles, tags or a review; it never saves or publishes.
 - The `api_keys` table contains a database-level `CHECK` constraint barring `content:publish` from ever being granted to an automated API key. Publishing remains human-session-only by structural invariant.
