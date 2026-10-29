@@ -19,7 +19,7 @@ export function routeVercelAdmin(request: Request, adminOrigin: string): Respons
   }
   if (!ADMIN_PREFIXES.some((prefix) => matches(path, prefix))) return null;
   if (request.method !== "GET" && request.method !== "HEAD") {
-    return new Response("Use the Vercel admin site", {
+    return new Response("Use the admin site", {
       status: 405,
       headers: { Allow: "GET, HEAD", "Cache-Control": "no-store" },
     });

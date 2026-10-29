@@ -5,7 +5,7 @@
   "compatibility_date": "2026-10-12",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "vars": {
-    "ADMIN_ORIGIN": "https://chibuezemaxwell.vercel.app",
+    "ADMIN_ORIGIN": "https://admin.chibuezemaxwell.com",
     "SITE_URL": "https://chibuezemaxwell.com",
     "NEXT_PUBLIC_SITE_URL": "https://chibuezemaxwell.com",
     "STORAGE_PUBLIC_URL": "https://pub-be5b26d4fdc14d42a7bfa1843c84c207.r2.dev",

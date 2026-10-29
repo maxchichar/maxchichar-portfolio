@@ -3,7 +3,10 @@
   "name": "maxchichar-portfolio-edge",
   "main": "cloudflare-edge.mjs",
   "compatibility_date": "2026-10-12",
-  "vars": { "ADMIN_ORIGIN": "https://chibuezemaxwell.vercel.app" },
+  "vars": {
+    "ORIGIN": "https://chibuezemaxwell.vercel.app",
+    "ADMIN_ORIGIN": "https://admin.chibuezemaxwell.com",
+  },
   "workers_dev": true,
   "preview_urls": true,
   "routes": [

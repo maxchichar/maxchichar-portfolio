@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { AdminNav } from "@/components/admin/admin-nav";
 import { auth, signOut } from "@/lib/auth/config";
+import { resolveCanonicalUrl } from "@/lib/metadata";
 import { getPublicSiteSettings } from "@/server/services/settings";
 
 // Authoritative route protection for everything under /admin except
@@ -27,6 +28,7 @@ export default async function ProtectedAdminLayout({
     <div className="flex min-h-screen flex-col lg:flex-row">
       <AdminNav
         siteName={settings.siteName}
+        siteUrl={resolveCanonicalUrl("/")}
         email={session.user.email ?? null}
         signOutSlot={
           <form

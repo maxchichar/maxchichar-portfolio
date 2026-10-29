@@ -3,7 +3,10 @@ import { test } from "node:test";
 import { createEdgeWorker } from "../cloudflare-edge.mjs";
 
 const base = "https://chibuezemaxwell.com";
-const env = { ADMIN_ORIGIN: "https://chibuezemaxwell.vercel.app" };
+const env = {
+  ORIGIN: "https://chibuezemaxwell.vercel.app",
+  ADMIN_ORIGIN: "https://admin.chibuezemaxwell.com",
+};
 
 test("www redirects to the canonical domain without fetching the origin", async () => {
   const worker = createEdgeWorker(async () => {
@@ -130,7 +133,7 @@ test("edge cache isolates HTML from RSC and never forwards admin credentials", a
     200,
   );
   const last = new Headers(calls.at(-1)!.init.headers);
-  assert.equal(last.get("origin"), env.ADMIN_ORIGIN);
+  assert.equal(last.get("origin"), env.ORIGIN);
   assert.equal(last.has("cookie"), false);
   assert.equal(last.has("x-forwarded-for"), false);
 });
@@ -154,7 +157,7 @@ test("edge never caches responses that set cookies, errors, or redirects", async
     new Response("error", { status: 500 }),
     new Response(null, {
       status: 302,
-      headers: { Location: env.ADMIN_ORIGIN + "/writing" },
+      headers: { Location: env.ORIGIN + "/writing" },
     }),
   ]) {
     const worker = createEdgeWorker(async () => response);
@@ -168,4 +171,24 @@ test("edge never caches responses that set cookies, errors, or redirects", async
       assert.equal(result.headers.get("location"), base + "/writing");
   }
   assert.equal(writes, 0);
+});
+
+test("public pages come from ORIGIN while /admin goes to the admin domain", async () => {
+  const fetched: string[] = [];
+  const worker = createEdgeWorker(async (input: RequestInfo | URL) => {
+    fetched.push(String(input));
+    return new Response("ok", { headers: { "content-type": "text/plain" } });
+  });
+  const ctx = { waitUntil: () => {} };
+  await worker.fetch(new Request(base + "/writing?x=1"), env, ctx);
+  assert.equal(fetched[0], "https://chibuezemaxwell.vercel.app/writing?x=1");
+  const admin = await worker.fetch(new Request(base + "/admin/articles"), env, ctx);
+  assert.equal(
+    admin.headers.get("location"),
+    "https://admin.chibuezemaxwell.com/admin/articles",
+  );
+
+  // Older config with only ADMIN_ORIGIN still fetches public pages from it.
+  await worker.fetch(new Request(base + "/now?y=2"), { ADMIN_ORIGIN: env.ORIGIN }, ctx);
+  assert.equal(fetched[1], "https://chibuezemaxwell.vercel.app/now?y=2");
 });
