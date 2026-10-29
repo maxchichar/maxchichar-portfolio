@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 
+import { adminHostRedirects } from "./src/lib/admin-host";
 import { buildSecurityHeaders } from "./src/lib/security-headers";
 import { storageRemotePatterns } from "./src/lib/storage/image";
 
@@ -24,6 +25,10 @@ const nextConfig: NextConfig = {
     formats: ["image/webp"],
     // Upload keys are random UUIDs and never reused, so variants never go stale.
     minimumCacheTTL: 60 * 60 * 24 * 31,
+  },
+
+  async redirects() {
+    return adminHostRedirects();
   },
 
   async headers() {
