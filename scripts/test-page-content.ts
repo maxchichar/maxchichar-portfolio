@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import { fieldMaxLength, pageFields } from "../src/app/admin/(protected)/pages/fields";
 import { parseBlocks } from "../src/components/pages/paragraphs";
+import { toDescription } from "../src/lib/metadata";
 import { contentSchemaForSlug, PAGE_SLUGS } from "../src/lib/validation/page";
 
 describe("page editor fields", () => {
@@ -44,5 +45,18 @@ describe("parseBlocks", () => {
     assert.deepStrictEqual(parseBlocks("real-world problems -- and more"), [
       { kind: "p", lines: ["real-world problems -- and more"] },
     ]);
+  });
+});
+
+describe("toDescription", () => {
+  it("keeps short text and drops list markers", () => {
+    assert.strictEqual(toDescription("- Agents\n- Infra"), "Agents Infra");
+  });
+
+  it("trims long text on a word boundary under 160 characters", () => {
+    const text = "word ".repeat(60);
+    const result = toDescription(text);
+    assert.ok(result.length <= 158, String(result.length));
+    assert.ok(result.endsWith("word…"), result);
   });
 });

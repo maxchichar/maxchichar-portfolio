@@ -8,6 +8,19 @@ export const DEFAULT_SITE_DESCRIPTION =
   "AI Engineer, entrepreneur, researcher, and writer. Explore my projects, research, and ideas under Chibueze Maxwell (MAXCHICHAR).";
 
 /**
+ * Meta descriptions read best under ~160 characters; page text can be
+ * longer than that, so flatten it and trim on a word boundary.
+ */
+export function toDescription(text: string): string {
+  const flat = text
+    .replace(/^\s*[-*•]\s+/gm, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (flat.length <= 160) return flat;
+  return `${flat.slice(0, 157).replace(/\s+\S*$/, "")}…`;
+}
+
+/**
  * Resolves the canonical base site URL for metadata, canonicals, and sitemaps.
  *
  * Evaluation order:
