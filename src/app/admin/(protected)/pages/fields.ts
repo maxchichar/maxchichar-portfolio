@@ -11,41 +11,88 @@ export interface PageField {
   /** Single-line input rather than a growing textarea. */
   short?: boolean;
   rows?: number;
+  /** Browser-side format check, mirroring the schema, with its message. */
+  pattern?: { regex: string; message: string };
 }
 
 export interface PageFieldSection {
   title: string;
   description?: string;
+  /** Lay the fields out side by side in pairs (e.g. a label and its link). */
+  columns?: 2;
   fields: readonly PageField[];
 }
 
 const PARAGRAPHS_HINT = "Leave a blank line between paragraphs.";
 const LIST_HINT = 'Start lines with "- " to show them as a list.';
 
+// Same rule as validation/page.ts's ctaHrefSchema, checked before submitting.
+const LINK_PATTERN = {
+  regex: "(/(?!/)|https?://)\\S*",
+  message: "Use a site path starting with / (like /work) or a full https:// URL.",
+};
+
 export const PAGE_SECTIONS: Record<PageSlug, readonly PageFieldSection[]> = {
   home: [
     {
       title: "Hero",
-      description: "The first screen of the home page.",
+      description:
+        "The first screen of the site, over the hero image. The image and your name come from Settings.",
       fields: [
-        { name: "heroEyebrow", label: "Eyebrow", short: true },
-        { name: "heroHeadline", label: "Headline", short: true },
-        { name: "heroBody", label: "Body", rows: 3 },
+        {
+          name: "heroEyebrow",
+          label: "Eyebrow",
+          hint: "The small uppercase line above the headline. Separate roles with · if you like.",
+          short: true,
+        },
+        {
+          name: "heroHeadline",
+          label: "Headline",
+          hint: 'Wrap words in *asterisks* to accent them in purple italics, e.g. "I build *intelligent* systems". Without asterisks, the word "intelligent" is accented.',
+          rows: 2,
+        },
+        {
+          name: "heroBody",
+          label: "Body",
+          hint: "One or two sentences under the headline.",
+          rows: 3,
+        },
       ],
     },
     {
-      title: "Calls to action",
-      description: "Links are a site path like /work, or a full https:// URL.",
+      title: "Buttons",
+      description:
+        "The two buttons beside the hero text: the first is solid, the second outlined.",
+      columns: 2,
       fields: [
-        { name: "heroPrimaryCtaLabel", label: "Primary button label", short: true },
-        { name: "heroPrimaryCtaHref", label: "Primary button link", short: true },
-        { name: "heroSecondaryCtaLabel", label: "Secondary button label", short: true },
-        { name: "heroSecondaryCtaHref", label: "Secondary button link", short: true },
+        { name: "heroPrimaryCtaLabel", label: "First button label", short: true },
+        {
+          name: "heroPrimaryCtaHref",
+          label: "First button link",
+          short: true,
+          pattern: LINK_PATTERN,
+        },
+        { name: "heroSecondaryCtaLabel", label: "Second button label", short: true },
+        {
+          name: "heroSecondaryCtaHref",
+          label: "Second button link",
+          short: true,
+          pattern: LINK_PATTERN,
+        },
       ],
     },
     {
-      title: "Current focus",
-      fields: [{ name: "currentFocusSummary", label: "Summary", rows: 3 }],
+      title: "Currently",
+      description:
+        'The highlighted "Currently" panel between Research and Writing. It appears once the Home page is published.',
+      fields: [
+        {
+          name: "currentFocusSummary",
+          label: "Current focus",
+          hint: "A sentence or two; it's shown large. Blank lines start new paragraphs.",
+          rows: 3,
+        },
+      ],
     },
   ],
   about: [

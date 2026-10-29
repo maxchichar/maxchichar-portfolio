@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getSiteUrl } from "@/lib/metadata";
+import { plainHeadline } from "@/lib/headline";
 import { richDocToMarkdown } from "@/lib/rich-text-markdown";
 
 import { listPublicArticlesOverview } from "./articles";
@@ -81,7 +82,7 @@ export async function buildLlmsTxt({ full }: { full: boolean }): Promise<string>
   const out: string[] = [];
   out.push(`# ${name}`);
   out.push(
-    `> ${[line(settings.siteDescription), line(home?.content.heroHeadline)].filter(Boolean).join(". ").replace(/\.\./g, ".")}`,
+    `> ${[line(settings.siteDescription), line(home ? plainHeadline(home.content.heroHeadline) : null)].filter(Boolean).join(". ").replace(/\.\./g, ".")}`,
   );
   if (about) out.push(paras(about.content.intro));
   if (home) out.push(`Currently: ${line(home.content.currentFocusSummary)}`);

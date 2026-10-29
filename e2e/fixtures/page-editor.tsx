@@ -12,6 +12,17 @@ createRoot(document.getElementById("root")!).render(
         hint='Start lines with "- " to show them as a list.'
         minRows={2}
       />
+      <TextField
+        name="heroPrimaryCtaHref"
+        label="First button link"
+        defaultValue="/work"
+        maxLength={200}
+        multiline={false}
+        pattern={{
+          regex: "(/(?!/)|https?://)\\S*",
+          message: "Use a site path starting with / (like /work) or a full https:// URL.",
+        }}
+      />
     </form>
   </main>,
 );

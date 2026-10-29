@@ -32,3 +32,18 @@ test("page text fields count characters and grow with their content", async ({
   await field.fill("x".repeat(80));
   await expect(field).toHaveValue("x".repeat(50));
 });
+
+test("button links are checked before the form is sent", async ({ page }) => {
+  const link = page.getByLabel("First button link");
+  const valid = () => link.evaluate((el: HTMLInputElement) => el.checkValidity());
+  expect(await valid()).toBe(true);
+
+  await link.fill("//evil.example");
+  expect(await valid()).toBe(false);
+  expect(await link.evaluate((el: HTMLInputElement) => el.validationMessage)).toContain(
+    "site path starting with /",
+  );
+
+  await link.fill("https://example.com/talk");
+  expect(await valid()).toBe(true);
+});

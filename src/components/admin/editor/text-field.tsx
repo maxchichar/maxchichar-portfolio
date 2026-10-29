@@ -23,6 +23,7 @@ export function TextField({
   hint,
   multiline = true,
   minRows = 3,
+  pattern,
 }: {
   name: string;
   label: string;
@@ -31,6 +32,8 @@ export function TextField({
   hint?: string;
   multiline?: boolean;
   minRows?: number;
+  /** Browser-side format check (an HTML pattern) and the message it shows. */
+  pattern?: { regex: string; message: string };
 }) {
   const [length, setLength] = useState(defaultValue.length);
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -82,8 +85,18 @@ export function TextField({
           defaultValue={defaultValue}
           required
           maxLength={maxLength}
+          pattern={pattern?.regex}
+          title={pattern?.message}
           aria-describedby={hintId}
-          onInput={(e) => setLength(e.currentTarget.value.length)}
+          onInput={(e) => {
+            e.currentTarget.setCustomValidity("");
+            setLength(e.currentTarget.value.length);
+          }}
+          onInvalid={(e) => {
+            if (pattern && e.currentTarget.validity.patternMismatch) {
+              e.currentTarget.setCustomValidity(pattern.message);
+            }
+          }}
           className={inputClass}
         />
       )}
