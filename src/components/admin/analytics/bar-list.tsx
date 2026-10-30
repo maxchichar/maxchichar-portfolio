@@ -17,23 +17,23 @@ export function BarList({
 }) {
   const max = Math.max(1, ...rows.map((r) => r.visitors));
   return (
-    <section className="rounded-panel border-border bg-surface border p-5">
+    <section className="rounded-panel border-border bg-surface min-w-0 border p-4 sm:p-5">
       <h2 className="text-text font-sans text-sm font-semibold">{title}</h2>
       {rows.length === 0 ? (
         <p className="text-text-muted py-8 text-center font-serif text-sm">
           No data yet.
         </p>
       ) : (
-        <table className="mt-4 w-full text-left">
+        <table className="mt-4 w-full table-fixed text-left">
           <thead className="text-text-muted font-mono text-[10px] tracking-wider uppercase">
             <tr>
               <th scope="col" className="pb-2 font-normal">
                 {labelHeader}
               </th>
-              <th scope="col" className="w-20 pb-2 text-right font-normal">
+              <th scope="col" className="w-16 pb-2 text-right font-normal sm:w-20">
                 Visitors
               </th>
-              <th scope="col" className="w-16 pb-2 text-right font-normal">
+              <th scope="col" className="w-12 pb-2 text-right font-normal sm:w-16">
                 Views
               </th>
             </tr>
@@ -41,7 +41,7 @@ export function BarList({
           <tbody>
             {rows.map((r) => (
               <tr key={r.label}>
-                <td className="py-1.5 pr-3">
+                <td className="py-1.5 pr-2 sm:pr-3">
                   <div className="relative h-7">
                     <div
                       aria-hidden="true"

@@ -12,8 +12,10 @@ const SERIES = [
 
 type Point = { day: string; views: number; visitors: number };
 
-const PAD = { top: 16, right: 84, bottom: 28, left: 40 };
-const HEIGHT = 260;
+const WIDE = { pad: { top: 16, right: 84, bottom: 28, left: 40 }, height: 260 };
+// Phones: no room for end labels, so the legend carries the latest values.
+const NARROW = { pad: { top: 16, right: 12, bottom: 28, left: 34 }, height: 220 };
+const NARROW_BELOW = 480;
 
 function niceMax(v: number) {
   if (v <= 4) return 4;
@@ -40,12 +42,14 @@ export function TrendChart({ data }: { data: Point[] }) {
     const el = ref.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
-      if (entry) setWidth(Math.max(320, Math.floor(entry.contentRect.width)));
+      if (entry) setWidth(Math.max(240, Math.floor(entry.contentRect.width)));
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
+  const narrow = width < NARROW_BELOW;
+  const { pad: PAD, height: HEIGHT } = narrow ? NARROW : WIDE;
   const innerW = width - PAD.left - PAD.right;
   const innerH = HEIGHT - PAD.top - PAD.bottom;
   const max = niceMax(Math.max(1, ...data.map((d) => Math.max(d.views, d.visitors))));
@@ -60,7 +64,7 @@ export function TrendChart({ data }: { data: Point[] }) {
   const area = `${path("visitors")}L${x(data.length - 1)},${y(0)}L${x(0)},${y(0)}Z`;
   const labelEvery = Math.max(
     1,
-    Math.ceil(data.length / Math.max(2, Math.floor(innerW / 90))),
+    Math.ceil(data.length / Math.max(2, Math.floor(innerW / (narrow ? 70 : 90)))),
   );
 
   function indexFromPointer(clientX: number) {
@@ -75,7 +79,10 @@ export function TrendChart({ data }: { data: Point[] }) {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-5" aria-hidden="true">
+      <div
+        className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2"
+        aria-hidden="true"
+      >
         {SERIES.map((s) => (
           <span
             key={s.key}
@@ -83,12 +90,22 @@ export function TrendChart({ data }: { data: Point[] }) {
           >
             <span className="h-0.5 w-4 rounded-full" style={{ background: s.color }} />
             {s.label}
+            {narrow && last ? (
+              <span className="text-text font-mono tabular-nums">
+                {last[s.key].toLocaleString("en-US")}
+              </span>
+            ) : null}
           </span>
         ))}
+        {narrow && last ? (
+          <span className="text-text-muted font-mono text-[10px]">
+            {fmtDay(last.day, { month: "short", day: "numeric" })}
+          </span>
+        ) : null}
       </div>
       <div
         ref={ref}
-        className="relative outline-none"
+        className="relative touch-pan-y outline-none"
         tabIndex={0}
         role="img"
         aria-label={`Daily visitors and page views over the last ${data.length} days. Use arrow keys to inspect days; values are also in the table below.`}
@@ -103,7 +120,11 @@ export function TrendChart({ data }: { data: Point[] }) {
             setActive((a) => Math.min(data.length - 1, (a ?? -1) + 1));
         }}
       >
-        <svg width={width} height={HEIGHT} className="block">
+        <svg
+          width="100%"
+          viewBox={`0 0 ${width} ${HEIGHT}`}
+          className="block overflow-visible"
+        >
           {ticks.map((t) => (
             <g key={t}>
               <line
@@ -168,7 +189,7 @@ export function TrendChart({ data }: { data: Point[] }) {
                 </g>
               ))
             : null}
-          {last
+          {last && !narrow
             ? (() => {
                 const a = y(last.visitors);
                 const b = y(last.views);
@@ -232,7 +253,7 @@ export function TrendChart({ data }: { data: Point[] }) {
           <div
             className="rounded-card border-border bg-surface-2 pointer-events-none absolute top-2 z-10 min-w-36 border px-3 py-2 shadow-lg"
             style={{
-              left: Math.min(Math.max(x(active) - 72, 0), width - 150),
+              left: Math.max(0, Math.min(x(active) - 72, width - 150)),
             }}
           >
             <p className="text-text-muted font-mono text-[10px] uppercase">

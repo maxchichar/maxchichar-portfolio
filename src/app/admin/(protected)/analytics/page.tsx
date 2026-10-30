@@ -38,7 +38,7 @@ export default async function AnalyticsPage({
   const prevPerVisitor = s.prevVisitors > 0 ? s.prevViews / s.prevVisitors : 0;
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10 md:py-12">
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 md:py-12">
       <AdminPageHeader
         title="Analytics"
         description="First-party and cookieless. No IPs or cookies are stored; visitors are counted once per day with a daily-rotating anonymous hash."
@@ -58,23 +58,27 @@ export default async function AnalyticsPage({
       {/* Date range first, one row above everything it scopes. */}
       <nav
         aria-label="Date range"
-        className="bg-surface border-border mb-6 inline-flex rounded-full border p-1"
+        className="bg-surface border-border mb-6 flex w-full rounded-full border p-1 sm:inline-flex sm:w-auto"
       >
         {ANALYTICS_RANGES.map((r) => (
           <Link
             key={r}
             href={`/admin/analytics?range=${r}`}
             aria-current={r === days ? "page" : undefined}
-            className={`rounded-full px-4 py-1.5 font-sans text-xs transition-colors ${
+            className={`flex-1 rounded-full px-3 py-2 text-center font-sans text-xs whitespace-nowrap transition-colors sm:flex-none sm:px-4 sm:py-1.5 ${
               r === days ? "bg-text text-bg" : "text-text-muted hover:text-text"
             }`}
           >
-            Last {r} days
+            <span className="sm:hidden">{r} days</span>
+            <span className="hidden sm:inline">Last {r} days</span>
           </Link>
         ))}
       </nav>
 
-      <section aria-label="Totals" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section
+        aria-label="Totals"
+        className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4"
+      >
         <StatTile
           label="Visitors"
           value={s.visitors}
@@ -97,14 +101,14 @@ export default async function AnalyticsPage({
         <StatTile label="Live now" value={s.live} note="active in the last 5 min" live />
       </section>
 
-      <section className="rounded-panel border-border bg-surface mt-4 border p-5 md:p-6">
+      <section className="rounded-panel border-border bg-surface mt-3 min-w-0 border p-4 sm:mt-4 sm:p-5 md:p-6">
         <h2 className="text-text font-sans text-sm font-semibold">Traffic</h2>
         <p className="text-text-muted mt-0.5 mb-5 font-sans text-xs">
           Daily visitors and page views (UTC).
         </p>
         <TrendChart data={s.daily} />
         <details className="mt-4">
-          <summary className="text-text-muted hover:text-text cursor-pointer font-sans text-xs">
+          <summary className="text-text-muted hover:text-text cursor-pointer py-1 font-sans text-xs">
             View as table
           </summary>
           <div className="mt-3 max-h-72 overflow-y-auto">
@@ -136,7 +140,7 @@ export default async function AnalyticsPage({
         </details>
       </section>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-2">
         <BarList title="Top pages" labelHeader="Page" rows={s.pages} />
         <BarList title="Referrers" labelHeader="Source" rows={s.referrers} />
         <BarList
@@ -145,7 +149,7 @@ export default async function AnalyticsPage({
           rows={s.countries}
           formatLabel={countryLabel}
         />
-        <div className="grid gap-4">
+        <div className="grid min-w-0 gap-3 sm:gap-4">
           <BarList
             title="Devices"
             labelHeader="Device"
