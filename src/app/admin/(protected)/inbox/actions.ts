@@ -48,7 +48,9 @@ export async function deleteInboxMessageForm(
   revalidatePath("/admin");
   const view = String(formData.get("view") ?? "");
   const query = new URLSearchParams({ deleted: "1" });
-  if (INBOX_STATUSES.includes(view as InboxStatus)) query.set("view", view);
+  if (view === "SENT" || INBOX_STATUSES.includes(view as InboxStatus)) {
+    query.set("view", view);
+  }
   redirect(`/admin/inbox?${query}`);
 }
 

@@ -7,6 +7,7 @@ import {
   getSubmission,
   listInbox,
   listReplies,
+  listSent,
 } from "@/server/services/contact";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { isEmailConfigured, replySender } from "@/server/services/email";
@@ -18,9 +19,12 @@ import { setInboxStatusForm } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-const TABS: { value: InboxStatus | "inbox"; label: string }[] = [
+type Tab = InboxStatus | "inbox" | "SENT";
+
+const TABS: { value: Tab; label: string }[] = [
   { value: "inbox", label: "Inbox" },
   { value: "NEW", label: "Unread" },
+  { value: "SENT", label: "Sent" },
   { value: "ARCHIVED", label: "Archived" },
   { value: "SPAM", label: "Spam" },
 ];
@@ -43,9 +47,15 @@ export default async function InboxPage({
   const status = INBOX_STATUSES.includes(view as InboxStatus)
     ? (view as InboxStatus)
     : null;
-  const [{ items, counts }, selected] = await Promise.all([
+  const isSent = view === "SENT";
+  const [{ items, counts }, selected, { value: sent }] = await Promise.all([
     listInbox(status),
     id ? getSubmission(id) : null,
+    // Degrades to an empty folder if the replies table isn't migrated yet.
+    readOrFallback("/admin/inbox", "sent replies", listSent(), {
+      items: [],
+      total: 0,
+    } as Awaited<ReturnType<typeof listSent>>),
   ]);
   // Degrades to an empty thread if the replies table isn't migrated yet.
   const { value: replies } = selected
@@ -58,9 +68,13 @@ export default async function InboxPage({
     : { value: [] };
   const sender = canReply() ? replySender() : null;
   const unread = counts.NEW ?? 0;
-  const tabCount = (v: InboxStatus | "inbox") =>
-    v === "inbox" ? (counts.NEW ?? 0) + (counts.READ ?? 0) : (counts[v] ?? 0);
-  const viewParam = status ? `view=${status}` : "";
+  const tabCount = (v: Tab) =>
+    v === "inbox"
+      ? (counts.NEW ?? 0) + (counts.READ ?? 0)
+      : v === "SENT"
+        ? sent.total
+        : (counts[v] ?? 0);
+  const viewParam = status ? `view=${status}` : isSent ? "view=SENT" : "";
   const hrefFor = (itemId: string) =>
     `/admin/inbox?${[viewParam, `id=${itemId}`].filter(Boolean).join("&")}`;
   const back = `/admin/inbox${viewParam ? `?${viewParam}` : ""}`;
@@ -99,16 +113,19 @@ export default async function InboxPage({
 
       <nav
         aria-label="Folders"
-        className="bg-surface border-border mb-6 inline-flex rounded-full border p-1"
+        className="bg-surface border-border mb-6 inline-flex max-w-full overflow-x-auto rounded-full border p-1"
       >
         {TABS.map((t) => {
-          const active = (t.value === "inbox" && !status) || t.value === status;
+          const active =
+            (t.value === "inbox" && !status && !isSent) ||
+            t.value === status ||
+            (t.value === "SENT" && isSent);
           return (
             <Link
               key={t.value}
               href={t.value === "inbox" ? "/admin/inbox" : `/admin/inbox?view=${t.value}`}
               aria-current={active ? "page" : undefined}
-              className={`rounded-full px-4 py-1.5 font-sans text-xs transition-colors ${
+              className={`shrink-0 rounded-full px-4 py-1.5 font-sans text-xs transition-colors ${
                 active ? "bg-text text-bg" : "text-text-muted hover:text-text"
               }`}
             >
@@ -121,7 +138,42 @@ export default async function InboxPage({
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <ul className="rounded-panel border-border bg-surface divide-border max-h-[70vh] divide-y overflow-y-auto border">
-          {items.length === 0 ? (
+          {isSent ? (
+            sent.items.length === 0 ? (
+              <li className="text-text-muted px-6 py-16 text-center font-serif text-sm">
+                No replies sent yet.
+              </li>
+            ) : (
+              sent.items.map((r) => (
+                <li key={r.id}>
+                  <Link
+                    href={hrefFor(r.submissionId)}
+                    aria-current={selected?.id === r.submissionId ? "true" : undefined}
+                    className={`block px-5 py-4 transition-colors ${
+                      selected?.id === r.submissionId
+                        ? "bg-surface-2"
+                        : "hover:bg-surface-2"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-text truncate font-sans text-sm">
+                        <span className="text-text-muted">To:</span> {r.name}
+                      </p>
+                      <span className="text-text-muted shrink-0 font-mono text-[11px]">
+                        {when(r.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-text-muted mt-0.5 truncate font-sans text-xs">
+                      {r.subject}
+                    </p>
+                    <p className="text-text-muted mt-1.5 line-clamp-2 font-serif text-sm">
+                      {r.body}
+                    </p>
+                  </Link>
+                </li>
+              ))
+            )
+          ) : items.length === 0 ? (
             <li className="text-text-muted px-6 py-16 text-center font-serif text-sm">
               Nothing here.
             </li>
@@ -267,7 +319,7 @@ export default async function InboxPage({
                   key={selected.id}
                   id={selected.id}
                   name={selected.name}
-                  view={status ?? ""}
+                  view={isSent ? "SENT" : (status ?? "")}
                 />
               </div>
             </article>
@@ -276,9 +328,11 @@ export default async function InboxPage({
               <p className="text-text-muted font-serif text-sm">
                 {id
                   ? "This message is no longer available. Select another message."
-                  : items.length === 0
+                  : (isSent ? sent.items.length : items.length) === 0
                     ? "No messages in this folder."
-                    : "Select a message to read it."}
+                    : isSent
+                      ? "Select a reply to see the conversation."
+                      : "Select a message to read it."}
               </p>
             </div>
           )}

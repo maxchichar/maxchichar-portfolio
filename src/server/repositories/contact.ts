@@ -106,3 +106,28 @@ export async function listReplies(tx: Tx, submissionId: string) {
     .where(eq(r.submissionId, submissionId))
     .orderBy(asc(r.createdAt));
 }
+
+/** Everything sent from the inbox, newest first, with who it answered. */
+export async function listSentReplies(tx: Tx) {
+  const r = schema.contactReplies;
+  const c = schema.contactSubmissions;
+  return tx
+    .select({
+      id: r.id,
+      submissionId: r.submissionId,
+      toEmail: r.toEmail,
+      subject: r.subject,
+      body: r.body,
+      createdAt: r.createdAt,
+      name: c.name,
+    })
+    .from(r)
+    .innerJoin(c, eq(c.id, r.submissionId))
+    .orderBy(desc(r.createdAt))
+    .limit(200);
+}
+
+export async function countReplies(tx: Tx) {
+  const [result] = await tx.select({ count: count() }).from(schema.contactReplies);
+  return Number(result?.count ?? 0);
+}
