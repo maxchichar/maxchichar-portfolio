@@ -53,3 +53,18 @@ export const contactSubmissionSchema = z.object({
 });
 
 export type ContactSubmissionInput = z.infer<typeof contactSubmissionSchema>;
+
+/** Longer bodies are cut; the full email is still in the forwarded copy. */
+export const INBOUND_MAX_TEXT = 50_000;
+
+/** An email sent to hello@, as the Cloudflare email worker posts it. */
+export const inboundEmailSchema = z.object({
+  from: z.object({
+    address: z.email().max(255),
+    name: z.string().trim().max(200).optional().nullable(),
+  }),
+  subject: z.string().trim().max(500).optional().nullable(),
+  text: z.string(),
+  messageId: z.string().trim().max(500).optional().nullable(),
+  attachments: z.number().int().min(0).max(1000).optional(),
+});

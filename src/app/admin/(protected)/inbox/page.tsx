@@ -38,6 +38,28 @@ function when(date: Date) {
   });
 }
 
+type Message = { source: string; subject: string | null; reason: string | null };
+
+/** What a message is about: an email's subject, or the form's reason. */
+function topic(m: Message) {
+  return m.source === "email" ? m.subject || "(no subject)" : (m.reason ?? "General");
+}
+
+/** "Re: <subject>" without stacking "Re: Re:". */
+function replySubject(m: Message) {
+  const base = m.source === "email" ? m.subject : m.reason;
+  if (!base) return "Re: your message";
+  return /^re:/i.test(base) ? base : `Re: ${base}`;
+}
+
+function EmailTag() {
+  return (
+    <span className="border-border text-text-muted mr-1.5 rounded-full border px-1.5 py-px font-mono text-[10px] tracking-wide uppercase">
+      Email
+    </span>
+  );
+}
+
 export default async function InboxPage({
   searchParams,
 }: {
@@ -85,8 +107,8 @@ export default async function InboxPage({
         title="Inbox"
         description={
           unread > 0
-            ? `${unread} unread ${unread === 1 ? "message" : "messages"} from your contact form.`
-            : "Messages from your contact form."
+            ? `${unread} unread ${unread === 1 ? "message" : "messages"} from your contact form and email.`
+            : "Messages from your contact form and email."
         }
       />
 
@@ -206,7 +228,8 @@ export default async function InboxPage({
                     </span>
                   </div>
                   <p className="text-text-muted mt-0.5 truncate font-sans text-xs">
-                    {m.reason ?? "General"}
+                    {m.source === "email" ? <EmailTag /> : null}
+                    {topic(m)}
                     {m.organization ? ` · ${m.organization}` : ""}
                   </p>
                   <p className="text-text-muted mt-1.5 line-clamp-2 font-serif text-sm">
@@ -234,12 +257,13 @@ export default async function InboxPage({
                     {selected.organization ? ` · ${selected.organization}` : ""}
                   </p>
                   <p className="text-text-muted mt-1 font-mono text-xs">
-                    {selected.reason ?? "General"} · {when(selected.createdAt)}
+                    {selected.source === "email" ? <EmailTag /> : null}
+                    {topic(selected)} · {when(selected.createdAt)}
                   </p>
                 </div>
                 {sender ? null : (
                   <a
-                    href={`mailto:${selected.email}?subject=${encodeURIComponent("Re: your message")}`}
+                    href={`mailto:${selected.email}?subject=${encodeURIComponent(replySubject(selected))}`}
                     className="rounded-card bg-accent text-bg px-4 py-2 font-sans text-sm font-medium transition-opacity hover:opacity-90"
                   >
                     Reply by email
@@ -276,10 +300,7 @@ export default async function InboxPage({
                     id={selected.id}
                     to={selected.email}
                     from={sender}
-                    defaultSubject={
-                      replies.at(-1)?.subject ??
-                      `Re: ${selected.reason ?? "your message"}`
-                    }
+                    defaultSubject={replies.at(-1)?.subject ?? replySubject(selected)}
                   />
                 </div>
               ) : null}

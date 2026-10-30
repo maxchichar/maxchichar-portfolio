@@ -19,6 +19,8 @@ export interface EmailMessage {
   html: string;
   replyTo?: string;
   from?: string;
+  /** Extra headers, e.g. In-Reply-To so a reply threads in the recipient's mail app. */
+  headers?: Record<string, string>;
 }
 
 export function isEmailConfigured(): boolean {
@@ -77,6 +79,13 @@ export async function sendEmail(message: EmailMessage): Promise<boolean> {
         text: message.text,
         html: message.html,
         ...(message.replyTo ? { reply_to: message.replyTo } : {}),
+        ...(message.headers
+          ? {
+              headers: Object.fromEntries(
+                Object.entries(message.headers).map(([k, v]) => [k, singleLine(v)]),
+              ),
+            }
+          : {}),
       }),
       signal: AbortSignal.timeout(10_000),
     });

@@ -15,14 +15,74 @@ export interface NewSubmission {
 }
 
 const VIOLET = "#652bfc";
+const INK = "#0c0c0f";
+const PAPER = "#f2f1ed";
+const MUTED = "#6b6a66";
+const RULE = "#e7e5df";
+const SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif";
+const SERIF = "Georgia,'Times New Roman',serif";
 
-function layout(inner: string): string {
-  return `<!doctype html><html><body style="margin:0;background:#f5f4f0;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#141416;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e4e2dc;border-radius:12px;">
-<tr><td style="padding:28px 28px 8px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${VIOLET};"></span></td></tr>
-<tr><td style="padding:0 28px 28px;">${inner}</td></tr>
-</table></body></html>`;
+interface LayoutOptions {
+  /** Inbox preview line shown next to the subject; never visible in the body. */
+  preheader?: string;
+  /** Small print under the card, e.g. why the recipient got this. */
+  footnote?: string;
 }
+
+/**
+ * The shared frame for every email: a dark header band with the logo and
+ * name, a white card for the content and a quiet footer. Table layout and
+ * inline styles because that is what mail clients reliably render; the logo
+ * is a PNG (public/email-logo.png) since most clients drop SVG.
+ */
+function layout(inner: string, options: LayoutOptions = {}): string {
+  const site = getSiteUrl();
+  const siteLabel = site.replace(/^https?:\/\//, "");
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"></head>
+<body style="margin:0;padding:0;background:#f4f3ef;-webkit-font-smoothing:antialiased;">
+${options.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${escapeHtml(options.preheader)}</div>` : ""}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f3ef;">
+<tr><td align="center" style="padding:40px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
+<tr><td style="background:${INK};border-radius:16px 16px 0 0;padding:26px 36px;">
+<a href="${escapeHtml(site)}" style="text-decoration:none;">
+<table role="presentation" cellpadding="0" cellspacing="0"><tr>
+<td style="vertical-align:middle;padding-right:14px;"><img src="${escapeHtml(site)}/email-logo.png" width="35" height="28" alt="" style="display:block;border:0;width:35px;height:28px;"></td>
+<td style="vertical-align:middle;font-family:${SERIF};font-size:19px;letter-spacing:.01em;color:${PAPER};">Chibueze Maxwell</td>
+</tr></table></a>
+</td></tr>
+<tr><td style="height:3px;line-height:3px;font-size:0;background:${VIOLET};">&nbsp;</td></tr>
+<tr><td style="background:#ffffff;border:1px solid ${RULE};border-top:0;border-radius:0 0 16px 16px;padding:40px 36px 36px;font-family:${SANS};color:#141416;">
+${inner}
+</td></tr>
+<tr><td align="center" style="padding:28px 24px 0;font-family:${SANS};font-size:12px;line-height:1.7;color:${MUTED};">
+<a href="${escapeHtml(site)}" style="color:${MUTED};text-decoration:none;letter-spacing:.08em;text-transform:uppercase;">${escapeHtml(siteLabel)}</a>
+${options.footnote ? `<br>${escapeHtml(options.footnote)}` : ""}
+</td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+/** Name and site link closing a personal email. */
+function signature(name: string | null): string {
+  const site = getSiteUrl();
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:32px;border-top:1px solid ${RULE};padding-top:20px;width:100%;"><tr><td style="padding-top:20px;">
+${name ? `<p style="margin:0;font-family:${SERIF};font-size:17px;color:#141416;">${escapeHtml(name)}</p>` : ""}
+<p style="margin:4px 0 0;font-size:13px;"><a href="${escapeHtml(site)}" style="color:${VIOLET};text-decoration:none;">${escapeHtml(site.replace(/^https?:\/\//, ""))}</a></p>
+</td></tr></table>`;
+}
+
+/** Display name from a sender like "Chibueze Maxwell <hello@…>", if it has one. */
+export function senderName(from: string): string | null {
+  const match = /^\s*"?([^"<]+?)"?\s*</.exec(from);
+  return match?.[1]?.trim() || null;
+}
+
+const eyebrow = (label: string) =>
+  `<p style="margin:0 0 10px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:${VIOLET};">${escapeHtml(label)}</p>`;
 
 /** Email to the site owner: everything needed to triage and reply. */
 function ownerEmail(s: NewSubmission, siteName: string) {
@@ -44,22 +104,24 @@ function ownerEmail(s: NewSubmission, siteName: string) {
     `Open in your inbox: ${inboxUrl}`,
   ].join("\n");
 
-  const html = layout(`
-<p style="margin:16px 0 4px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#6b6a66;">New message</p>
-<h1 style="margin:0 0 20px;font-size:22px;line-height:1.3;">${escapeHtml(s.name)}${s.reason ? ` <span style="color:#6b6a66;font-weight:400;">· ${escapeHtml(s.reason)}</span>` : ""}</h1>
-<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;margin-bottom:20px;">
+  const html = layout(
+    `${eyebrow("New message")}
+<h1 style="margin:0 0 24px;font-family:${SERIF};font-size:28px;font-weight:400;line-height:1.25;color:#141416;">${escapeHtml(s.name)}${s.reason ? ` <span style="color:${MUTED};">· ${escapeHtml(s.reason)}</span>` : ""}</h1>
+<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;margin-bottom:24px;">
 ${rows
   .map(
     ([k, v]) =>
-      `<tr><td style="padding:3px 16px 3px 0;color:#6b6a66;vertical-align:top;">${k}</td><td style="padding:3px 0;">${escapeHtml(v)}</td></tr>`,
+      `<tr><td style="padding:4px 20px 4px 0;color:${MUTED};vertical-align:top;white-space:nowrap;">${k}</td><td style="padding:4px 0;color:#141416;">${escapeHtml(v)}</td></tr>`,
   )
   .join("")}
 </table>
-<div style="white-space:pre-wrap;font-size:15px;line-height:1.6;border-left:3px solid ${VIOLET};padding:4px 0 4px 16px;">${escapeHtml(s.message)}</div>
-<p style="margin:28px 0 0;font-size:14px;">
-<a href="mailto:${escapeHtml(s.email)}" style="display:inline-block;background:#141416;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:999px;margin:0 8px 8px 0;">Reply to ${escapeHtml(s.name.split(/\s+/)[0] ?? s.name)}</a>
-<a href="${escapeHtml(inboxUrl)}" style="display:inline-block;color:#141416;padding:10px 4px;">Open in inbox →</a>
-</p>`);
+<div style="white-space:pre-wrap;font-family:${SERIF};font-size:17px;line-height:1.7;color:#141416;background:#faf9f6;border-left:3px solid ${VIOLET};border-radius:0 10px 10px 0;padding:18px 22px;">${escapeHtml(s.message)}</div>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:32px;"><tr>
+<td style="background:${VIOLET};border-radius:999px;"><a href="${escapeHtml(inboxUrl)}" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">Reply from your inbox</a></td>
+<td style="padding-left:18px;"><a href="mailto:${escapeHtml(s.email)}" style="font-size:14px;color:#141416;text-decoration:none;">or email ${escapeHtml(s.name.split(/\s+/)[0] ?? s.name)} &rarr;</a></td>
+</tr></table>`,
+    { preheader: s.message.slice(0, 140) },
+  );
 
   return {
     subject: `New message from ${s.name}${s.reason ? ` · ${s.reason}` : ""}`,
@@ -83,10 +145,17 @@ function visitorEmail(s: NewSubmission, siteName: string) {
     siteName,
     getSiteUrl(),
   ].join("\n");
-  const html = layout(`
-<h1 style="margin:16px 0 16px;font-size:22px;line-height:1.3;">Thanks, ${escapeHtml(first)}.</h1>
-<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Your message came through and I read every one personally. I usually reply within two working days.</p>
-<p style="margin:24px 0 0;font-size:14px;color:#6b6a66;">${escapeHtml(siteName)}<br><a href="${escapeHtml(getSiteUrl())}" style="color:${VIOLET};">${escapeHtml(getSiteUrl().replace(/^https?:\/\//, ""))}</a></p>`);
+  const html = layout(
+    `${eyebrow("Message received")}
+<h1 style="margin:0 0 20px;font-family:${SERIF};font-size:30px;font-weight:400;line-height:1.25;color:#141416;">Thanks, ${escapeHtml(first)}.</h1>
+<p style="margin:0 0 14px;font-size:16px;line-height:1.7;color:#2a2a2e;">Your message came through, and I read every one personally.</p>
+<p style="margin:0;font-size:16px;line-height:1.7;color:#2a2a2e;">I usually reply within two working days.</p>
+${signature(siteName)}`,
+    {
+      preheader: "Your message came through. I usually reply within two working days.",
+      footnote: `You're receiving this because you wrote to me through ${getSiteUrl().replace(/^https?:\/\//, "")}.`,
+    },
+  );
   return { subject: `Thanks for your message, ${first}`, text, html };
 }
 
@@ -141,6 +210,7 @@ export async function sendContactEmails(s: NewSubmission): Promise<void> {
 export function replyEmail(
   original: { name: string; message: string; createdAt: Date },
   body: string,
+  signedBy: string | null = null,
 ) {
   const sentOn = new Date(original.createdAt).toLocaleString("en-US", {
     dateStyle: "medium",
@@ -154,9 +224,12 @@ export function replyEmail(
     attribution,
     ...original.message.split(/\r?\n/).map((line) => `> ${line}`),
   ].join("\n");
-  const html = layout(`
-<div style="white-space:pre-wrap;font-size:15px;line-height:1.6;margin-top:8px;">${escapeHtml(body)}</div>
-<p style="margin:28px 0 8px;font-size:13px;color:#6b6a66;">${escapeHtml(attribution)}</p>
-<div style="white-space:pre-wrap;font-size:14px;line-height:1.6;color:#6b6a66;border-left:3px solid #e4e2dc;padding:4px 0 4px 16px;">${escapeHtml(original.message)}</div>`);
+  const html = layout(
+    `<div style="white-space:pre-wrap;font-size:16px;line-height:1.75;color:#141416;">${escapeHtml(body)}</div>
+${signature(signedBy)}
+<p style="margin:36px 0 10px;font-size:12px;color:${MUTED};">${escapeHtml(attribution)}</p>
+<div style="white-space:pre-wrap;font-size:14px;line-height:1.65;color:${MUTED};background:#faf9f6;border-left:3px solid ${RULE};border-radius:0 10px 10px 0;padding:14px 18px;">${escapeHtml(original.message)}</div>`,
+    { preheader: body.slice(0, 140) },
+  );
   return { text, html };
 }
