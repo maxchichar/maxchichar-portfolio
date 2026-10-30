@@ -133,3 +133,30 @@ export async function sendContactEmails(s: NewSubmission): Promise<void> {
     console.error("sendContactEmails failed:", err);
   }
 }
+
+/**
+ * A reply written in the admin inbox, with the visitor's original message
+ * quoted underneath so they have the context.
+ */
+export function replyEmail(
+  original: { name: string; message: string; createdAt: Date },
+  body: string,
+) {
+  const sentOn = new Date(original.createdAt).toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "UTC",
+  });
+  const attribution = `On ${sentOn} UTC, ${singleLine(original.name)} wrote:`;
+  const text = [
+    body,
+    "",
+    attribution,
+    ...original.message.split(/\r?\n/).map((line) => `> ${line}`),
+  ].join("\n");
+  const html = layout(`
+<div style="white-space:pre-wrap;font-size:15px;line-height:1.6;margin-top:8px;">${escapeHtml(body)}</div>
+<p style="margin:28px 0 8px;font-size:13px;color:#6b6a66;">${escapeHtml(attribution)}</p>
+<div style="white-space:pre-wrap;font-size:14px;line-height:1.6;color:#6b6a66;border-left:3px solid #e4e2dc;padding:4px 0 4px 16px;">${escapeHtml(original.message)}</div>`);
+  return { text, html };
+}

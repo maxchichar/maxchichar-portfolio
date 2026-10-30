@@ -2,10 +2,17 @@ import Link from "next/link";
 
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { INBOX_STATUSES, type InboxStatus } from "@/server/repositories/contact";
-import { getSubmission, listInbox } from "@/server/services/contact";
-import { isEmailConfigured } from "@/server/services/email";
+import {
+  canReply,
+  getSubmission,
+  listInbox,
+  listReplies,
+} from "@/server/services/contact";
+import { readOrFallback } from "@/server/services/fallback-read";
+import { isEmailConfigured, replySender } from "@/server/services/email";
 
 import { DeleteMessageButton } from "./delete-message-button";
+import { ReplyForm } from "./reply-form";
 
 import { setInboxStatusForm } from "./actions";
 
@@ -40,6 +47,16 @@ export default async function InboxPage({
     listInbox(status),
     id ? getSubmission(id) : null,
   ]);
+  // Degrades to an empty thread if the replies table isn't migrated yet.
+  const { value: replies } = selected
+    ? await readOrFallback(
+        "/admin/inbox",
+        "replies",
+        listReplies(selected.id),
+        [] as Awaited<ReturnType<typeof listReplies>>,
+      )
+    : { value: [] };
+  const sender = canReply() ? replySender() : null;
   const unread = counts.NEW ?? 0;
   const tabCount = (v: InboxStatus | "inbox") =>
     v === "inbox" ? (counts.NEW ?? 0) + (counts.READ ?? 0) : (counts[v] ?? 0);
@@ -71,6 +88,12 @@ export default async function InboxPage({
           messages only appear here. Add{" "}
           <code className="font-mono text-xs">RESEND_API_KEY</code> to your environment
           variables to get an email for each one.
+        </p>
+      ) : !canReply() ? (
+        <p className="border-border bg-surface text-text-muted mb-6 rounded-lg border px-4 py-3 font-sans text-sm">
+          <span className="text-text font-medium">Replying from here is off.</span> Set{" "}
+          <code className="font-mono text-xs">REPLY_FROM_EMAIL</code> to an address on
+          your verified Resend domain to answer messages from this page.
         </p>
       ) : null}
 
@@ -162,16 +185,52 @@ export default async function InboxPage({
                     {selected.reason ?? "General"} · {when(selected.createdAt)}
                   </p>
                 </div>
-                <a
-                  href={`mailto:${selected.email}?subject=${encodeURIComponent("Re: your message")}`}
-                  className="rounded-card bg-accent text-bg px-4 py-2 font-sans text-sm font-medium transition-opacity hover:opacity-90"
-                >
-                  Reply by email
-                </a>
+                {sender ? null : (
+                  <a
+                    href={`mailto:${selected.email}?subject=${encodeURIComponent("Re: your message")}`}
+                    className="rounded-card bg-accent text-bg px-4 py-2 font-sans text-sm font-medium transition-opacity hover:opacity-90"
+                  >
+                    Reply by email
+                  </a>
+                )}
               </header>
               <p className="text-text mt-6 font-serif text-lg leading-relaxed whitespace-pre-wrap">
                 {selected.message}
               </p>
+              {replies.length > 0 ? (
+                <ol aria-label="Replies" className="mt-8 space-y-4">
+                  {replies.map((r) => (
+                    <li
+                      key={r.id}
+                      className="border-accent bg-surface-2 rounded-card border-l-2 px-5 py-4"
+                    >
+                      <p className="text-text-muted font-mono text-[11px]">
+                        You replied · {when(r.createdAt)} · {r.subject}
+                      </p>
+                      <p className="text-text mt-2 font-serif text-base leading-relaxed whitespace-pre-wrap">
+                        {r.body}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              ) : null}
+              {sender ? (
+                <div className="border-border mt-8 border-t pt-6">
+                  <h3 className="text-text mb-3 font-sans text-sm font-semibold">
+                    Reply
+                  </h3>
+                  <ReplyForm
+                    key={selected.id}
+                    id={selected.id}
+                    to={selected.email}
+                    from={sender}
+                    defaultSubject={
+                      replies.at(-1)?.subject ??
+                      `Re: ${selected.reason ?? "your message"}`
+                    }
+                  />
+                </div>
+              ) : null}
               <div className="border-border mt-8 flex flex-wrap gap-2 border-t pt-5">
                 {(
                   [
