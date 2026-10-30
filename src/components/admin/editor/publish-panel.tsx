@@ -85,7 +85,7 @@ export function PublishPanel({
   const hidden = <input type="hidden" name={idName} value={id} />;
   return (
     <div className="space-y-4 lg:sticky lg:top-6">
-      <section className="rounded-panel border-border bg-surface border p-5">
+      <section className="rounded-panel border-border bg-surface border p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <h2 className="text-text font-sans text-sm font-semibold">Publishing</h2>
           {itemStatus === "ARCHIVED" ? <StatusPill status="ARCHIVED" /> : null}
@@ -197,7 +197,7 @@ export function PublishPanel({
         </div>
       </section>
 
-      <section className="rounded-panel border-border bg-surface border p-5">
+      <section className="rounded-panel border-border bg-surface border p-4 sm:p-5">
         <h2 className="text-text font-sans text-sm font-semibold">History</h2>
         <ol className="mt-4 space-y-3">
           {versions.map((v) => (
@@ -207,7 +207,7 @@ export function PublishPanel({
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-text truncate font-sans text-xs">{v.title}</p>
-                <div className="mt-1 flex items-center gap-2">
+                <div className="mt-1 flex flex-wrap items-center gap-2">
                   <StatusPill status={v.status} />
                   {v.status === "SUPERSEDED" && !draft ? (
                     <ConfirmForm

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth/config";
@@ -44,8 +45,14 @@ export default async function NewProjectPage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-xl px-6 py-10 md:px-10 md:py-12">
-      <h1 className="text-text font-sans text-3xl font-semibold tracking-tight">
+    <main className="mx-auto w-full max-w-xl px-4 py-6 sm:px-6 sm:py-10 md:px-10 md:py-12">
+      <Link
+        href="/admin/projects"
+        className="text-text-muted hover:text-text -my-1 inline-flex items-center gap-1.5 py-1 font-sans text-sm transition-colors sm:text-xs"
+      >
+        ← Projects
+      </Link>
+      <h1 className="text-text mt-4 font-sans text-2xl font-semibold tracking-tight sm:text-3xl">
         New Project
       </h1>
 
@@ -59,7 +66,7 @@ export default async function NewProjectPage({
             name="slug"
             required
             placeholder="cryptoscan"
-            className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-mono text-sm outline-none"
+            className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-mono text-sm outline-none max-sm:text-base"
           />
         </div>
         <div>
@@ -70,7 +77,7 @@ export default async function NewProjectPage({
             id="title"
             name="title"
             required
-            className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
+            className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none max-sm:text-base"
           />
         </div>
         <div>
@@ -85,7 +92,7 @@ export default async function NewProjectPage({
             name="shortDescription"
             required
             rows={3}
-            className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm outline-none"
+            className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm outline-none max-sm:text-base"
           />
         </div>
         {error && (
@@ -95,7 +102,7 @@ export default async function NewProjectPage({
         )}
         <button
           type="submit"
-          className="rounded-card bg-accent text-bg px-4 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90"
+          className="rounded-card bg-accent text-bg w-full px-4 py-3 font-sans text-sm font-medium transition-opacity hover:opacity-90 sm:w-auto sm:py-2.5"
         >
           Create draft
         </button>

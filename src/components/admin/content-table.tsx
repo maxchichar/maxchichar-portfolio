@@ -91,24 +91,24 @@ export function ContentTable({
   };
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10 md:py-12">
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 md:py-12">
       <AdminPageHeader
         title={title}
         description={description}
         actions={
           <Link
             href={newHref}
-            className="rounded-card bg-accent text-bg px-4 py-2 font-sans text-sm font-medium transition-opacity hover:opacity-90"
+            className="rounded-card bg-accent text-bg px-4 py-2.5 font-sans text-sm font-medium whitespace-nowrap transition-opacity hover:opacity-90 sm:py-2"
           >
             + {newLabel}
           </Link>
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <nav
           aria-label="Status"
-          className="bg-surface border-border flex rounded-full border p-1"
+          className="bg-surface border-border flex max-w-full [scrollbar-width:none] overflow-x-auto rounded-full border p-1 sm:self-start [&::-webkit-scrollbar]:hidden"
         >
           {FILTERS.map((f) => {
             const count = rows.filter((r) => matches(r, f.value)).length;
@@ -118,7 +118,7 @@ export function ContentTable({
                 key={f.value}
                 href={href(f.value)}
                 aria-current={active ? "page" : undefined}
-                className={`rounded-full px-3.5 py-1.5 font-sans text-xs transition-colors ${
+                className={`shrink-0 grow rounded-full px-3.5 py-2 text-center font-sans text-xs whitespace-nowrap transition-colors sm:grow-0 sm:py-1.5 ${
                   active ? "bg-text text-bg" : "text-text-muted hover:text-text"
                 }`}
               >
@@ -128,7 +128,7 @@ export function ContentTable({
             );
           })}
         </nav>
-        <form action={basePath} method="GET" role="search">
+        <form action={basePath} method="GET" role="search" className="w-full sm:w-auto">
           {filter !== "all" ? <input type="hidden" name="status" value={filter} /> : null}
           <input
             type="search"
@@ -136,7 +136,7 @@ export function ContentTable({
             defaultValue={rawQuery ?? ""}
             placeholder="Search titles…"
             aria-label={`Search ${title.toLowerCase()}`}
-            className="rounded-card border-border bg-surface text-text focus-visible:border-accent w-64 border px-3.5 py-2 font-sans text-sm outline-none"
+            className="rounded-card border-border bg-surface text-text focus-visible:border-accent w-full border px-3.5 py-2.5 font-sans text-base outline-none sm:w-64 sm:py-2 sm:text-sm"
           />
         </form>
       </div>
@@ -150,7 +150,7 @@ export function ContentTable({
           <table className="w-full text-left">
             <thead className="border-border text-text-muted border-b font-mono text-[10px] tracking-wider uppercase">
               <tr>
-                <th scope="col" className="px-5 py-3 font-normal">
+                <th scope="col" className="px-4 py-3 font-normal sm:px-5">
                   Title
                 </th>
                 <th scope="col" className="hidden px-5 py-3 font-normal md:table-cell">
@@ -159,7 +159,7 @@ export function ContentTable({
                 <th scope="col" className="hidden px-5 py-3 font-normal sm:table-cell">
                   Updated
                 </th>
-                <th scope="col" className="w-10 px-5 py-3">
+                <th scope="col" className="w-10 px-4 py-3 sm:px-5">
                   <span className="sr-only">Open</span>
                 </th>
               </tr>
@@ -170,17 +170,26 @@ export function ContentTable({
                   key={row.id}
                   className="group hover:bg-surface-2 relative transition-colors"
                 >
-                  <td className="px-5 py-4">
+                  <td className="max-w-0 px-4 py-4 sm:px-5 md:max-w-none">
                     <Link
                       href={row.href}
-                      className="text-text font-sans text-sm font-medium after:absolute after:inset-0"
+                      className="text-text font-sans text-sm font-medium [overflow-wrap:anywhere] after:absolute after:inset-0"
                     >
                       {row.title}
                     </Link>
-                    <p className="text-text-muted mt-0.5 font-mono text-xs">
+                    <p className="text-text-muted mt-0.5 truncate font-mono text-xs">
                       /{row.slug}
                       {row.meta ? ` · ${row.meta}` : ""}
                     </p>
+                    {/* Status and age live in their own columns from md/sm up. */}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5 md:hidden">
+                      {row.archived ? <StatusPill status="ARCHIVED" /> : null}
+                      {row.live ? <StatusPill status="PUBLISHED" label="Live" /> : null}
+                      {row.draft ? <StatusPill status="DRAFT" label="Draft" /> : null}
+                      <span className="text-text-muted font-mono text-[11px] sm:hidden">
+                        {relative(row.updatedAt)}
+                      </span>
+                    </div>
                   </td>
                   <td className="hidden px-5 py-4 md:table-cell">
                     <div className="flex flex-wrap gap-1.5">
@@ -192,7 +201,7 @@ export function ContentTable({
                   <td className="text-text-muted hidden px-5 py-4 font-mono text-xs sm:table-cell">
                     {relative(row.updatedAt)}
                   </td>
-                  <td className="text-text-muted group-hover:text-accent px-5 py-4 text-right transition-colors">
+                  <td className="text-text-muted group-hover:text-accent w-10 px-4 py-4 text-right transition-colors sm:px-5">
                     →
                   </td>
                 </tr>

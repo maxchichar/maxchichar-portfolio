@@ -15,13 +15,13 @@ export function EditorSection({
       id={id}
       className="rounded-panel border-border bg-surface scroll-mt-24 border"
     >
-      <header className="border-border border-b px-6 py-4">
+      <header className="border-border border-b px-4 py-4 sm:px-6">
         <h2 className="text-text font-sans text-sm font-semibold">{title}</h2>
         {description ? (
           <p className="text-text-muted mt-0.5 font-sans text-xs">{description}</p>
         ) : null}
       </header>
-      <div className="space-y-5 p-6">{children}</div>
+      <div className="space-y-5 p-4 sm:p-6">{children}</div>
     </section>
   );
 }
