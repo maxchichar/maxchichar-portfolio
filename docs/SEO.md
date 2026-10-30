@@ -116,12 +116,12 @@ a third-party web search; the site is not yet visible there.
 
 ## 8. Backlog
 
-| Pri | Item                                                                       | Done when                                                  |
-| --- | -------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| P0  | Deploy edge Worker; Bing + IndexNow env                                    | All listed files return 200 live; Bing shows site verified |
-| P1  | Submit sitemaps to Google and Bing                                         | Both report the sitemap read, URLs discovered              |
-| P1  | Profile photo + all socials in settings                                    | Home JSON-LD includes `image` and full `sameAs`            |
-| P2  | CollectionPage + ItemList JSON-LD on `/work`, `/research`, `/writing`      | Rich Results test passes                                   |
-| P2  | `SoftwareSourceCode` with `codeRepository` for projects with public repos  | Each project links its repo                                |
-| P2  | Add Organization / `worksFor` only once a venture is public and verifiable | Entity has an official page                                |
-| P3  | Monthly AI-citation prompt run (section 7)                                 | Logged results                                             |
+| Pri | Item                                                                       | Done when                                                                                                      |
+| --- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| P0  | Deploy edge Worker; Bing + IndexNow env                                    | All listed files return 200 live; Bing shows site verified                                                     |
+| P1  | Submit sitemaps to Google and Bing                                         | Both report the sitemap read, URLs discovered                                                                  |
+| P1  | Profile photo + all socials in settings                                    | Home JSON-LD includes `image` and full `sameAs`                                                                |
+| P2  | ~~CollectionPage + ItemList JSON-LD on `/work`, `/research`, `/writing`~~  | Shipped (`buildCollectionPageJsonLd`); confirm in the [Schema Markup Validator](https://validator.schema.org/) |
+| P2  | `SoftwareSourceCode` with `codeRepository` for projects with public repos  | Each project links its repo                                                                                    |
+| P2  | Add Organization / `worksFor` only once a venture is public and verifiable | Entity has an official page                                                                                    |
+| P3  | Monthly AI-citation prompt run (section 7)                                 | Logged results                                                                                                 |

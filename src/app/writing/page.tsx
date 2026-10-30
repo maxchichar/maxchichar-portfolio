@@ -7,6 +7,7 @@ import { Nav } from "@/components/layout/nav";
 import { countBy, FilterChips, firstParam } from "@/components/layout/filter-chips";
 import { PageIntro } from "@/components/layout/page-intro";
 import { constructPageMetadata, withNoIndex } from "@/lib/metadata";
+import { buildCollectionPageJsonLd, JsonLdScript } from "@/lib/structured-data";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { listPublicArticlesOverview } from "@/server/services/articles";
 import { PageTransition } from "@/components/motion/page-transition";
@@ -15,10 +16,13 @@ import { MediaImage } from "@/components/media-image";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const TITLE = "Writing";
+const DESCRIPTION =
+  "AI Engineer & Entrepreneur. Essays and notes on building intelligent systems.";
+
 const METADATA: Metadata = constructPageMetadata({
-  title: "Writing",
-  description:
-    "Super Intelligence Engineer & Entrepreneur. Essays and notes on building intelligent systems.",
+  title: TITLE,
+  description: DESCRIPTION,
   path: "/writing",
 });
 
@@ -58,8 +62,23 @@ export default async function WritingListingPage({
   // The newest piece is featured, unless a filter narrows the list.
   const [featured, ...rest] = active ? [null, ...visible] : visible;
 
+  // Describes the unfiltered list, which is what the canonical URL shows.
+  const collectionJsonLd =
+    !failed && sorted.length > 0
+      ? buildCollectionPageJsonLd({
+          path: "/writing",
+          name: TITLE,
+          description: DESCRIPTION,
+          items: sorted.map(({ article, published }) => ({
+            path: `/writing/${article.slug}`,
+            name: published.title,
+          })),
+        })
+      : null;
+
   return (
     <>
+      {collectionJsonLd ? <JsonLdScript data={collectionJsonLd} /> : null}
       <Nav />
 
       <PageTransition>

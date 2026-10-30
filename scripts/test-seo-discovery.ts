@@ -158,3 +158,61 @@ describe("Person entity", () => {
     assert.strictEqual(article.inLanguage, "en");
   });
 });
+
+describe("CollectionPage structured data", () => {
+  it("lists a section's items in order, each at its canonical URL", async () => {
+    const { buildCollectionPageJsonLd } = await import("../src/lib/structured-data");
+    const graph = buildCollectionPageJsonLd({
+      path: "/work",
+      name: "Selected Work",
+      description: " Projects ",
+      items: [
+        { path: "/work/repotrace", name: "RepoTrace" },
+        { path: "/work/refjou", name: "RefJou" },
+      ],
+    }) as { "@context": string; "@graph": Array<Record<string, unknown>> };
+
+    assert.strictEqual(graph["@context"], "https://schema.org");
+    const [page, list, breadcrumbs] = graph["@graph"];
+    assert.strictEqual(page!["@type"], "CollectionPage");
+    assert.strictEqual(page!.url, "http://localhost:3000/work");
+    assert.strictEqual(page!.description, "Projects");
+    assert.deepStrictEqual(page!.mainEntity, { "@id": list!["@id"] });
+    assert.deepStrictEqual(page!.about, { "@id": "http://localhost:3000/#person" });
+    assert.deepStrictEqual(page!.isPartOf, { "@id": "http://localhost:3000/#website" });
+
+    assert.strictEqual(list!["@type"], "ItemList");
+    assert.strictEqual(list!.numberOfItems, 2);
+    assert.deepStrictEqual(list!.itemListElement, [
+      {
+        "@type": "ListItem",
+        position: 1,
+        url: "http://localhost:3000/work/repotrace",
+        name: "RepoTrace",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        url: "http://localhost:3000/work/refjou",
+        name: "RefJou",
+      },
+    ]);
+
+    assert.strictEqual(breadcrumbs!["@type"], "BreadcrumbList");
+    assert.strictEqual((breadcrumbs!.itemListElement as unknown[]).length, 2);
+    // Nested nodes in a @graph never repeat @context.
+    for (const node of graph["@graph"]) assert.strictEqual(node["@context"], undefined);
+  });
+
+  it("omits an empty description", async () => {
+    const { buildCollectionPageJsonLd } = await import("../src/lib/structured-data");
+    const graph = buildCollectionPageJsonLd({
+      path: "/writing",
+      name: "Writing",
+      description: "  ",
+      items: [],
+    }) as { "@graph": Array<Record<string, unknown>> };
+    assert.strictEqual(graph["@graph"][0]!.description, undefined);
+    assert.strictEqual(graph["@graph"][1]!.numberOfItems, 0);
+  });
+});

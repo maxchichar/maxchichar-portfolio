@@ -7,6 +7,7 @@ import { Nav } from "@/components/layout/nav";
 import { countBy, FilterChips, firstParam } from "@/components/layout/filter-chips";
 import { PageIntro } from "@/components/layout/page-intro";
 import { constructPageMetadata, withNoIndex } from "@/lib/metadata";
+import { buildCollectionPageJsonLd, JsonLdScript } from "@/lib/structured-data";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { listPublicWorkOverview } from "@/server/services/projects";
 import { PageTransition } from "@/components/motion/page-transition";
@@ -15,10 +16,13 @@ import { MediaImage } from "@/components/media-image";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const TITLE = "Selected Work";
+const DESCRIPTION =
+  "AI Engineer & Entrepreneur. Selected projects, intelligent systems, and engineering case studies.";
+
 const METADATA: Metadata = constructPageMetadata({
-  title: "Selected Work",
-  description:
-    "Super Intelligence Engineer & Entrepreneur. Selected projects, intelligent systems, and engineering case studies.",
+  title: TITLE,
+  description: DESCRIPTION,
   path: "/work",
 });
 
@@ -44,8 +48,23 @@ export default async function WorkListingPage({ searchParams }: PageProps<"/work
   const active = categories.some((c) => c.value === requested) ? requested : null;
   const visible = active ? items.filter((i) => i.published.category === active) : items;
 
+  // Describes the unfiltered list, which is what the canonical URL shows.
+  const collectionJsonLd =
+    !failed && items.length > 0
+      ? buildCollectionPageJsonLd({
+          path: "/work",
+          name: TITLE,
+          description: DESCRIPTION,
+          items: items.map(({ project, published }) => ({
+            path: `/work/${project.slug}`,
+            name: published.title,
+          })),
+        })
+      : null;
+
   return (
     <>
+      {collectionJsonLd ? <JsonLdScript data={collectionJsonLd} /> : null}
       <Nav />
 
       <PageTransition>

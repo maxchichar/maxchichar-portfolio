@@ -47,8 +47,7 @@ export async function upsertSiteSettings(
     .values({
       id: 1,
       siteName: data.siteName ?? "CHIBUEZE MAXWELL",
-      siteDescription:
-        data.siteDescription ?? "Super Intelligence Engineer & Entrepreneur",
+      siteDescription: data.siteDescription ?? "AI Engineer & Entrepreneur",
       primaryEmail: data.primaryEmail ?? null,
       socialGithub: data.socialGithub ?? null,
       socialX: data.socialX ?? null,
