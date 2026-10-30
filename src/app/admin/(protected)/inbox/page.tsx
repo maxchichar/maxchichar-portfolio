@@ -13,6 +13,7 @@ import { readOrFallback } from "@/server/services/fallback-read";
 import { isEmailConfigured, replySender } from "@/server/services/email";
 
 import { DeleteMessageButton } from "./delete-message-button";
+import { Avatar, EmailBody } from "./email-view";
 import { ReplyForm } from "./reply-form";
 
 import { setInboxStatusForm } from "./actions";
@@ -36,6 +37,15 @@ function when(date: Date) {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+/** A one-line glimpse of a message: no links, padding or invisible characters. */
+function preview(text: string) {
+  return text
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/[\u034f\u200b-\u200f\u2060\ufeff]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 type Message = { source: string; subject: string | null; reason: string | null };
@@ -103,14 +113,17 @@ export default async function InboxPage({
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 md:py-12">
-      <AdminPageHeader
-        title="Inbox"
-        description={
-          unread > 0
-            ? `${unread} unread ${unread === 1 ? "message" : "messages"} from your contact form and email.`
-            : "Messages from your contact form and email."
-        }
-      />
+      {/* On phones an open message gets the whole screen. */}
+      <div className={selected ? "hidden lg:block" : undefined}>
+        <AdminPageHeader
+          title="Inbox"
+          description={
+            unread > 0
+              ? `${unread} unread ${unread === 1 ? "message" : "messages"} from your contact form and email.`
+              : "Messages from your contact form and email."
+          }
+        />
+      </div>
 
       {deleted === "1" ? (
         <p role="status" className="text-text mb-6 font-sans text-sm">
@@ -211,36 +224,39 @@ export default async function InboxPage({
                 <Link
                   href={hrefFor(m.id)}
                   aria-current={selected?.id === m.id ? "true" : undefined}
-                  className={`block px-4 py-4 transition-colors sm:px-5 ${
+                  className={`flex gap-3 px-4 py-4 transition-colors sm:px-5 ${
                     selected?.id === m.id ? "bg-surface-2" : "hover:bg-surface-2"
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <p
-                      className={`truncate font-sans text-sm ${
-                        m.status === "NEW" ? "text-text font-semibold" : "text-text"
-                      }`}
-                    >
-                      {m.status === "NEW" ? (
-                        <span
-                          aria-label="Unread"
-                          className="bg-accent mr-2 inline-block h-1.5 w-1.5 rounded-full align-middle"
-                        />
-                      ) : null}
-                      {m.name}
+                  <Avatar name={m.name} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <p
+                        className={`truncate font-sans text-sm ${
+                          m.status === "NEW" ? "text-text font-semibold" : "text-text"
+                        }`}
+                      >
+                        {m.status === "NEW" ? (
+                          <span
+                            aria-label="Unread"
+                            className="bg-accent mr-2 inline-block h-1.5 w-1.5 rounded-full align-middle"
+                          />
+                        ) : null}
+                        {m.name}
+                      </p>
+                      <span className="text-text-muted shrink-0 font-mono text-[11px]">
+                        {when(m.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-text-muted mt-0.5 truncate font-sans text-xs">
+                      {m.source === "email" ? <EmailTag /> : null}
+                      {topic(m)}
+                      {m.organization ? ` · ${m.organization}` : ""}
                     </p>
-                    <span className="text-text-muted shrink-0 font-mono text-[11px]">
-                      {when(m.createdAt)}
-                    </span>
+                    <p className="text-text-muted mt-1.5 line-clamp-2 font-sans text-[13px] leading-5 [overflow-wrap:anywhere]">
+                      {preview(m.message)}
+                    </p>
                   </div>
-                  <p className="text-text-muted mt-0.5 truncate font-sans text-xs">
-                    {m.source === "email" ? <EmailTag /> : null}
-                    {topic(m)}
-                    {m.organization ? ` · ${m.organization}` : ""}
-                  </p>
-                  <p className="text-text-muted mt-1.5 line-clamp-2 font-serif text-sm">
-                    {m.message}
-                  </p>
                 </Link>
               </li>
             ))
@@ -276,32 +292,57 @@ export default async function InboxPage({
                   ? "Sent"
                   : (TABS.find((t) => t.value === status)?.label ?? "Inbox")}
               </Link>
-              <header className="border-border flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <h2 className="text-text font-sans text-xl font-semibold [overflow-wrap:anywhere]">
-                    {selected.name}
-                  </h2>
-                  <p className="text-text-muted mt-1 font-mono text-xs [overflow-wrap:anywhere]">
-                    {selected.email}
-                    {selected.organization ? ` · ${selected.organization}` : ""}
-                  </p>
-                  <p className="text-text-muted mt-1 font-mono text-xs">
-                    {selected.source === "email" ? <EmailTag /> : null}
-                    {topic(selected)} · {when(selected.createdAt)}
-                  </p>
+              <header className="border-border border-b pb-5">
+                <p className="text-text-muted flex flex-wrap items-center gap-2 font-mono text-[10px] tracking-wider uppercase">
+                  <span className="border-border rounded-full border px-2 py-0.5">
+                    {selected.source === "email" ? "Email" : "Contact form"}
+                  </span>
+                  {selected.status === "NEW" ? (
+                    <span className="text-accent border-accent/40 rounded-full border px-2 py-0.5">
+                      Unread
+                    </span>
+                  ) : null}
+                </p>
+                <h2 className="text-text mt-3 font-sans text-xl leading-snug font-semibold tracking-tight text-balance [overflow-wrap:anywhere] sm:text-2xl">
+                  {topic(selected)}
+                </h2>
+                <div className="mt-5 flex items-start gap-3">
+                  <Avatar name={selected.name} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                      <p className="text-text min-w-0 font-sans text-sm font-semibold [overflow-wrap:anywhere]">
+                        {selected.name}
+                      </p>
+                      <time
+                        dateTime={new Date(selected.createdAt).toISOString()}
+                        className="text-text-muted shrink-0 font-sans text-xs"
+                      >
+                        {when(selected.createdAt)}
+                      </time>
+                    </div>
+                    <p className="text-text-muted mt-0.5 truncate font-sans text-xs">
+                      <a
+                        href={`mailto:${selected.email}`}
+                        className="hover:text-text transition-colors"
+                      >
+                        {selected.email}
+                      </a>
+                      {selected.organization ? ` · ${selected.organization}` : ""}
+                    </p>
+                  </div>
                 </div>
                 {sender ? null : (
                   <a
                     href={`mailto:${selected.email}?subject=${encodeURIComponent(replySubject(selected))}`}
-                    className="rounded-card bg-accent text-bg shrink-0 px-4 py-2.5 text-center font-sans text-sm font-medium transition-opacity hover:opacity-90 sm:py-2"
+                    className="rounded-card bg-accent text-bg mt-5 block px-4 py-2.5 text-center font-sans text-sm font-medium transition-opacity hover:opacity-90 sm:inline-block sm:py-2"
                   >
                     Reply by email
                   </a>
                 )}
               </header>
-              <p className="text-text mt-6 font-serif text-base leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap sm:text-lg">
-                {selected.message}
-              </p>
+              <div className="mt-6">
+                <EmailBody text={selected.message} source={selected.source} />
+              </div>
               {replies.length > 0 ? (
                 <ol aria-label="Replies" className="mt-8 space-y-4">
                   {replies.map((r) => (
