@@ -7,6 +7,7 @@ import { Nav } from "@/components/layout/nav";
 import { countBy, FilterChips, firstParam } from "@/components/layout/filter-chips";
 import { PageIntro } from "@/components/layout/page-intro";
 import { constructPageMetadata, withNoIndex } from "@/lib/metadata";
+import { buildCollectionPageJsonLd, JsonLdScript } from "@/lib/structured-data";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { listPublicResearchOverview } from "@/server/services/research";
 import { PageTransition } from "@/components/motion/page-transition";
@@ -14,10 +15,13 @@ import { PageTransition } from "@/components/motion/page-transition";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const TITLE = "Research";
+const DESCRIPTION =
+  "Super Intelligence Engineer & Entrepreneur. Investigations, technical notes, and experiments, documented with verifiable evidence.";
+
 const METADATA: Metadata = constructPageMetadata({
-  title: "Research",
-  description:
-    "Super Intelligence Engineer & Entrepreneur. Investigations, technical notes, and experiments, documented with verifiable evidence.",
+  title: TITLE,
+  description: DESCRIPTION,
   path: "/research",
 });
 
@@ -45,8 +49,23 @@ export default async function ResearchListingPage({
   const active = types.some((t) => t.value === requested) ? requested : null;
   const visible = active ? items.filter((i) => i.published.type === active) : items;
 
+  // Describes the unfiltered list, which is what the canonical URL shows.
+  const collectionJsonLd =
+    !failed && items.length > 0
+      ? buildCollectionPageJsonLd({
+          path: "/research",
+          name: TITLE,
+          description: DESCRIPTION,
+          items: items.map(({ research, published }) => ({
+            path: `/research/${research.slug}`,
+            name: published.title,
+          })),
+        })
+      : null;
+
   return (
     <>
+      {collectionJsonLd ? <JsonLdScript data={collectionJsonLd} /> : null}
       <Nav />
 
       <PageTransition>

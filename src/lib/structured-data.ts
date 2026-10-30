@@ -369,6 +369,69 @@ export function buildBreadcrumbJsonLd(items: BreadcrumbItem[]): Record<string, u
   };
 }
 
+export interface CollectionPageItem {
+  /** Site path of the item's own page, e.g. "/work/repotrace". */
+  path: string;
+  name: string;
+}
+
+export interface CollectionPageJsonLdOptions {
+  /** Site path of the listing page, e.g. "/work". */
+  path: string;
+  name: string;
+  description?: string | null;
+  /** Items in the order the page lists them. */
+  items: CollectionPageItem[];
+}
+
+/**
+ * Builds Schema.org CollectionPage structured data for a section listing
+ * (/work, /research, /writing): the page, an ItemList of its published
+ * items in on-page order, and a breadcrumb back to the home page. Search
+ * engines use the ItemList to understand what the section contains and to
+ * group its entries; every entry points at its own canonical detail page.
+ */
+export function buildCollectionPageJsonLd(
+  options: CollectionPageJsonLdOptions,
+): Record<string, unknown> {
+  const canonicalUrl = resolveCanonicalUrl(options.path);
+  const siteUrl = resolveCanonicalUrl("/").replace(/\/+$/, "");
+  const description = options.description?.trim();
+  const listId = `${canonicalUrl}#items`;
+
+  const page = {
+    "@type": "CollectionPage",
+    "@id": `${canonicalUrl}#collectionpage`,
+    name: options.name,
+    ...(description ? { description } : {}),
+    url: canonicalUrl,
+    inLanguage: "en",
+    isPartOf: { "@id": `${siteUrl}/#website` },
+    about: { "@id": `${siteUrl}/#person` },
+    mainEntity: { "@id": listId },
+  };
+
+  const list = {
+    "@type": "ItemList",
+    "@id": listId,
+    name: options.name,
+    numberOfItems: options.items.length,
+    itemListElement: options.items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: resolveCanonicalUrl(item.path),
+      name: item.name,
+    })),
+  };
+
+  const breadcrumbs = buildBreadcrumbJsonLd([
+    { name: "Home", url: "/" },
+    { name: options.name, url: options.path },
+  ]);
+
+  return buildJsonLdGraph([page, list, breadcrumbs]);
+}
+
 /**
  * Combines multiple Schema.org entities into a single `@graph` object.
  */
