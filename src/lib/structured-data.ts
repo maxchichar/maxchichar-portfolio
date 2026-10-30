@@ -7,6 +7,7 @@ import {
   resolveCanonicalUrl,
   SITE_ALTERNATE_NAME,
   SITE_AUTHOR,
+  SITE_AUTHOR_ALTERNATE_NAMES,
   toPersonName,
 } from "./metadata";
 
@@ -234,7 +235,7 @@ export function buildPersonJsonLd(
     "@type": "Person",
     "@id": `${siteUrl}/#person`,
     name,
-    ...(isCanonicalPerson(name) ? { alternateName: SITE_ALTERNATE_NAME } : {}),
+    ...(isCanonicalPerson(name) ? { alternateName: SITE_AUTHOR_ALTERNATE_NAMES } : {}),
     url: `${siteUrl}/`,
     mainEntityOfPage: `${siteUrl}/about`,
     jobTitle,

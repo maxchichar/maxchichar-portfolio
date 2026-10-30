@@ -9,6 +9,7 @@ code now does, and what needs a person with account access.
 | -------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | Public name          | Chibueze Maxwell                                                                              | Site settings, live site                                       |
 | Alias                | MAXCHICHAR                                                                                    | Live site, social handles                                      |
+| Full name            | Chibueze Charles Maxwell                                                                      | Confirmed by the owner for public use                          |
 | Profession           | AI engineer; also researcher, writer, entrepreneur                                            | Self-described on the site                                     |
 | Official site        | https://chibuezemaxwell.com (www and http → 308 to apex)                                      | Verified live                                                  |
 | Profiles in `sameAs` | github.com/maxchichar, x.com/maxchichar, linkedin.com/in/maxchichar, instagram.com/maxchichar | Linked from the site (owner-claimed, not independent evidence) |
@@ -18,8 +19,9 @@ code now does, and what needs a person with account access.
 **Ambiguity.** "Chibueze" is a common Igbo name shared by footballers,
 academics and others; "Chibueze Maxwell" as an exact pair returned no other
 person, and "MAXCHICHAR" returned nothing at all. Both are winnable exact
-matches. Other name forms (full legal name, name order) are deliberately not
-published; add any you use publicly to `alternateName`.
+matches. The full name "Chibueze Charles Maxwell" is published as an
+`alternateName` alongside MAXCHICHAR (`SITE_AUTHOR_ALTERNATE_NAMES` in
+`src/lib/metadata.ts`); add any other public name form there.
 
 ## 2. Audit
 

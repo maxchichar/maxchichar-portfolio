@@ -3,6 +3,7 @@ import "server-only";
 import {
   getSiteUrl,
   SITE_ALTERNATE_NAME,
+  SITE_AUTHOR_FULL_NAME,
   SITE_AUTHOR,
   toPersonName,
 } from "@/lib/metadata";
@@ -90,6 +91,11 @@ export async function buildLlmsTxt({ full }: { full: boolean }): Promise<string>
   out.push(
     `> ${[line(settings.siteDescription), line(home ? plainHeadline(home.content.heroHeadline) : null)].filter(Boolean).join(". ").replace(/\.\./g, ".")}`,
   );
+  if (name === SITE_AUTHOR) {
+    out.push(
+      `Full name: ${SITE_AUTHOR_FULL_NAME}. Also known as ${SITE_ALTERNATE_NAME}.`,
+    );
+  }
   if (about) out.push(paras(about.content.intro));
   if (home) out.push(`Currently: ${line(home.content.currentFocusSummary)}`);
   const contact = [
