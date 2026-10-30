@@ -216,6 +216,14 @@ export async function listReplies(submissionId: string) {
   return contactRepo.listReplies(db, submissionId);
 }
 
+export async function listSent() {
+  const [items, total] = await Promise.all([
+    contactRepo.listSentReplies(db),
+    contactRepo.countReplies(db),
+  ]);
+  return { items, total };
+}
+
 /**
  * Emails a reply to the person who wrote in, from the configured sender, and
  * records it on the message. Throws ContactServiceError with a message fit to
