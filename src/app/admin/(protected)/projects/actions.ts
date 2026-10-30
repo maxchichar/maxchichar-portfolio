@@ -79,6 +79,7 @@ async function saveSubmittedDraft(formData: FormData) {
 
   const patch = parseProjectDraftForm(formData);
 
+  await projectService.ensureDraft(projectId, actor);
   await projectService.saveDraft(projectId, patch, actor);
   revalidatePath(`/admin/projects/${projectId}`);
   return { projectId, actor };

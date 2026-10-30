@@ -72,6 +72,10 @@ async function saveSubmittedDraft(formData: FormData) {
     redirect(`/admin/pages/${slug}?error=${encodeURIComponent(message)}`);
   }
 
+  // The form can outlive its draft (a second tab, or a repeat Publish click
+  // after the first one already published it), so reopen one if needed
+  // instead of failing the save.
+  await pagesService.ensureDraft(pageId, actor);
   await pagesService.saveDraft(pageId, parsed.data, actor);
   revalidatePath(`/admin/pages/${slug}`);
   return { actor, pageId, slug };
