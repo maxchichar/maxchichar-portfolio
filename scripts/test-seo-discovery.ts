@@ -216,3 +216,72 @@ describe("CollectionPage structured data", () => {
     assert.strictEqual(graph["@graph"][1]!.numberOfItems, 0);
   });
 });
+
+describe("SoftwareSourceCode structured data", () => {
+  const base = {
+    title: "RefJou",
+    description: "Reference journal.",
+    slug: "refjou",
+    authorName: "CHIBUEZE MAXWELL",
+  };
+
+  it("separates programming languages from frameworks and tools", async () => {
+    const { programmingLanguagesOf } = await import("../src/lib/structured-data");
+    assert.deepStrictEqual(
+      programmingLanguagesOf(["TypeScript", "Next.js", "python", "Docker", "ts", "C++"]),
+      ["TypeScript", "Python", "C++"],
+    );
+    assert.deepStrictEqual(programmingLanguagesOf(null), []);
+  });
+
+  it("describes the repository and links back to a software project", async () => {
+    const { buildSourceCodeJsonLd, buildWorkJsonLd } =
+      await import("../src/lib/structured-data");
+    const options = {
+      ...base,
+      category: "Web Application",
+      githubUrl: " https://github.com/maxchichar/refjou ",
+      technologies: ["TypeScript", "Next.js", "PostgreSQL"],
+    };
+    const work = buildWorkJsonLd(options);
+    const code = buildSourceCodeJsonLd(options)!;
+
+    assert.strictEqual(code["@type"], "SoftwareSourceCode");
+    assert.strictEqual(code.codeRepository, "https://github.com/maxchichar/refjou");
+    assert.strictEqual(code.url, "https://github.com/maxchichar/refjou");
+    assert.strictEqual(code.programmingLanguage, "TypeScript");
+    assert.strictEqual(code.keywords, "TypeScript, Next.js, PostgreSQL");
+    assert.strictEqual((code.author as Record<string, unknown>).name, "Chibueze Maxwell");
+    assert.deepStrictEqual(code.targetProduct, { "@id": work["@id"] });
+    assert.deepStrictEqual(work.isBasedOn, { "@id": code["@id"] });
+  });
+
+  it("links a non-software project only through isBasedOn", async () => {
+    const { buildSourceCodeJsonLd, buildWorkJsonLd } =
+      await import("../src/lib/structured-data");
+    const options = { ...base, githubUrl: "https://github.com/maxchichar/py-modu" };
+    const code = buildSourceCodeJsonLd(options)!;
+    assert.strictEqual(code.targetProduct, undefined);
+    assert.strictEqual(code.programmingLanguage, undefined);
+    assert.deepStrictEqual(buildWorkJsonLd(options).isBasedOn, { "@id": code["@id"] });
+  });
+
+  it("adds nothing without a usable repository URL", async () => {
+    const { buildSourceCodeJsonLd, buildWorkJsonLd } =
+      await import("../src/lib/structured-data");
+    for (const githubUrl of [
+      null,
+      "",
+      "  ",
+      "github.com/no-scheme",
+      "javascript:alert(1)",
+    ]) {
+      assert.strictEqual(
+        buildSourceCodeJsonLd({ ...base, githubUrl }),
+        null,
+        String(githubUrl),
+      );
+      assert.strictEqual(buildWorkJsonLd({ ...base, githubUrl }).isBasedOn, undefined);
+    }
+  });
+});

@@ -41,6 +41,10 @@ export interface WorkJsonLdOptions {
   publishedAt?: Date | string | null;
   updatedAt?: Date | string | null;
   authorName?: string | null;
+  /** Public source repository (e.g. GitHub); adds a SoftwareSourceCode node. */
+  githubUrl?: string | null;
+  /** The project's technologies: languages, frameworks and tools mixed. */
+  technologies?: string[] | null;
 }
 
 export interface ResearchJsonLdOptions {
@@ -272,21 +276,103 @@ export function buildProfilePageJsonLd(
 }
 
 /** Builds structured data for a published work detail page. */
+/** The project node's type, shared by its builder and the source code node. */
+function workType(category?: string | null): "SoftwareApplication" | "CreativeWork" {
+  return category && /software|application|app\b/i.test(category)
+    ? "SoftwareApplication"
+    : "CreativeWork";
+}
+
+function workId(slug: string, type: string): string {
+  return `${resolveCanonicalUrl(`/work/${slug}`)}/#${type.toLowerCase()}`;
+}
+
+function sourceCodeId(slug: string): string {
+  return `${resolveCanonicalUrl(`/work/${slug}`)}/#softwaresourcecode`;
+}
+
+/** A trimmed http(s) URL, or null. */
+function httpUrl(value?: string | null): string | null {
+  const trimmed = value?.trim();
+  return trimmed && /^https?:\/\/\S+$/i.test(trimmed) ? trimmed : null;
+}
+
+/**
+ * Programming languages as they're usually written. A project's technologies
+ * mix languages with frameworks and tools ("TypeScript", "Next.js",
+ * "Docker"); only these count as `programmingLanguage`, so a framework is
+ * never mislabelled as a language.
+ */
+const PROGRAMMING_LANGUAGES = [
+  "Bash",
+  "C",
+  "C#",
+  "C++",
+  "Clojure",
+  "CSS",
+  "Dart",
+  "Elixir",
+  "Erlang",
+  "F#",
+  "Go",
+  "Haskell",
+  "HTML",
+  "Java",
+  "JavaScript",
+  "Julia",
+  "Kotlin",
+  "Lua",
+  "MATLAB",
+  "Nim",
+  "Objective-C",
+  "OCaml",
+  "Perl",
+  "PHP",
+  "PowerShell",
+  "Python",
+  "R",
+  "Ruby",
+  "Rust",
+  "Scala",
+  "Shell",
+  "Solidity",
+  "SQL",
+  "Swift",
+  "TypeScript",
+  "Zig",
+];
+const LANGUAGE_BY_KEY = new Map(PROGRAMMING_LANGUAGES.map((l) => [l.toLowerCase(), l]));
+const LANGUAGE_ALIASES: Record<string, string> = {
+  golang: "Go",
+  js: "JavaScript",
+  ts: "TypeScript",
+  py: "Python",
+  "c sharp": "C#",
+  cpp: "C++",
+};
+
+export function programmingLanguagesOf(technologies?: string[] | null): string[] {
+  const found = (technologies ?? []).map((t) => {
+    const key = t.trim().toLowerCase();
+    return LANGUAGE_BY_KEY.get(key) ?? LANGUAGE_ALIASES[key];
+  });
+  return [...new Set(found.filter((l): l is string => Boolean(l)))];
+}
+
 export function buildWorkJsonLd(options: WorkJsonLdOptions): Record<string, unknown> {
   const canonicalUrl = resolveCanonicalUrl(`/work/${options.slug}`);
   const siteUrl = resolveCanonicalUrl("/").replace(/\/+$/, "");
-  const isSoftware =
-    Boolean(options.category) &&
-    /software|application|app\b/i.test(options.category || "");
-  const type = isSoftware ? "SoftwareApplication" : "CreativeWork";
+  const type = workType(options.category);
+  const isSoftware = type === "SoftwareApplication";
   const datePublished = toIsoDate(options.publishedAt);
   const dateModified = toIsoDate(options.updatedAt);
   const image = resolveStructuredDataImage(options.coverUrl);
+  const hasSource = Boolean(httpUrl(options.githubUrl));
 
   return {
     "@context": "https://schema.org",
     "@type": type,
-    "@id": `${canonicalUrl}/#${type.toLowerCase()}`,
+    "@id": workId(options.slug, type),
     name: options.title,
     headline: options.title,
     description: options.description,
@@ -296,6 +382,45 @@ export function buildWorkJsonLd(options: WorkJsonLdOptions): Record<string, unkn
     ...(dateModified ? { dateModified } : {}),
     ...contentPageFields(siteUrl, canonicalUrl, options.authorName),
     ...(isSoftware && options.category ? { applicationCategory: options.category } : {}),
+    ...(hasSource ? { isBasedOn: { "@id": sourceCodeId(options.slug) } } : {}),
+  };
+}
+
+/**
+ * Builds Schema.org SoftwareSourceCode for a project with a public source
+ * repository, or null without one. It names the repository, the languages
+ * it is written in and its author, and points back at the project: as the
+ * `targetProduct` when the project is software, otherwise via the project's
+ * `isBasedOn`.
+ */
+export function buildSourceCodeJsonLd(
+  options: WorkJsonLdOptions,
+): Record<string, unknown> | null {
+  const repository = httpUrl(options.githubUrl);
+  if (!repository) return null;
+  const siteUrl = resolveCanonicalUrl("/").replace(/\/+$/, "");
+  const type = workType(options.category);
+  const languages = programmingLanguagesOf(options.technologies);
+  const keywords = [
+    ...new Set((options.technologies ?? []).map((t) => t.trim()).filter(Boolean)),
+  ];
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "SoftwareSourceCode",
+    "@id": sourceCodeId(options.slug),
+    name: options.title,
+    description: options.description,
+    url: repository,
+    codeRepository: repository,
+    ...(languages.length > 0
+      ? { programmingLanguage: languages.length === 1 ? languages[0] : languages }
+      : {}),
+    ...(keywords.length > 0 ? { keywords: keywords.join(", ") } : {}),
+    ...(options.authorName ? { author: personRef(siteUrl, options.authorName) } : {}),
+    ...(type === "SoftwareApplication"
+      ? { targetProduct: { "@id": workId(options.slug, type) } }
+      : {}),
   };
 }
 
