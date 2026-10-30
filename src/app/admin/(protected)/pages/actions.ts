@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/config";
 import { contentSchemaForSlug, PAGE_SLUGS, type PageSlug } from "@/lib/validation/page";
 import * as pagesService from "@/server/services/pages";
+import { announceToSearchEngines } from "@/server/services/indexnow";
 
 import { pageFields } from "./fields";
 
@@ -97,6 +98,7 @@ export async function publishPageForm(formData: FormData): Promise<void> {
   await pagesService.publishPage(pageId, actor);
   revalidatePath("/admin/pages");
   revalidatePath(slug === "home" ? "/" : `/${slug}`);
+  announceToSearchEngines(() => [slug === "home" ? "/" : `/${slug}`]);
   redirect(`/admin/pages/${slug}?published=1`);
 }
 

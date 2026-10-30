@@ -13,7 +13,6 @@ export const metadata: Metadata = {
     path: "/",
   }),
   title: { absolute: "Chibueze Maxwell (MAXCHICHAR) | AI Engineer, Research & Writing" },
-  verification: { google: "6oW8w0a8eNljvhIuI2bd51M-1GC4qctVVFECy5xtnq4" },
 };
 
 export default function Home() {

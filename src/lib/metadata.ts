@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import { DEFAULT_SITE_SETTINGS } from "@/lib/validation/settings";
 
@@ -6,6 +6,64 @@ export const DEFAULT_SITE_TITLE = DEFAULT_SITE_SETTINGS.siteName; // "CHIBUEZE M
 export const PRODUCTION_SITE_URL = "https://chibuezemaxwell.com";
 export const DEFAULT_SITE_DESCRIPTION =
   "AI Engineer, entrepreneur, researcher, and writer. Explore my projects, research, and ideas under Chibueze Maxwell (MAXCHICHAR).";
+
+/** The person behind the site, as search engines should attribute it. */
+export const SITE_AUTHOR = "Chibueze Maxwell";
+export const SITE_ALTERNATE_NAME = "MAXCHICHAR";
+
+export const SITE_KEYWORDS = [
+  "Chibueze Maxwell",
+  "MAXCHICHAR",
+  "AI engineer",
+  "artificial intelligence",
+  "machine learning",
+  "entrepreneur",
+  "research",
+  "writing",
+  "portfolio",
+];
+
+/**
+ * Google Search Console token. It used to live on the home page only; it is
+ * now site-wide so every page verifies, and can be overridden from the env.
+ */
+const GOOGLE_SITE_VERIFICATION = "6oW8w0a8eNljvhIuI2bd51M-1GC4qctVVFECy5xtnq4";
+
+/**
+ * Ownership tokens for each search engine's webmaster console. Bing's also
+ * covers the engines it feeds (DuckDuckGo, Yahoo, Ecosia); Brave Search has
+ * no console and simply crawls what robots.txt and the sitemap allow.
+ */
+export function buildVerification(): Metadata["verification"] {
+  const env = (name: string) => process.env[name]?.trim() || undefined;
+  const bing = env("BING_SITE_VERIFICATION");
+  const pinterest = env("PINTEREST_SITE_VERIFICATION");
+  const other: Record<string, string> = {};
+  if (bing) other["msvalidate.01"] = bing;
+  if (pinterest) other["p:domain_verify"] = pinterest;
+  return {
+    google: env("GOOGLE_SITE_VERIFICATION") ?? GOOGLE_SITE_VERIFICATION,
+    ...(env("YANDEX_SITE_VERIFICATION")
+      ? { yandex: env("YANDEX_SITE_VERIFICATION") }
+      : {}),
+    ...(Object.keys(other).length > 0 ? { other } : {}),
+  };
+}
+
+/**
+ * Browser chrome colours (address bar, task switcher, PWA title bar) for
+ * Chrome, Brave, Edge, Samsung Internet and Safari; they match `--bg` in
+ * globals.css for each OS colour scheme.
+ */
+export const SITE_VIEWPORT: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  colorScheme: "dark light",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0b" },
+    { media: "(prefers-color-scheme: light)", color: "#f6f5f1" },
+  ],
+};
 
 /**
  * Meta descriptions read best under ~160 characters; page text can be
@@ -141,10 +199,28 @@ export function constructBaseMetadata(options?: BaseMetadataOptions): Metadata {
       template: `%s | ${siteName}`,
     },
     description,
+    applicationName: siteName,
+    authors: [{ name: SITE_AUTHOR, url: "/" }],
+    creator: SITE_AUTHOR,
+    publisher: SITE_AUTHOR,
+    keywords: SITE_KEYWORDS,
+    category: "technology",
+    // Stops iOS/Safari from turning numbers and addresses into links.
+    formatDetection: { telephone: false, email: false, address: false },
+    appleWebApp: { capable: true, title: siteName, statusBarStyle: "black-translucent" },
     robots: {
       index: true,
       follow: true,
+      // Lets Google, Bing and Brave show large image previews and full snippets.
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
     },
+    verification: buildVerification(),
     alternates: {
       canonical: "/",
       types: FEED_ALTERNATE,
@@ -153,6 +229,7 @@ export function constructBaseMetadata(options?: BaseMetadataOptions): Metadata {
       title: siteName,
       description,
       siteName,
+      locale: "en_US",
       url: "/",
       type: "website",
     },
@@ -170,6 +247,16 @@ export interface PageMetadataOptions {
   path?: string;
   image?: string | null;
   type?: "website" | "article";
+  /** Article-only Open Graph fields (ignored for "website"). */
+  publishedTime?: Date | string | null;
+  modifiedTime?: Date | string | null;
+  tags?: string[];
+}
+
+function toIso(date?: Date | string | null): string | undefined {
+  if (!date) return undefined;
+  const d = typeof date === "string" ? new Date(date) : date;
+  return isNaN(d.getTime()) ? undefined : d.toISOString();
 }
 
 /**
@@ -194,6 +281,17 @@ export function constructPageMetadata(options: PageMetadataOptions): Metadata {
   const image = options.image?.trim() || null;
   const type = options.type || "website";
   const cleanPath = normalizeCanonicalPath(options.path);
+  const publishedTime = toIso(options.publishedTime);
+  const modifiedTime = toIso(options.modifiedTime);
+  const articleFields =
+    type === "article"
+      ? {
+          authors: [SITE_AUTHOR],
+          ...(publishedTime ? { publishedTime } : {}),
+          ...(modifiedTime ? { modifiedTime } : {}),
+          ...(options.tags && options.tags.length > 0 ? { tags: options.tags } : {}),
+        }
+      : {};
 
   return {
     title,
@@ -204,6 +302,7 @@ export function constructPageMetadata(options: PageMetadataOptions): Metadata {
       siteName: DEFAULT_SITE_TITLE,
       locale: "en_US",
       type,
+      ...articleFields,
       ...(cleanPath ? { url: cleanPath } : {}),
       ...(image ? { images: [image] } : {}),
     },

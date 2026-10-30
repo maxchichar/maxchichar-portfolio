@@ -8,6 +8,7 @@ import { evidenceCreateSchema } from "@/lib/validation/evidence";
 import { projectCreateSchema } from "@/lib/validation/project";
 import { parseProjectDraftForm } from "@/lib/validation/project-form";
 import * as projectService from "@/server/services/projects";
+import { announceToSearchEngines } from "@/server/services/indexnow";
 
 // Every action re-checks auth() itself, server-side — the route-group
 // layout protects page navigation, not individual mutations. Client-side
@@ -101,6 +102,10 @@ export async function publishProjectForm(formData: FormData): Promise<void> {
   revalidatePath(`/admin/projects/${projectId}`);
   revalidatePath("/admin/projects");
   revalidatePath("/", "layout");
+  announceToSearchEngines(async () => {
+    const state = await projectService.getProjectFullState(projectId);
+    return state ? [`/work/${state.project.slug}`, "/work", "/"] : [];
+  });
   redirect(`/admin/projects/${projectId}`);
 }
 

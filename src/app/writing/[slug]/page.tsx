@@ -53,6 +53,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: item.published.excerpt,
     path: `/writing/${slug}`,
     type: "article",
+    publishedTime: item.published.publishedAt,
+    modifiedTime: item.article.updatedAt,
+    tags: item.tags.map((tag) => tag.name),
   });
 }
 
