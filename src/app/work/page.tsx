@@ -18,7 +18,7 @@ export const revalidate = 0;
 
 const TITLE = "Selected Work";
 const DESCRIPTION =
-  "Super Intelligence Engineer & Entrepreneur. Selected projects, intelligent systems, and engineering case studies.";
+  "AI Engineer & Entrepreneur. Selected projects, intelligent systems, and engineering case studies.";
 
 const METADATA: Metadata = constructPageMetadata({
   title: TITLE,

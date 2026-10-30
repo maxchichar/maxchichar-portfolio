@@ -17,7 +17,7 @@ export const revalidate = 0;
 
 const TITLE = "Research";
 const DESCRIPTION =
-  "Super Intelligence Engineer & Entrepreneur. Investigations, technical notes, and experiments, documented with verifiable evidence.";
+  "AI Engineer & Entrepreneur. Investigations, technical notes, and experiments, documented with verifiable evidence.";
 
 const METADATA: Metadata = constructPageMetadata({
   title: TITLE,

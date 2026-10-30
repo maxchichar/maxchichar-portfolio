@@ -84,7 +84,7 @@ async function main() {
           <div>Maxwell.</div>
         </div>
         <div style={{ marginTop: 26, fontSize: 27, color: "#c9c7d0" }}>
-          Super Intelligence Engineer &amp; Entrepreneur
+          AI Engineer &amp; Entrepreneur
         </div>
         <div
           style={{

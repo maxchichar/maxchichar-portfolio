@@ -18,7 +18,7 @@ export const revalidate = 0;
 
 const TITLE = "Writing";
 const DESCRIPTION =
-  "Super Intelligence Engineer & Entrepreneur. Essays and notes on building intelligent systems.";
+  "AI Engineer & Entrepreneur. Essays and notes on building intelligent systems.";
 
 const METADATA: Metadata = constructPageMetadata({
   title: TITLE,
