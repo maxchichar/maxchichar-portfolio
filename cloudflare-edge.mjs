@@ -27,7 +27,10 @@ const FORWARDED_HEADERS = [
 const noStore = (message, status) =>
   new Response(message, { status, headers: { "Cache-Control": "no-store" } });
 
-/** Plain text for an HTML-only email; the inbox shows text, never HTML. */
+// Larger HTML is left out; the dashboard keeps the text either way.
+const MAX_HTML_CHARS = 1_000_000;
+
+/** Plain text for an HTML-only email (the dashboard also keeps the HTML, shown sandboxed). */
 export function htmlToText(html) {
   return html
     .replace(/<(style|script|head)[^>]*>[\s\S]*?<\/\1>/gi, "")
@@ -63,6 +66,7 @@ export async function saveInboundEmail(message, env, fetchOrigin = fetch) {
         from: { address: from.address, name: from.name || null },
         subject: email.subject || null,
         text: email.text || htmlToText(email.html || ""),
+        html: email.html && email.html.length <= MAX_HTML_CHARS ? email.html : null,
         messageId: email.messageId || null,
         attachments: email.attachments?.length ?? 0,
       }),

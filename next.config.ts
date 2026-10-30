@@ -38,6 +38,12 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: buildSecurityHeaders(),
       },
+      {
+        // Same headers; the CSP also lets opened emails show remote images.
+        // Listed last so it replaces the global CSP for this path.
+        source: "/admin/inbox",
+        headers: buildSecurityHeaders({ emailImages: true }),
+      },
     ];
   },
 };

@@ -64,6 +64,36 @@ describe("Email worker", () => {
     assert.deepEqual(calls.forwarded, ["me@example.com"]);
   });
 
+  it("sends the HTML of a designed email along with its text", async () => {
+    const htmlRaw = [
+      "From: News <news@example.com>",
+      "To: hello@chibuezemaxwell.com",
+      "Subject: Weekly",
+      'Content-Type: multipart/alternative; boundary="b"',
+      "",
+      "--b",
+      "Content-Type: text/plain; charset=utf-8",
+      "",
+      "Top stories",
+      "--b",
+      "Content-Type: text/html; charset=utf-8",
+      "",
+      "<h1>Top stories</h1>",
+      "--b--",
+      "",
+    ].join("\r\n");
+    let body: Record<string, unknown> = {};
+    const worker = createEdgeWorker(async (_url, init) => {
+      body = JSON.parse(String(init?.body));
+      return new Response("{}", { status: 201 });
+    });
+    const { message } = fakeMessage();
+    await worker.email({ ...message, raw: new Response(htmlRaw).body }, env);
+    assert.match(String(body.text), /Top stories/);
+    assert.match(String(body.html), /<h1>Top stories<\/h1>/);
+    assert.ok(inboundEmailSchema.safeParse(body).success);
+  });
+
   it("still forwards when the dashboard is down", async () => {
     const worker = createEdgeWorker(async () => new Response("", { status: 503 }));
     const { message, calls } = fakeMessage();
