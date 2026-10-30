@@ -92,6 +92,7 @@ export async function saveDraftForm(formData: FormData): Promise<void> {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
+  await researchService.ensureDraft(researchId, actor);
   await researchService.saveDraft(researchId, parsed.data, actor);
   revalidatePath(`/admin/research/${researchId}`);
   redirect(`/admin/research/${researchId}`);

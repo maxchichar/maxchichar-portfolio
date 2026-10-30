@@ -82,6 +82,7 @@ async function saveSubmittedDraft(formData: FormData) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
+  await articlesService.ensureDraft(articleId, actor);
   await articlesService.saveDraft(articleId, parsed.data, actor);
   revalidatePath(`/admin/articles/${articleId}`);
   return { articleId, actor };
