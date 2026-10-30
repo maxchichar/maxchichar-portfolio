@@ -59,7 +59,7 @@ export function ResearchEvidenceForm({ researchId }: { researchId: string }) {
   return (
     <form
       action={submit}
-      className="rounded-panel border-border bg-bg mt-4 space-y-3 border p-4"
+      className="rounded-panel border-border bg-bg mt-4 space-y-3 border p-3 sm:p-4"
     >
       <input type="hidden" name="researchId" value={researchId} />
       <fieldset disabled={pending} className="space-y-3">
@@ -134,7 +134,7 @@ export function ResearchEvidenceForm({ researchId }: { researchId: string }) {
         })}
         <button
           type="submit"
-          className="rounded-card border-border text-text hover:border-accent border px-4 py-2 font-sans text-sm"
+          className="rounded-card border-border text-text hover:border-accent w-full border px-4 py-2.5 font-sans text-sm sm:w-auto sm:py-2"
         >
           {pending ? "Saving…" : "Add evidence"}
         </button>

@@ -220,7 +220,7 @@ export default async function ResearchEditPage({
           </EditorSection>
         </form>
       ) : (
-        <div className="rounded-panel border-border bg-surface border border-dashed p-8 text-center">
+        <div className="rounded-panel border-border bg-surface border border-dashed p-6 text-center sm:p-8">
           <p className="text-text font-sans text-sm font-medium">
             This research is live.
           </p>

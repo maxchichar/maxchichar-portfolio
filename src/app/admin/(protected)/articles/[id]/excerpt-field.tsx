@@ -56,7 +56,7 @@ export function ExcerptField({
         </label>
         <span
           aria-live="polite"
-          className={`font-mono text-[11px] ${tooLong ? "text-accent font-semibold" : "text-text-muted"}`}
+          className={`shrink-0 font-mono text-[11px] ${tooLong ? "text-accent font-semibold" : "text-text-muted"}`}
         >
           {value.length.toLocaleString("en-US")} / {EXCERPT_MAX}
         </span>

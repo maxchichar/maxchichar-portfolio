@@ -142,7 +142,9 @@ export function WritingAssistant({
                 key={title}
                 className="rounded-card border-border flex items-center justify-between gap-3 border p-3"
               >
-                <span className="text-text font-sans text-sm font-medium">{title}</span>
+                <span className="text-text min-w-0 font-sans text-sm font-medium [overflow-wrap:anywhere]">
+                  {title}
+                </span>
                 <button
                   type="button"
                   className={useButton}

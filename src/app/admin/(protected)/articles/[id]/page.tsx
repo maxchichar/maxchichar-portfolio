@@ -100,7 +100,7 @@ export default async function ArticleEditPage({
       {query.error ? (
         <p
           role="alert"
-          className="rounded-panel border-border text-text mb-6 border p-5 font-sans text-sm"
+          className="rounded-panel border-border text-text mb-6 border p-4 font-sans text-sm sm:p-5"
         >
           {query.error}
         </p>
@@ -108,7 +108,7 @@ export default async function ArticleEditPage({
       {draft?.source?.startsWith("content-api:") ? (
         <p
           role="status"
-          className="rounded-panel border-border bg-surface text-text mb-6 border p-5 font-sans text-sm"
+          className="rounded-panel border-border bg-surface text-text mb-6 border p-4 font-sans text-sm sm:p-5"
         >
           This draft was {draft.generationMode === "AI_GENERATED" ? "written" : "edited"}{" "}
           through the Content API by{" "}
@@ -120,7 +120,7 @@ export default async function ArticleEditPage({
         <form
           action={fixFormattingForm}
           role="alert"
-          className="rounded-panel border-accent/40 bg-accent/5 mb-6 flex flex-col gap-4 border p-5 sm:flex-row sm:items-center sm:justify-between"
+          className="rounded-panel border-accent/40 bg-accent/5 mb-6 flex flex-col gap-4 border p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5"
         >
           <input type="hidden" name="articleId" value={article.id} />
           <div>
@@ -143,7 +143,7 @@ export default async function ArticleEditPage({
       ) : justFixed ? (
         <p
           role="status"
-          className="rounded-panel border-border bg-surface text-text mb-6 border p-5 font-sans text-sm"
+          className="rounded-panel border-border bg-surface text-text mb-6 border p-4 font-sans text-sm sm:p-5"
         >
           Formatting fixed in this draft. Check the excerpt and body below, add a cover
           image if you like, then choose <strong>Publish changes</strong>.
@@ -242,7 +242,7 @@ export default async function ArticleEditPage({
           </EditorSection>
         </form>
       ) : (
-        <div className="rounded-panel border-border bg-surface border border-dashed p-8 text-center">
+        <div className="rounded-panel border-border bg-surface border border-dashed p-6 text-center sm:p-8">
           {currentCoverMedia ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth/config";
@@ -44,8 +45,14 @@ export default async function NewArticlePage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-xl px-6 py-10 md:px-10 md:py-12">
-      <h1 className="text-text font-sans text-3xl font-semibold tracking-tight">
+    <main className="mx-auto w-full max-w-xl px-4 py-6 sm:px-6 sm:py-10 md:px-10 md:py-12">
+      <Link
+        href="/admin/articles"
+        className="text-text-muted hover:text-text -my-1 inline-flex items-center gap-1.5 py-1 font-sans text-sm transition-colors sm:text-xs"
+      >
+        ← Writing
+      </Link>
+      <h1 className="text-text mt-4 font-sans text-2xl font-semibold tracking-tight sm:text-3xl">
         New Article
       </h1>
 
@@ -59,7 +66,7 @@ export default async function NewArticlePage({
             name="slug"
             required
             placeholder="building-ai-systems"
-            className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-mono text-sm outline-none"
+            className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-mono text-sm outline-none max-sm:text-base"
           />
         </div>
         <div>
@@ -70,7 +77,7 @@ export default async function NewArticlePage({
             id="title"
             name="title"
             required
-            className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none"
+            className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none max-sm:text-base"
           />
         </div>
         <div>
@@ -83,7 +90,7 @@ export default async function NewArticlePage({
             required
             rows={3}
             maxLength={300}
-            className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm outline-none"
+            className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-serif text-sm outline-none max-sm:text-base"
           />
           <p className="text-text-muted mt-1 font-sans text-xs">
             One or two sentences (up to 300 characters), shown under the title and in
@@ -98,7 +105,7 @@ export default async function NewArticlePage({
         )}
         <button
           type="submit"
-          className="rounded-card bg-accent text-bg px-4 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90"
+          className="rounded-card bg-accent text-bg w-full px-4 py-3 font-sans text-sm font-medium transition-opacity hover:opacity-90 sm:w-auto sm:py-2.5"
         >
           Create draft
         </button>
