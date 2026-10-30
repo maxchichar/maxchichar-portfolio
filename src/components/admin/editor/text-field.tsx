@@ -53,11 +53,11 @@ export function TextField({
   return (
     <div>
       <div className="flex items-baseline justify-between gap-4">
-        <label htmlFor={id} className={labelClass}>
+        <label htmlFor={id} className={`${labelClass} min-w-0`}>
           {label}
         </label>
         <span
-          className={`font-mono text-[11px] tabular-nums ${near ? "text-accent font-semibold" : "text-text-muted"}`}
+          className={`shrink-0 font-mono text-[11px] tabular-nums ${near ? "text-accent font-semibold" : "text-text-muted"}`}
         >
           {length.toLocaleString("en-US")} / {maxLength.toLocaleString("en-US")}
         </span>

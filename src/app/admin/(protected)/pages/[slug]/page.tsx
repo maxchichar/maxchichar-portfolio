@@ -30,7 +30,7 @@ function isPageSlug(value: string): value is PageSlug {
 }
 
 const noticeClass =
-  "rounded-panel border-border bg-surface text-text border p-5 font-sans text-sm";
+  "rounded-panel border-border bg-surface text-text border p-4 font-sans text-sm sm:p-5";
 
 export default async function PageEditPage({
   params,

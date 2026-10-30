@@ -17,7 +17,7 @@ export function EditorLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-10">
+    <main className="mx-auto w-full max-w-7xl px-4 pt-6 pb-28 sm:px-6 sm:pt-8 md:px-10 md:pt-10 lg:pb-10">
       <Link
         href={backHref}
         className="text-text-muted hover:text-text -my-1 inline-flex items-center gap-1.5 py-1 font-sans text-sm transition-colors sm:text-xs"

@@ -85,6 +85,39 @@ export function PublishPanel({
   const hidden = <input type="hidden" name={idName} value={id} />;
   return (
     <div className="space-y-4 lg:sticky lg:top-6">
+      {draft ? (
+        // Phones: the panel sits above the fields, so keep Save and Publish
+        // reachable at the bottom of the screen while editing.
+        <div className="border-border bg-bg/95 fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
+          <button
+            type="submit"
+            form={formId}
+            className="rounded-card border-border text-text bg-surface flex-1 border px-4 py-2.5 font-sans text-sm font-medium"
+          >
+            Save draft
+          </button>
+          {publishFromDraftForm ? (
+            <button
+              type="submit"
+              form={formId}
+              formAction={publishAction}
+              className="rounded-card bg-accent text-bg flex-1 px-4 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90"
+            >
+              Save &amp; publish
+            </button>
+          ) : (
+            <form action={publishAction} data-needs-saved className="flex flex-1">
+              {hidden}
+              <button
+                type="submit"
+                className="rounded-card bg-accent text-bg flex-1 px-4 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90"
+              >
+                {published ? "Publish changes" : "Publish"}
+              </button>
+            </form>
+          )}
+        </div>
+      ) : null}
       <section className="rounded-panel border-border bg-surface border p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <h2 className="text-text font-sans text-sm font-semibold">Publishing</h2>
