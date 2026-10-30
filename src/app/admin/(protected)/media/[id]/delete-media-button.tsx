@@ -23,8 +23,8 @@ export function DeleteMediaButton({
       confirmLabel="Delete media"
       buttonClassName={
         compact
-          ? "rounded-card border-border text-text-muted hover:border-accent hover:text-accent border px-2.5 py-1 font-mono text-xs transition-colors"
-          : undefined
+          ? "rounded-card border-border text-text-muted hover:border-accent hover:text-accent w-full border px-2 py-2 font-mono text-xs whitespace-nowrap transition-colors disabled:opacity-50 sm:py-1.5"
+          : "rounded-card border-border text-text hover:border-text/40 w-full border px-3.5 py-2.5 font-sans text-sm transition-colors disabled:opacity-50 sm:w-auto sm:py-2 sm:text-xs"
       }
     >
       <input type="hidden" name="mediaId" value={mediaId} />

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import * as mediaService from "@/server/services/media";
@@ -48,13 +49,31 @@ export default async function MediaDetailPage({
   );
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10 md:px-10 md:py-12">
-      <div className="flex items-center justify-between">
-        <h1 className="text-text truncate font-sans text-3xl font-semibold tracking-tight">
+    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 md:py-12">
+      <Link
+        href="/admin/media"
+        className="text-text-muted hover:text-text mb-4 inline-flex items-center gap-1.5 py-1 font-sans text-sm transition-colors"
+      >
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M12 15l-5-5 5-5" />
+        </svg>
+        Media Library
+      </Link>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-text min-w-0 font-sans text-2xl font-semibold tracking-tight [overflow-wrap:anywhere] sm:text-3xl">
           {media.filename}
         </h1>
         <span
-          className={`rounded-badge border px-2 py-0.5 font-mono text-xs ${STATUS_TONE[media.status] ?? "border-border text-text-muted"}`}
+          className={`rounded-badge mt-1.5 shrink-0 border px-2 py-0.5 font-mono text-xs ${STATUS_TONE[media.status] ?? "border-border text-text-muted"}`}
         >
           {media.status}
         </span>
@@ -66,7 +85,7 @@ export default async function MediaDetailPage({
           <img
             src={media.storageUrl}
             alt={media.altText ?? media.filename}
-            className="max-h-[420px] w-full object-contain"
+            className="max-h-[60vh] w-full object-contain sm:max-h-[420px]"
           />
         </div>
       ) : (
@@ -80,10 +99,10 @@ export default async function MediaDetailPage({
         </a>
       )}
 
-      <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 font-mono text-xs">
+      <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-3 font-mono text-xs sm:gap-x-6">
         <div>
           <dt className="text-text-muted">MIME type</dt>
-          <dd className="text-text mt-0.5">{media.mimeType}</dd>
+          <dd className="text-text mt-0.5 [overflow-wrap:anywhere]">{media.mimeType}</dd>
         </div>
         <div>
           <dt className="text-text-muted">Dimensions</dt>
@@ -105,20 +124,22 @@ export default async function MediaDetailPage({
             })}
           </dd>
         </div>
-        <div className="col-span-2">
+        <div className="col-span-2 min-w-0">
           <dt className="text-text-muted">Storage key</dt>
-          <dd className="text-text mt-0.5 truncate">{media.storageKey}</dd>
+          <dd className="text-text mt-0.5 [overflow-wrap:anywhere]">
+            {media.storageKey}
+          </dd>
         </div>
-        <div className="col-span-2">
+        <div className="col-span-2 min-w-0">
           <dt className="text-text-muted">Public URL</dt>
           <dd className="text-text mt-0.5 flex items-center gap-3">
-            <span className="truncate">{media.storageUrl}</span>
+            <span className="min-w-0 flex-1 truncate">{media.storageUrl}</span>
             <CopyUrlButton url={media.storageUrl} />
           </dd>
         </div>
       </dl>
 
-      <section className="border-border mt-10 border-t pt-6">
+      <section className="border-border mt-8 border-t pt-6 sm:mt-10">
         <h2 className="text-text font-sans text-sm font-medium">Alt text</h2>
         <form action={updateAltTextForm} className="mt-3 space-y-3">
           <input type="hidden" name="mediaId" value={media.id} />
@@ -128,12 +149,12 @@ export default async function MediaDetailPage({
             rows={2}
             maxLength={300}
             placeholder="Describe this image for accessibility and SEO"
-            className="rounded-card border-border bg-surface text-text focus-visible:border-accent w-full border px-3.5 py-2.5 font-serif text-sm outline-none"
+            className="rounded-card border-border bg-surface text-text focus-visible:border-accent w-full border px-3.5 py-2.5 font-serif text-base outline-none sm:text-sm"
           />
           <div className="flex items-center gap-3">
             <button
               type="submit"
-              className="rounded-card border-border text-text hover:border-accent border px-4 py-2 font-sans text-sm transition-colors"
+              className="rounded-card border-border text-text hover:border-accent flex-1 border px-4 py-2.5 font-sans text-sm transition-colors sm:flex-none sm:py-2"
             >
               Save alt text
             </button>
@@ -142,7 +163,7 @@ export default async function MediaDetailPage({
         </form>
       </section>
 
-      <section className="border-border mt-10 border-t pt-6">
+      <section className="border-border mt-8 border-t pt-6 sm:mt-10">
         <h2 className="text-text font-sans text-sm font-medium">Delete</h2>
 
         {referencedBy.length > 0 ? (
