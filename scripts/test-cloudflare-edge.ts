@@ -192,3 +192,28 @@ test("public pages come from ORIGIN while /admin goes to the admin domain", asyn
   await worker.fetch(new Request(base + "/now?y=2"), { ADMIN_ORIGIN: env.ORIGIN }, ctx);
   assert.equal(fetched[1], "https://chibuezemaxwell.vercel.app/now?y=2");
 });
+
+test("serves every public crawler and browser file, and nothing private", async () => {
+  const worker = createEdgeWorker(async () => new Response("ok"));
+  const ctx = { waitUntil: () => {} };
+  const status = async (path: string) =>
+    (await worker.fetch(new Request(base + path), env, ctx)).status;
+  for (const path of [
+    "/robots.txt",
+    "/sitemap.xml",
+    "/feed.xml",
+    "/llms.txt",
+    "/llms-full.txt",
+    "/manifest.webmanifest",
+    "/indexnow.txt",
+    "/favicon.ico",
+    "/icon.svg",
+    "/apple-icon.png",
+    "/cv",
+    "/topics",
+    "/topics/ai",
+  ])
+    assert.equal(await status(path), 200, path);
+  for (const path of ["/api/auth/session", "/llms.txt.bak", "/cv/old"])
+    assert.equal(await status(path), 404, path);
+});

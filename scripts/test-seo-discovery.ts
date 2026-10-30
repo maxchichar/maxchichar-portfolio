@@ -115,3 +115,43 @@ describe("IndexNow", () => {
     assert.strictEqual(buildIndexNowPayload("https://x.com", "0123456789", []), null);
   });
 });
+
+describe("Person entity", () => {
+  it("writes names as people write them, not in display capitals", async () => {
+    const { toPersonName } = await import("../src/lib/structured-data");
+    assert.strictEqual(toPersonName("CHIBUEZE MAXWELL"), "Chibueze Maxwell");
+    assert.strictEqual(toPersonName("ADA LOVELACE-KING"), "Ada Lovelace-King");
+    assert.strictEqual(toPersonName("Ada McLovelace"), "Ada McLovelace");
+  });
+
+  it("carries description, image and evidenced topics, deduplicated", async () => {
+    const { buildPersonJsonLd } = await import("../src/lib/structured-data");
+    const person = buildPersonJsonLd({
+      name: "CHIBUEZE MAXWELL",
+      description: " AI engineer ",
+      image: "https://cdn.example/me.jpg",
+      knowsAbout: ["AI", "AI", " "],
+    })!;
+    assert.strictEqual(person.alternateName, "MAXCHICHAR");
+    assert.strictEqual(person.description, "AI engineer");
+    assert.strictEqual(person.image, "https://cdn.example/me.jpg");
+    assert.deepStrictEqual(person.knowsAbout, ["AI"]);
+    assert.ok(String(person.mainEntityOfPage).endsWith("/about"));
+  });
+
+  it("links content to the person as author and publisher, and to the site", async () => {
+    const { buildArticleJsonLd } = await import("../src/lib/structured-data");
+    const article = buildArticleJsonLd({
+      title: "T",
+      excerpt: "E",
+      slug: "t",
+      authorName: "CHIBUEZE MAXWELL",
+    });
+    assert.strictEqual(article.mainEntityOfPage, article.url);
+    assert.deepStrictEqual(article.publisher, {
+      "@id": "http://localhost:3000/#person",
+    });
+    assert.deepStrictEqual(article.isPartOf, { "@id": "http://localhost:3000/#website" });
+    assert.strictEqual(article.inLanguage, "en");
+  });
+});

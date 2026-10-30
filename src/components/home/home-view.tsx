@@ -19,7 +19,9 @@ import {
   buildPersonJsonLd,
   buildWebSiteJsonLd,
   JsonLdScript,
+  topTopics,
 } from "@/lib/structured-data";
+import { getSiteDocument } from "@/server/services/documents";
 import { PageTransition } from "@/components/motion/page-transition";
 import { HomeEditorialCard } from "@/components/home/editorial-card";
 import { TestimonialsShowcase } from "@/components/testimonials/testimonials";
@@ -54,7 +56,7 @@ const UNAVAILABLE = "This section couldn't be loaded right now. Please check bac
 export async function HomeView({ content }: { content?: HomePageContent | null } = {}) {
   // Settings and testimonials already fall back on their own; the rest are
   // guarded here so one failed read can't take the whole page down.
-  const [work, research, articles, homeContent, siteSettings, testimonials] =
+  const [work, research, articles, homeContent, siteSettings, testimonials, avatar] =
     await Promise.all([
       readOrFallback("/", "work", listPublicWorkOverview(), []),
       readOrFallback("/", "research", listPublicResearchOverview(), []),
@@ -69,6 +71,7 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
         : { value: content, failed: false },
       getPublicSiteSettings(),
       getFeaturedTestimonials(),
+      getSiteDocument("avatar"),
     ]);
   const workOverview = work.value;
   const researchOverview = research.value;
@@ -91,6 +94,9 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
   const personJsonLd = buildPersonJsonLd({
     name: siteSettings.siteName,
     socialLinks,
+    description: siteSettings.siteDescription,
+    image: avatar?.url ?? siteSettings.aboutImage?.url ?? null,
+    knowsAbout: topTopics([...workOverview, ...researchOverview, ...articlesOverview]),
   });
   const homepageJsonLd = buildJsonLdGraph([websiteJsonLd, personJsonLd]);
 

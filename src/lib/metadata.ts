@@ -24,6 +24,18 @@ export const SITE_KEYWORDS = [
 ];
 
 /**
+ * The site name is styled in capitals ("CHIBUEZE MAXWELL"), but search
+ * engines should see the person's name as it is written. The canonical name
+ * wins on a case-insensitive match; any other all-caps name is title-cased.
+ */
+export function toPersonName(name: string): string {
+  const trimmed = name.trim();
+  if (trimmed.toLowerCase() === SITE_AUTHOR.toLowerCase()) return SITE_AUTHOR;
+  if (trimmed !== trimmed.toUpperCase()) return trimmed;
+  return trimmed.toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (m) => m.toUpperCase());
+}
+
+/**
  * Google Search Console token. It used to live on the home page only; it is
  * now site-wide so every page verifies, and can be overridden from the env.
  */

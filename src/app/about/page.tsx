@@ -6,7 +6,13 @@ import { Footer } from "@/components/layout/footer";
 import { Nav } from "@/components/layout/nav";
 import { AboutView } from "@/components/pages/about-view";
 import { UnavailableView } from "@/components/pages/unavailable-view";
-import { constructPageMetadata, toDescription, withNoIndex } from "@/lib/metadata";
+import {
+  constructPageMetadata,
+  SITE_ALTERNATE_NAME,
+  SITE_AUTHOR,
+  toDescription,
+  withNoIndex,
+} from "@/lib/metadata";
 import { buildProfilePageJsonLd, JsonLdScript } from "@/lib/structured-data";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { getPublishedAboutPage } from "@/server/services/pages";
@@ -36,18 +42,24 @@ export async function generateMetadata(): Promise<Metadata> {
     });
   }
 
-  return constructPageMetadata({
-    title: "About",
-    description: toDescription(about.content.intro),
-    path: "/about",
-  });
+  // Answers "who is …" searches directly, without repeating the site name.
+  const title = `About ${SITE_AUTHOR} (${SITE_ALTERNATE_NAME})`;
+  return {
+    ...constructPageMetadata({
+      title,
+      description: toDescription(about.content.intro),
+      path: "/about",
+    }),
+    title: { absolute: title },
+  };
 }
 
 export default async function AboutPage() {
-  const [{ value: about, failed }, settings, cv] = await Promise.all([
+  const [{ value: about, failed }, settings, cv, avatar] = await Promise.all([
     loadAbout(),
     getPublicSiteSettings(),
     getSiteDocument("cv"),
+    getSiteDocument("avatar"),
   ]);
   if (failed) {
     return (
@@ -65,7 +77,7 @@ export default async function AboutPage() {
   const profile = buildProfilePageJsonLd({
     name: settings.siteName,
     description: about.content.intro,
-    image: settings.aboutImage?.url,
+    image: settings.aboutImage?.url ?? avatar?.url,
     socialLinks: [
       settings.socialGithub,
       settings.socialX,

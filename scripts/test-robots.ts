@@ -22,7 +22,7 @@ describe("Robots configuration (Level 9.2)", () => {
     const config = robots();
 
     assert.ok(config.rules, "Robots rules must be defined");
-    assert.strictEqual(Array.isArray(config.rules), false);
+    assert.ok(Array.isArray(config.rules));
 
     const rules = Array.isArray(config.rules) ? config.rules[0]! : config.rules;
 
@@ -85,5 +85,38 @@ describe("Robots configuration (Level 9.2)", () => {
     process.env.VERCEL_PROJECT_PRODUCTION_URL = "portfolio-os.vercel.app";
     const config = robots();
     assert.strictEqual(config.sitemap, "https://portfolio-os.vercel.app/sitemap.xml");
+  });
+
+  it("names AI search and training crawlers in their own groups", () => {
+    delete process.env.AI_TRAINING_CRAWLERS;
+    const rules = robots().rules as Array<{
+      userAgent: string | string[];
+      allow?: string | string[];
+      disallow?: string | string[];
+    }>;
+    const group = (ua: string) =>
+      rules.find((r) =>
+        (Array.isArray(r.userAgent) ? r.userAgent : [r.userAgent]).includes(ua),
+      )!;
+    for (const ua of ["OAI-SearchBot", "PerplexityBot", "Claude-SearchBot", "GPTBot"]) {
+      assert.strictEqual(group(ua).allow, "/", ua);
+      assert.ok((group(ua).disallow as string[]).includes("/admin/"), ua);
+    }
+  });
+
+  it("can block training crawlers without touching search or AI search", () => {
+    process.env.AI_TRAINING_CRAWLERS = "block";
+    const rules = robots().rules as Array<{
+      userAgent: string[] | string;
+      disallow?: unknown;
+      allow?: unknown;
+    }>;
+    const training = rules.find((r) => (r.userAgent as string[]).includes?.("GPTBot"))!;
+    assert.strictEqual(training.disallow, "/");
+    const search = rules.find((r) =>
+      (r.userAgent as string[]).includes?.("OAI-SearchBot"),
+    )!;
+    assert.strictEqual(search.allow, "/");
+    assert.strictEqual(rules[0]!.allow, "/");
   });
 });

@@ -1,6 +1,11 @@
 import "server-only";
 
-import { getSiteUrl } from "@/lib/metadata";
+import {
+  getSiteUrl,
+  SITE_ALTERNATE_NAME,
+  SITE_AUTHOR,
+  toPersonName,
+} from "@/lib/metadata";
 import { plainHeadline } from "@/lib/headline";
 import { richDocToMarkdown } from "@/lib/rich-text-markdown";
 
@@ -69,7 +74,8 @@ export async function buildLlmsTxt({ full }: { full: boolean }): Promise<string>
     getSiteDocument("cv"),
   ]);
 
-  const name = settings.siteName;
+  const name = toPersonName(settings.siteName);
+  const heading = name === SITE_AUTHOR ? `${name} (${SITE_ALTERNATE_NAME})` : name;
   const socials = [
     ["GitHub", settings.socialGithub],
     ["LinkedIn", settings.socialLinkedin],
@@ -80,7 +86,7 @@ export async function buildLlmsTxt({ full }: { full: boolean }): Promise<string>
   ].filter((s): s is [string, string] => Boolean(s[1]));
 
   const out: string[] = [];
-  out.push(`# ${name}`);
+  out.push(`# ${heading}`);
   out.push(
     `> ${[line(settings.siteDescription), line(home ? plainHeadline(home.content.heroHeadline) : null)].filter(Boolean).join(". ").replace(/\.\./g, ".")}`,
   );
