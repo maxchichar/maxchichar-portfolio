@@ -10,6 +10,7 @@ import { constructPageMetadata, withNoIndex } from "@/lib/metadata";
 import {
   buildBreadcrumbJsonLd,
   buildJsonLdGraph,
+  buildSourceCodeJsonLd,
   buildWorkJsonLd,
   JsonLdScript,
 } from "@/lib/structured-data";
@@ -87,7 +88,7 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
       }
     : null;
 
-  const workJsonLd = buildWorkJsonLd({
+  const workOptions = {
     title: item.published.title,
     description: item.published.shortDescription,
     slug,
@@ -96,7 +97,11 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
     publishedAt: item.published.publishedAt,
     updatedAt: item.project.updatedAt,
     authorName: settings.siteName,
-  });
+    githubUrl: item.published.githubUrl,
+    technologies: item.published.technologies,
+  };
+  const workJsonLd = buildWorkJsonLd(workOptions);
+  const sourceCodeJsonLd = buildSourceCodeJsonLd(workOptions);
 
   const breadcrumbsJsonLd = buildBreadcrumbJsonLd([
     { name: "Home", url: "/" },
@@ -104,7 +109,7 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
     { name: item.published.title, url: `/work/${slug}` },
   ]);
 
-  const pageJsonLd = buildJsonLdGraph([workJsonLd, breadcrumbsJsonLd]);
+  const pageJsonLd = buildJsonLdGraph([workJsonLd, sourceCodeJsonLd, breadcrumbsJsonLd]);
 
   return (
     <>
