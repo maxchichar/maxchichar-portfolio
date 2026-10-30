@@ -9,7 +9,7 @@ import type { MediaPickerItem } from "@/components/admin/media-picker";
 import { saveTestimonialForm, type TestimonialFormState } from "./actions";
 
 const inputClass =
-  "rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-sm outline-none";
+  "rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-2.5 font-sans text-base outline-none sm:text-sm";
 const labelClass = "text-text-muted block font-sans text-sm";
 const QUOTE_MAX = 800;
 
@@ -50,7 +50,7 @@ export function TestimonialForm({
     <form action={formAction} className="space-y-8">
       <input type="hidden" name="id" value={initial.id ?? ""} />
 
-      <section className="rounded-panel border-border bg-surface space-y-5 border p-6">
+      <section className="rounded-panel border-border bg-surface space-y-5 border p-4 sm:p-6">
         <h2 className="text-text font-sans text-base font-semibold">Quote</h2>
         <div>
           <label htmlFor="t-quote" className={labelClass}>
@@ -74,7 +74,7 @@ export function TestimonialForm({
         </div>
       </section>
 
-      <section className="rounded-panel border-border bg-surface space-y-5 border p-6">
+      <section className="rounded-panel border-border bg-surface space-y-5 border p-4 sm:p-6">
         <h2 className="text-text font-sans text-base font-semibold">Who said it</h2>
         <div className="grid gap-6 md:grid-cols-[1fr_200px]">
           <div className="space-y-5">
@@ -133,19 +133,21 @@ export function TestimonialForm({
               />
             </div>
           </div>
-          <ImageField
-            name="avatarMediaId"
-            label="Photo"
-            hint="Optional. Square works best."
-            initialMediaId={initial.avatarMediaId}
-            initialUrl={initial.avatarUrl}
-            libraryMedia={libraryMedia}
-            aspect="aspect-square"
-          />
+          <div className="max-w-[220px] md:max-w-none">
+            <ImageField
+              name="avatarMediaId"
+              label="Photo"
+              hint="Optional. Square works best."
+              initialMediaId={initial.avatarMediaId}
+              initialUrl={initial.avatarUrl}
+              libraryMedia={libraryMedia}
+              aspect="aspect-square"
+            />
+          </div>
         </div>
       </section>
 
-      <section className="rounded-panel border-border bg-surface space-y-5 border p-6">
+      <section className="rounded-panel border-border bg-surface space-y-5 border p-4 sm:p-6">
         <h2 className="text-text font-sans text-base font-semibold">Where it appears</h2>
         <div>
           <label htmlFor="t-project" className={labelClass}>
@@ -165,22 +167,22 @@ export function TestimonialForm({
             ))}
           </select>
         </div>
-        <div className="flex flex-wrap gap-x-8 gap-y-3">
-          <label className="text-text flex items-center gap-2.5 font-sans text-sm">
+        <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:gap-x-8 sm:gap-y-3">
+          <label className="text-text flex cursor-pointer items-center gap-3 py-2 font-sans text-sm sm:py-0">
             <input
               type="checkbox"
               name="featured"
               defaultChecked={v.featured}
-              className="accent-accent h-4 w-4"
+              className="accent-accent h-5 w-5 sm:h-4 sm:w-4"
             />
             Feature on the homepage
           </label>
-          <label className="text-text flex items-center gap-2.5 font-sans text-sm">
+          <label className="text-text flex cursor-pointer items-center gap-3 py-2 font-sans text-sm sm:py-0">
             <input
               type="checkbox"
               name="visible"
               defaultChecked={v.visible}
-              className="accent-accent h-4 w-4"
+              className="accent-accent h-5 w-5 sm:h-4 sm:w-4"
             />
             Visible on the site
           </label>
@@ -210,17 +212,17 @@ export function TestimonialForm({
         </p>
       ) : null}
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
         <button
           type="submit"
           disabled={pending}
-          className="rounded-card bg-accent text-bg px-5 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="rounded-card bg-accent text-bg w-full px-5 py-3 font-sans text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 sm:w-auto sm:py-2.5"
         >
           {pending ? "Saving…" : initial.id ? "Save changes" : "Add testimonial"}
         </button>
         <Link
           href="/admin/testimonials"
-          className="text-text-muted hover:text-text font-sans text-sm"
+          className="text-text-muted hover:text-text py-2 text-center font-sans text-sm"
         >
           Cancel
         </Link>
