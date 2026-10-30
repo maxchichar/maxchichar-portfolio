@@ -43,7 +43,7 @@ export default async function MediaLibraryPage({
   const filtersActive = status !== "READY" || Boolean(filenameQuery);
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10 md:py-12">
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 md:py-12">
       <AdminPageHeader
         title="Media Library"
         description={`${media.length} ${media.length === 1 ? "file" : "files"}. Every upload is validated server-side before it can be used.`}
@@ -68,19 +68,21 @@ export default async function MediaLibraryPage({
       <form
         action="/admin/media"
         method="GET"
-        className="flex flex-wrap items-center gap-3"
+        className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3"
       >
         <input
-          type="text"
           name="q"
           defaultValue={q ?? ""}
           placeholder="Search filename…"
-          className="rounded-card border-border bg-surface text-text focus-visible:border-accent min-w-48 flex-1 border px-3.5 py-2 font-sans text-sm outline-none"
+          type="search"
+          aria-label="Search filename"
+          className="rounded-card border-border bg-surface text-text focus-visible:border-accent col-span-2 w-full border px-3.5 py-2.5 font-sans text-base outline-none sm:min-w-48 sm:flex-1 sm:py-2 sm:text-sm"
         />
         <select
           name="status"
           defaultValue={status}
-          className="rounded-card border-border bg-surface text-text focus-visible:border-accent border px-3.5 py-2 font-sans text-sm outline-none"
+          aria-label="Status"
+          className="rounded-card border-border bg-surface text-text focus-visible:border-accent min-w-0 border px-3.5 py-2.5 font-sans text-sm outline-none sm:py-2"
         >
           <option value="READY">Ready</option>
           <option value="PENDING">Pending</option>
@@ -89,22 +91,22 @@ export default async function MediaLibraryPage({
         </select>
         <button
           type="submit"
-          className="rounded-card border-border text-text hover:border-accent border px-4 py-2 font-sans text-sm transition-colors"
+          className="rounded-card border-border text-text hover:border-accent border px-4 py-2.5 font-sans text-sm transition-colors sm:py-2"
         >
           Filter
         </button>
         {filtersActive ? (
           <Link
             href="/admin/media"
-            className="text-text-muted hover:text-text font-sans text-xs"
+            className="text-text-muted hover:text-text col-span-2 py-1 font-sans text-xs sm:col-span-1"
           >
-            Clear
+            Clear filters
           </Link>
         ) : null}
       </form>
 
       {media.length === 0 ? (
-        <div className="rounded-panel border-border bg-surface mt-8 border p-8">
+        <div className="rounded-panel border-border bg-surface mt-6 border p-6 sm:mt-8 sm:p-8">
           <p className="text-text-muted font-serif text-sm">
             {filtersActive
               ? "No media matches your search."
@@ -112,11 +114,11 @@ export default async function MediaLibraryPage({
           </p>
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
           {media.map((item) => (
             <div
               key={item.id}
-              className="group rounded-panel border-border bg-surface hover:border-text/25 overflow-hidden border transition-colors"
+              className="group rounded-panel border-border bg-surface hover:border-text/25 flex min-w-0 flex-col overflow-hidden border transition-colors"
             >
               <Link href={`/admin/media/${item.id}`}>
                 <div className="border-border bg-bg/50 relative aspect-square w-full overflow-hidden border-b">
@@ -132,15 +134,15 @@ export default async function MediaLibraryPage({
                     <DocumentTile />
                   )}
                 </div>
-                <div className="px-3 pt-3">
+                <div className="min-w-0 px-3 pt-3">
                   <p className="text-text truncate font-sans text-xs font-medium">
                     {item.filename}
                   </p>
-                  <p className="text-text-muted mt-1 font-mono text-xs">
+                  <p className="text-text-muted mt-1 truncate font-mono text-[11px] sm:text-xs">
                     {item.width && item.height ? `${item.width}×${item.height} · ` : ""}
                     {formatBytes(item.sizeBytes)}
                   </p>
-                  <p className="text-text-muted mt-0.5 font-mono text-xs">
+                  <p className="text-text-muted mt-0.5 font-mono text-[11px] sm:text-xs">
                     {new Date(item.createdAt).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
@@ -149,11 +151,9 @@ export default async function MediaLibraryPage({
                   </p>
                 </div>
               </Link>
-              <div className="p-3 pt-3">
-                <div className="flex items-center justify-between gap-2">
-                  <CopyUrlButton url={item.storageUrl} />
-                  <DeleteMediaButton mediaId={item.id} filename={item.filename} compact />
-                </div>
+              <div className="mt-auto grid grid-cols-2 gap-2 p-3">
+                <CopyUrlButton url={item.storageUrl} compact />
+                <DeleteMediaButton mediaId={item.id} filename={item.filename} compact />
               </div>
             </div>
           ))}

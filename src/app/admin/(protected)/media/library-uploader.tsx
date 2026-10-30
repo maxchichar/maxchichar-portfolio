@@ -79,7 +79,7 @@ export function LibraryUploader() {
   }
 
   return (
-    <div className="mb-8">
+    <div className="mb-6 sm:mb-8">
       <label
         onDragOver={(e) => {
           e.preventDefault();
@@ -91,7 +91,7 @@ export function LibraryUploader() {
           setOver(false);
           void handleFiles(e.dataTransfer.files);
         }}
-        className={`rounded-panel flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed px-6 py-10 text-center transition-colors ${
+        className={`rounded-panel flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed px-5 py-8 text-center transition-colors sm:px-6 sm:py-10 ${
           over
             ? "border-accent bg-accent/5"
             : "border-border hover:border-text/30 bg-surface"
@@ -101,7 +101,8 @@ export function LibraryUploader() {
           ⇪
         </span>
         <span className="text-text font-sans text-sm font-medium">
-          Drop images here, or click to upload
+          <span className="sm:hidden">Tap to upload images</span>
+          <span className="hidden sm:inline">Drop images here, or click to upload</span>
         </span>
         <span className="text-text-muted font-sans text-xs">
           JPEG, PNG or WebP · up to {MAX_UPLOAD_BYTES / 1024 / 1024}MB each
@@ -120,11 +121,11 @@ export function LibraryUploader() {
           {items.map((i) => (
             <li
               key={i.name}
-              className="rounded-card bg-surface flex items-center justify-between px-4 py-2 font-sans text-xs"
+              className="rounded-card bg-surface flex items-start justify-between gap-3 px-3 py-2 font-sans text-xs sm:items-center sm:px-4"
             >
-              <span className="text-text truncate">{i.name}</span>
+              <span className="text-text min-w-0 truncate">{i.name}</span>
               <span
-                className={`ml-4 shrink-0 font-mono ${
+                className={`max-w-[55%] text-right font-mono [overflow-wrap:anywhere] ${
                   i.state === "error"
                     ? "text-text"
                     : i.state === "done"
