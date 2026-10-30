@@ -102,7 +102,7 @@ export default async function InboxPage({
   const back = `/admin/inbox${viewParam ? `?${viewParam}` : ""}`;
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10 md:py-12">
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 md:py-12">
       <AdminPageHeader
         title="Inbox"
         description={
@@ -135,7 +135,9 @@ export default async function InboxPage({
 
       <nav
         aria-label="Folders"
-        className="bg-surface border-border mb-6 inline-flex max-w-full overflow-x-auto rounded-full border p-1"
+        className={`bg-surface border-border mb-6 max-w-full [scrollbar-width:none] overflow-x-auto rounded-full border p-1 [&::-webkit-scrollbar]:hidden ${
+          selected ? "hidden lg:inline-flex" : "flex lg:inline-flex"
+        }`}
       >
         {TABS.map((t) => {
           const active =
@@ -147,7 +149,7 @@ export default async function InboxPage({
               key={t.value}
               href={t.value === "inbox" ? "/admin/inbox" : `/admin/inbox?view=${t.value}`}
               aria-current={active ? "page" : undefined}
-              className={`shrink-0 rounded-full px-4 py-1.5 font-sans text-xs transition-colors ${
+              className={`shrink-0 rounded-full px-4 py-2 font-sans text-xs whitespace-nowrap transition-colors lg:py-1.5 ${
                 active ? "bg-text text-bg" : "text-text-muted hover:text-text"
               }`}
             >
@@ -159,7 +161,11 @@ export default async function InboxPage({
       </nav>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <ul className="rounded-panel border-border bg-surface divide-border max-h-[70vh] divide-y overflow-y-auto border">
+        <ul
+          className={`rounded-panel border-border bg-surface divide-border divide-y overflow-hidden border lg:max-h-[70vh] lg:overflow-y-auto ${
+            selected || id ? "hidden lg:block" : ""
+          }`}
+        >
           {isSent ? (
             sent.items.length === 0 ? (
               <li className="text-text-muted px-6 py-16 text-center font-serif text-sm">
@@ -171,7 +177,7 @@ export default async function InboxPage({
                   <Link
                     href={hrefFor(r.submissionId)}
                     aria-current={selected?.id === r.submissionId ? "true" : undefined}
-                    className={`block px-5 py-4 transition-colors ${
+                    className={`block px-4 py-4 transition-colors sm:px-5 ${
                       selected?.id === r.submissionId
                         ? "bg-surface-2"
                         : "hover:bg-surface-2"
@@ -205,7 +211,7 @@ export default async function InboxPage({
                 <Link
                   href={hrefFor(m.id)}
                   aria-current={selected?.id === m.id ? "true" : undefined}
-                  className={`block px-5 py-4 transition-colors ${
+                  className={`block px-4 py-4 transition-colors sm:px-5 ${
                     selected?.id === m.id ? "bg-surface-2" : "hover:bg-surface-2"
                   }`}
                 >
@@ -243,16 +249,39 @@ export default async function InboxPage({
 
         <section
           aria-label="Message"
-          className="rounded-panel border-border bg-surface min-h-80 border"
+          className={`rounded-panel border-border bg-surface min-w-0 border lg:min-h-80 ${
+            selected || id ? "" : "hidden lg:block"
+          }`}
         >
           {selected ? (
-            <article className="p-6 md:p-8">
-              <header className="border-border flex flex-wrap items-start justify-between gap-4 border-b pb-5">
-                <div>
-                  <h2 className="text-text font-sans text-xl font-semibold">
+            <article className="p-4 sm:p-6 md:p-8">
+              <Link
+                href={back}
+                className="text-text-muted hover:text-text -mt-1 mb-4 inline-flex items-center gap-1.5 py-1 font-sans text-sm transition-colors lg:hidden"
+              >
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
+                  <path d="M12 15l-5-5 5-5" />
+                </svg>
+                Back to{" "}
+                {isSent
+                  ? "Sent"
+                  : (TABS.find((t) => t.value === status)?.label ?? "Inbox")}
+              </Link>
+              <header className="border-border flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <h2 className="text-text font-sans text-xl font-semibold [overflow-wrap:anywhere]">
                     {selected.name}
                   </h2>
-                  <p className="text-text-muted mt-1 font-mono text-xs">
+                  <p className="text-text-muted mt-1 font-mono text-xs [overflow-wrap:anywhere]">
                     {selected.email}
                     {selected.organization ? ` · ${selected.organization}` : ""}
                   </p>
@@ -264,13 +293,13 @@ export default async function InboxPage({
                 {sender ? null : (
                   <a
                     href={`mailto:${selected.email}?subject=${encodeURIComponent(replySubject(selected))}`}
-                    className="rounded-card bg-accent text-bg px-4 py-2 font-sans text-sm font-medium transition-opacity hover:opacity-90"
+                    className="rounded-card bg-accent text-bg shrink-0 px-4 py-2.5 text-center font-sans text-sm font-medium transition-opacity hover:opacity-90 sm:py-2"
                   >
                     Reply by email
                   </a>
                 )}
               </header>
-              <p className="text-text mt-6 font-serif text-lg leading-relaxed whitespace-pre-wrap">
+              <p className="text-text mt-6 font-serif text-base leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap sm:text-lg">
                 {selected.message}
               </p>
               {replies.length > 0 ? (
@@ -278,12 +307,12 @@ export default async function InboxPage({
                   {replies.map((r) => (
                     <li
                       key={r.id}
-                      className="border-accent bg-surface-2 rounded-card border-l-2 px-5 py-4"
+                      className="border-accent bg-surface-2 rounded-card border-l-2 px-4 py-4 sm:px-5"
                     >
                       <p className="text-text-muted font-mono text-[11px]">
                         You replied · {when(r.createdAt)} · {r.subject}
                       </p>
-                      <p className="text-text mt-2 font-serif text-base leading-relaxed whitespace-pre-wrap">
+                      <p className="text-text mt-2 font-serif text-base leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap">
                         {r.body}
                       </p>
                     </li>
@@ -304,7 +333,7 @@ export default async function InboxPage({
                   />
                 </div>
               ) : null}
-              <div className="border-border mt-8 flex flex-wrap gap-2 border-t pt-5">
+              <div className="border-border mt-8 grid grid-cols-2 gap-2 border-t pt-5 sm:flex sm:flex-wrap">
                 {(
                   [
                     selected.status === "NEW" ? ["READ", "Mark as read"] : null,
@@ -316,7 +345,7 @@ export default async function InboxPage({
                       : null,
                   ].filter(Boolean) as [InboxStatus, string][]
                 ).map(([next, label]) => (
-                  <form key={label} action={setInboxStatusForm}>
+                  <form key={label} action={setInboxStatusForm} className="contents">
                     <input type="hidden" name="id" value={selected.id} />
                     <input type="hidden" name="status" value={next} />
                     <input
@@ -330,7 +359,7 @@ export default async function InboxPage({
                     />
                     <button
                       type="submit"
-                      className="rounded-card border-border text-text hover:border-text/40 border px-3.5 py-2 font-sans text-xs transition-colors"
+                      className="rounded-card border-border text-text hover:border-text/40 border px-3.5 py-2.5 font-sans text-xs transition-colors sm:py-2"
                     >
                       {label}
                     </button>
@@ -345,7 +374,7 @@ export default async function InboxPage({
               </div>
             </article>
           ) : (
-            <div className="flex h-full min-h-80 items-center justify-center p-8 text-center">
+            <div className="flex h-full min-h-60 flex-col items-center justify-center gap-4 p-8 text-center lg:min-h-80">
               <p className="text-text-muted font-serif text-sm">
                 {id
                   ? "This message is no longer available. Select another message."
@@ -355,6 +384,14 @@ export default async function InboxPage({
                       ? "Select a reply to see the conversation."
                       : "Select a message to read it."}
               </p>
+              {id ? (
+                <Link
+                  href={back}
+                  className="text-text hover:text-accent font-sans text-sm underline underline-offset-4 lg:hidden"
+                >
+                  Back to messages
+                </Link>
+              ) : null}
             </div>
           )}
         </section>
