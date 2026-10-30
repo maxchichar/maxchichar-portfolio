@@ -67,7 +67,7 @@ export default async function LoginPage({
         </div>
       </aside>
 
-      <div className="flex items-center justify-center px-6 py-16">
+      <div className="flex items-center justify-center px-5 py-12 sm:px-6 sm:py-16">
         <div className="w-full max-w-sm">
           <LogoMark className="text-text mb-8 h-9 w-auto lg:hidden" />
           <p className="text-accent-purple font-mono text-xs tracking-[0.2em] uppercase">
@@ -91,7 +91,7 @@ export default async function LoginPage({
                 type="email"
                 required
                 autoComplete="email"
-                className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-3 font-sans text-sm outline-none"
+                className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-3 font-sans text-sm outline-none max-sm:text-base"
               />
             </div>
 
@@ -108,7 +108,7 @@ export default async function LoginPage({
                 type="password"
                 required
                 autoComplete="current-password"
-                className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-3 font-sans text-sm outline-none"
+                className="rounded-card border-border bg-surface text-text focus-visible:border-accent mt-1.5 w-full border px-3.5 py-3 font-sans text-sm outline-none max-sm:text-base"
               />
             </div>
 

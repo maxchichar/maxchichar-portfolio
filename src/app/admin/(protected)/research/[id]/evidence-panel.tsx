@@ -22,7 +22,7 @@ export function EvidencePanel({
   error?: string;
 }) {
   return (
-    <section className="rounded-panel border-border bg-surface border p-6">
+    <section className="rounded-panel border-border bg-surface border p-4 sm:p-6">
       <h2 className="text-text font-sans text-sm font-semibold">Evidence</h2>
 
       <div className="mt-3 space-y-2">
@@ -32,13 +32,15 @@ export function EvidencePanel({
           evidence.map((e) => (
             <div
               key={e.id}
-              className="rounded-card border-border bg-bg flex items-start justify-between border px-4 py-2.5"
+              className="rounded-card border-border bg-bg flex items-start justify-between gap-3 border px-3 py-2.5 sm:px-4"
             >
-              <div>
+              <div className="min-w-0">
                 <span className="text-text-muted font-mono text-xs">{e.type}</span>
-                <span className="text-text ml-2 font-sans text-sm">{e.label}</span>
+                <span className="text-text ml-2 font-sans text-sm [overflow-wrap:anywhere]">
+                  {e.label}
+                </span>
                 {e.data ? (
-                  <p className="text-text-muted mt-0.5 font-mono text-xs">
+                  <p className="text-text-muted mt-0.5 font-mono text-xs [overflow-wrap:anywhere]">
                     {JSON.stringify(e.data)}
                   </p>
                 ) : null}
@@ -48,7 +50,7 @@ export function EvidencePanel({
                 <input type="hidden" name="evidenceId" value={e.id} />
                 <button
                   type="submit"
-                  className="text-text-muted hover:text-text font-sans text-xs"
+                  className="text-text-muted hover:text-text -my-1 shrink-0 py-1 font-sans text-xs"
                 >
                   Remove
                 </button>
@@ -58,7 +60,11 @@ export function EvidencePanel({
         )}
       </div>
 
-      {error ? <p role="alert">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="text-text mt-3 font-sans text-sm">
+          {error}
+        </p>
+      ) : null}
       <ResearchEvidenceForm researchId={researchId} />
     </section>
   );

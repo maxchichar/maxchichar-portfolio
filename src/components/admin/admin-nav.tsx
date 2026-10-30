@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { LogoMark } from "@/components/brand/logo-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -58,6 +58,22 @@ export function AdminNav({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+  // While the mobile drawer is open, keep the page behind it still and let
+  // Escape close it.
+  useEffect(() => {
+    if (!open) return;
+    const { overflow } = document.body.style;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = overflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   const nav = (
     <nav aria-label="Admin" className="flex-1 space-y-7 overflow-y-auto px-3 py-6">
       {SECTIONS.map((section) => (
@@ -74,7 +90,7 @@ export function AdminNav({
                     href={link.href}
                     aria-current={active ? "page" : undefined}
                     onClick={() => setOpen(false)}
-                    className={`rounded-card flex items-center gap-3 px-3 py-2 font-sans text-sm transition-colors ${
+                    className={`rounded-card flex items-center gap-3 px-3 py-2.5 font-sans text-sm transition-colors lg:py-2 ${
                       active
                         ? "bg-text/[0.06] text-text"
                         : "text-text-muted hover:bg-text/[0.03] hover:text-text"
@@ -156,7 +172,7 @@ export function AdminNav({
           aria-expanded={open}
           aria-controls="admin-mobile-nav"
           aria-label={open ? "Close menu" : "Open menu"}
-          className="text-text-muted hover:text-text p-2"
+          className="text-text-muted hover:text-text -mr-2 p-2.5"
         >
           <svg
             aria-hidden="true"
@@ -177,7 +193,7 @@ export function AdminNav({
       {open ? (
         <div
           id="admin-mobile-nav"
-          className="bg-bg fixed inset-x-0 top-14 bottom-0 z-40 flex flex-col lg:hidden"
+          className="bg-bg fixed inset-x-0 top-14 bottom-0 z-40 flex flex-col pb-[env(safe-area-inset-bottom)] lg:hidden"
         >
           {nav}
           {footer}

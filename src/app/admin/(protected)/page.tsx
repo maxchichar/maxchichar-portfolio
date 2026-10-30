@@ -80,30 +80,30 @@ export default async function AdminDashboard() {
   const remaining = checklist.filter((c) => !c.done).length;
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10 md:py-12">
-      <header className="border-border flex flex-wrap items-end justify-between gap-6 border-b pb-8">
-        <div>
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 md:py-12">
+      <header className="border-border flex flex-col gap-5 border-b pb-6 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-6 sm:pb-8">
+        <div className="min-w-0">
           <p className="text-text-muted font-mono text-xs tracking-wider uppercase">
             Dashboard
           </p>
-          <h1 className="text-text mt-2 font-sans text-3xl font-semibold tracking-tight md:text-4xl">
+          <h1 className="text-text mt-2 font-sans text-2xl font-semibold tracking-tight [overflow-wrap:anywhere] sm:text-3xl md:text-4xl">
             Welcome back, <span className="text-accent-purple">{name}</span>.
           </h1>
           <p className="text-text-muted mt-2 font-serif text-sm">
             Here&apos;s the state of your portfolio.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
           <Link
             href={resolveCanonicalUrl("/")}
             target="_blank"
-            className="rounded-card border-border text-text hover:border-accent hover:text-accent border px-4 py-2 font-sans text-sm transition-colors"
+            className="rounded-card border-border text-text hover:border-accent hover:text-accent border px-4 py-2.5 text-center font-sans text-sm transition-colors sm:py-2"
           >
             View site ↗
           </Link>
           <Link
             href="/admin/projects/new"
-            className="rounded-card bg-accent text-bg px-4 py-2 font-sans text-sm font-medium transition-opacity hover:opacity-90"
+            className="rounded-card bg-accent text-bg px-4 py-2.5 text-center font-sans text-sm font-medium transition-opacity hover:opacity-90 sm:py-2"
           >
             New project
           </Link>
@@ -113,7 +113,7 @@ export default async function AdminDashboard() {
       {!traffic.available ? (
         <p
           role="alert"
-          className="rounded-card border-border bg-surface-2 text-text mt-10 border px-4 py-3 font-sans text-sm"
+          className="rounded-card border-border bg-surface-2 text-text mt-6 border px-4 py-3 font-sans text-sm sm:mt-10"
         >
           Analytics isn&apos;t available yet. Apply the latest database migration (
           <code className="font-mono text-xs">npm run db:push</code>) to create the{" "}
@@ -122,7 +122,7 @@ export default async function AdminDashboard() {
       ) : null}
       <section
         aria-label="Traffic"
-        className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        className="mt-6 grid grid-cols-2 gap-3 sm:mt-10 sm:gap-4 lg:grid-cols-4"
       >
         <StatTile
           label="Visitors · 7 days"
@@ -139,10 +139,10 @@ export default async function AdminDashboard() {
         <StatTile label="Live now" value={traffic.live} note="last 5 min" live />
         <Link
           href="/admin/inbox?view=NEW"
-          className="rounded-panel border-border bg-surface hover:border-text/25 border p-5 transition-colors"
+          className="rounded-panel border-border bg-surface hover:border-text/25 min-w-0 border p-4 transition-colors sm:p-5"
         >
-          <p className="text-text-muted font-sans text-sm">Unread messages</p>
-          <p className="text-text mt-3 font-sans text-4xl font-semibold tracking-tight">
+          <p className="text-text-muted font-sans text-xs sm:text-sm">Unread messages</p>
+          <p className="text-text mt-2 font-sans text-3xl font-semibold tracking-tight tabular-nums sm:mt-3 sm:text-4xl">
             {unread}
           </p>
           <p className="text-accent mt-2 font-sans text-xs">Open inbox →</p>
@@ -157,22 +157,25 @@ export default async function AdminDashboard() {
         </Link>
       </p>
 
-      <section aria-label="Content" className="mt-6 grid gap-4 md:grid-cols-3">
+      <section
+        aria-label="Content"
+        className="mt-4 grid gap-3 sm:mt-6 sm:gap-4 md:grid-cols-3"
+      >
         {contentStats.map((stat) => (
           <div
             key={stat.label}
-            className="rounded-panel border-border bg-surface group relative overflow-hidden border p-6"
+            className="rounded-panel border-border bg-surface group relative overflow-hidden border p-4 sm:p-6"
           >
             <div className="flex items-start justify-between">
               <p className="text-text-muted font-sans text-sm">{stat.label}</p>
               <Link
                 href={stat.newHref}
-                className="text-text-muted hover:text-accent font-sans text-xs transition-colors"
+                className="text-text-muted hover:text-accent -my-1 py-1 font-sans text-xs transition-colors"
               >
                 + New
               </Link>
             </div>
-            <p className="text-text mt-4 font-sans text-5xl font-semibold tracking-tight tabular-nums">
+            <p className="text-text mt-3 font-sans text-4xl font-semibold tracking-tight tabular-nums sm:mt-4 sm:text-5xl">
               {stat.total}
             </p>
             <div className="text-text-muted mt-4 flex gap-4 font-mono text-xs">
@@ -185,7 +188,7 @@ export default async function AdminDashboard() {
             </div>
             <Link
               href={stat.href}
-              className="text-accent mt-6 inline-flex items-center gap-1 font-sans text-xs font-medium hover:underline"
+              className="text-accent mt-4 inline-flex items-center gap-1 py-1 font-sans text-xs font-medium hover:underline sm:mt-6"
             >
               Manage {stat.label.toLowerCase()} →
             </Link>
@@ -193,8 +196,8 @@ export default async function AdminDashboard() {
         ))}
       </section>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <section className="rounded-panel border-border bg-surface border p-6">
+      <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-[2fr_1fr]">
+        <section className="rounded-panel border-border bg-surface border p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-text font-sans text-sm font-medium">Site readiness</h2>
             <span className="text-text-muted font-mono text-xs">
@@ -210,7 +213,7 @@ export default async function AdminDashboard() {
                 >
                   <span
                     aria-hidden="true"
-                    className={`flex h-5 w-5 items-center justify-center rounded-full border text-[10px] ${
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] ${
                       item.done
                         ? "border-accent bg-accent text-bg"
                         : "border-border text-transparent"
@@ -227,7 +230,7 @@ export default async function AdminDashboard() {
                   </span>
                   <span className="sr-only">{item.done ? "(done)" : "(to do)"}</span>
                   {!item.done ? (
-                    <span className="text-text-muted group-hover:text-accent ml-auto text-xs">
+                    <span className="text-text-muted group-hover:text-accent ml-auto shrink-0 text-xs">
                       →
                     </span>
                   ) : null}
@@ -237,10 +240,10 @@ export default async function AdminDashboard() {
           </ul>
         </section>
 
-        <section className="grid gap-4">
+        <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-1">
           <Link
             href="/admin/media"
-            className="rounded-panel border-border bg-surface hover:border-accent/40 border p-6 transition-colors"
+            className="rounded-panel border-border bg-surface hover:border-accent/40 min-w-0 border p-4 transition-colors sm:p-6"
           >
             <p className="text-text-muted font-sans text-sm">Media library</p>
             <p className="text-text mt-3 font-sans text-3xl font-semibold tabular-nums">
@@ -250,7 +253,7 @@ export default async function AdminDashboard() {
           </Link>
           <Link
             href="/admin/pages"
-            className="rounded-panel border-border bg-surface hover:border-accent/40 border p-6 transition-colors"
+            className="rounded-panel border-border bg-surface hover:border-accent/40 min-w-0 border p-4 transition-colors sm:p-6"
           >
             <p className="text-text-muted font-sans text-sm">Pages</p>
             <p className="text-text mt-3 font-sans text-3xl font-semibold tabular-nums">

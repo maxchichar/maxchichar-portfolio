@@ -24,13 +24,13 @@ export default async function ApiKeysPage() {
   const revoked = keys.filter((k) => k.revokedAt);
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-6 py-10 md:px-10 md:py-12">
+    <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 md:py-12">
       <AdminPageHeader
         title="API keys"
         description="Let other tools, such as an AI writing agent, read your articles and create or edit drafts through the Content API. Nothing they send goes live until you publish it."
       />
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <EditorSection title="New key">
           <CreateKeyForm />
         </EditorSection>
@@ -49,7 +49,9 @@ export default async function ApiKeysPage() {
                   className="flex flex-wrap items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
                 >
                   <div className="min-w-0">
-                    <p className="text-text font-sans text-sm font-medium">{k.name}</p>
+                    <p className="text-text font-sans text-sm font-medium [overflow-wrap:anywhere]">
+                      {k.name}
+                    </p>
                     <p className="text-text-muted mt-0.5 font-sans text-xs">
                       {k.scopes.map((s) => SCOPE_LABELS[s as ApiScope] ?? s).join(" · ")}
                     </p>

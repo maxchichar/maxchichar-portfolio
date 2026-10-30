@@ -77,14 +77,14 @@ export function CreateKeyForm() {
             {GRANTABLE_SCOPES.map((scope) => (
               <label
                 key={scope}
-                className="text-text flex items-center gap-2 font-sans text-sm"
+                className="text-text flex flex-wrap items-center gap-x-2 gap-y-0.5 py-1 font-sans text-sm sm:py-0"
               >
                 <input
                   type="checkbox"
                   name="scopes"
                   value={scope}
                   defaultChecked={scope === "content:read"}
-                  className="accent-accent h-4 w-4"
+                  className="accent-accent h-5 w-5 sm:h-4 sm:w-4"
                 />
                 {SCOPE_LABELS[scope]}{" "}
                 <code className="text-text-muted font-mono text-[11px]">{scope}</code>
@@ -106,7 +106,7 @@ export function CreateKeyForm() {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-card bg-accent text-bg px-4 py-2 font-sans text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="rounded-card bg-accent text-bg w-full px-4 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 sm:w-auto sm:py-2"
         >
           {pending ? "Creating…" : "Create key"}
         </button>
