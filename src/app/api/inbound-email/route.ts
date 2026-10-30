@@ -4,8 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { ContactServiceError, receiveEmail } from "@/server/services/contact";
 
-// Raw email text plus JSON overhead; the service trims the body further.
-const MAX_BODY_BYTES = 256 * 1024;
+// Text, HTML (up to INBOUND_MAX_HTML) and JSON overhead; the service trims
+// the text further and drops oversized HTML.
+const MAX_BODY_BYTES = 2 * 1024 * 1024;
 
 function digest(value: string) {
   return createHash("sha256").update(value).digest();

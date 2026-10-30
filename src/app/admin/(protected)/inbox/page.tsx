@@ -2,8 +2,10 @@ import Link from "next/link";
 
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { INBOX_STATUSES, type InboxStatus } from "@/server/repositories/contact";
+import { cleanEmailHtml } from "@/lib/email-html";
 import {
   canReply,
+  getEmailHtml,
   getSubmission,
   listInbox,
   listReplies,
@@ -13,6 +15,7 @@ import { readOrFallback } from "@/server/services/fallback-read";
 import { isEmailConfigured, replySender } from "@/server/services/email";
 
 import { DeleteMessageButton } from "./delete-message-button";
+import { EmailContent } from "./email-content";
 import { Avatar, EmailBody } from "./email-view";
 import { ReplyForm } from "./reply-form";
 
@@ -98,6 +101,18 @@ export default async function InboxPage({
         [] as Awaited<ReturnType<typeof listReplies>>,
       )
     : { value: [] };
+  // The designed version of an email, when it was kept (null if the table
+  // isn't migrated yet: the text view still works).
+  const { value: rawHtml } =
+    selected?.source === "email"
+      ? await readOrFallback(
+          "/admin/inbox",
+          "email HTML",
+          getEmailHtml(selected.id),
+          null as string | null,
+        )
+      : { value: null };
+  const emailHtml = rawHtml ? cleanEmailHtml(rawHtml) : null;
   const sender = canReply() ? replySender() : null;
   const unread = counts.NEW ?? 0;
   const tabCount = (v: Tab) =>
@@ -341,7 +356,17 @@ export default async function InboxPage({
                 )}
               </header>
               <div className="mt-6">
-                <EmailBody text={selected.message} source={selected.source} />
+                {emailHtml ? (
+                  <EmailContent
+                    key={selected.id}
+                    html={emailHtml.html}
+                    remoteImages={emailHtml.remoteImages}
+                  >
+                    <EmailBody text={selected.message} source={selected.source} />
+                  </EmailContent>
+                ) : (
+                  <EmailBody text={selected.message} source={selected.source} />
+                )}
               </div>
               {replies.length > 0 ? (
                 <ol aria-label="Replies" className="mt-8 space-y-4">

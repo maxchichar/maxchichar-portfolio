@@ -64,6 +64,13 @@
       "when": 1793348017121,
       "tag": "0008_inbound_email",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793382169991,
+      "tag": "0009_inbound_email_html",
+      "breakpoints": true
     }
   ]
 }

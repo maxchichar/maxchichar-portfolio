@@ -7,6 +7,12 @@ export interface SecurityHeaderOptions {
   forceHsts?: boolean;
   /** Allow the Cloudflare Turnstile script and iframe (contact form). */
   turnstile?: boolean;
+  /**
+   * The admin inbox: allow remote https images, which the sandboxed email
+   * frame inherits. The frame's own policy still blocks them until the
+   * admin chooses "Load images".
+   */
+  emailImages?: boolean;
 }
 
 /**
@@ -72,6 +78,7 @@ export function buildCspHeader(options?: SecurityHeaderOptions): string {
   const frameSrc = turnstile ? [TURNSTILE_ORIGIN] : ["'none'"];
 
   const imgSrc = ["'self'", "data:", "blob:"];
+  if (options?.emailImages) imgSrc.push("https:");
   if (storageOrigin) {
     imgSrc.push(storageOrigin);
   }

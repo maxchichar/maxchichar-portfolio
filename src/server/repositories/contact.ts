@@ -132,6 +132,19 @@ export async function countReplies(tx: Tx) {
   return Number(result?.count ?? 0);
 }
 
+export async function insertEmailHtml(tx: Tx, submissionId: string, html: string) {
+  await tx.insert(schema.contactEmailHtml).values({ submissionId, html });
+}
+
+export async function findEmailHtml(tx: Tx, submissionId: string) {
+  const [row] = await tx
+    .select({ html: schema.contactEmailHtml.html })
+    .from(schema.contactEmailHtml)
+    .where(eq(schema.contactEmailHtml.submissionId, submissionId))
+    .limit(1);
+  return row?.html ?? null;
+}
+
 export async function findSubmissionByMessageId(tx: Tx, messageId: string) {
   const [row] = await tx
     .select({ id: schema.contactSubmissions.id })

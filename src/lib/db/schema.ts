@@ -718,6 +718,17 @@ export const contactReplies = pgTable(
   ],
 );
 
+// The original HTML of an email received at hello@, kept beside its text so
+// the inbox can show it as designed (sandboxed, scripts off). Optional: the
+// text in contact_submissions stays the source of truth.
+export const contactEmailHtml = pgTable("contact_email_html", {
+  submissionId: uuid("submission_id")
+    .primaryKey()
+    .references(() => contactSubmissions.id, { onDelete: "cascade" }),
+  html: text("html").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ---------------------------------------------------------------------------
 // AUDIT LOG
 // ---------------------------------------------------------------------------

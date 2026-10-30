@@ -23,12 +23,30 @@ describe("Defensive HTTP Security Headers (Level 9.7)", () => {
       assert.ok(typeof nextConfig.headers === "function");
       const rules = await nextConfig.headers();
       assert.ok(Array.isArray(rules));
-      assert.strictEqual(rules.length, 1);
+      assert.strictEqual(rules.length, 2);
       const [firstRule] = rules;
       assert.ok(firstRule, "Expected first header rule to exist");
       assert.strictEqual(firstRule.source, "/:path*");
       assert.ok(Array.isArray(firstRule.headers));
       assert.ok(firstRule.headers.length >= 7);
+    });
+
+    it("only the admin inbox lets remote https images through (opened emails)", async () => {
+      assert.ok(nextConfig.headers);
+      const rules = await nextConfig.headers();
+      const csp = (source: string) =>
+        rules
+          .find((r) => r.source === source)
+          ?.headers.find((h) => h.key === "Content-Security-Policy")?.value ?? "";
+      const imgSrc = (value: string) => /img-src ([^;]*)/.exec(value)?.[1] ?? "";
+      assert.ok(!imgSrc(csp("/:path*")).split(" ").includes("https:"));
+      assert.ok(imgSrc(csp("/admin/inbox")).split(" ").includes("https:"));
+      // Everything else is the same strict policy.
+      assert.strictEqual(
+        csp("/admin/inbox").replace(/img-src [^;]*/, ""),
+        csp("/:path*").replace(/img-src [^;]*/, ""),
+      );
+      assert.strictEqual(rules.at(-1)?.source, "/admin/inbox", "must come last to win");
     });
   });
 

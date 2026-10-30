@@ -9,9 +9,11 @@ import { z } from "zod";
 
 import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
+import { isMissingTableError } from "@/lib/db/errors";
 import {
   contactSubmissionSchema,
   RATE_LIMIT_MAX_COUNT,
+  INBOUND_MAX_HTML,
   INBOUND_MAX_TEXT,
   inboundEmailSchema,
   RATE_LIMIT_WINDOW_MS,
@@ -317,7 +319,7 @@ export async function receiveEmail(input: unknown): Promise<boolean> {
   if (!parsed.success) {
     throw new ContactServiceError(parsed.error.issues[0]?.message ?? "Invalid email.");
   }
-  const { from, subject, text, messageId, attachments } = parsed.data;
+  const { from, subject, text, html, messageId, attachments } = parsed.data;
 
   if (messageId && (await contactRepo.findSubmissionByMessageId(db, messageId))) {
     return false;
@@ -332,7 +334,7 @@ export async function receiveEmail(input: unknown): Promise<boolean> {
     message = message ? `${message}\n\n${note}` : note;
   }
 
-  await contactRepo.insertContactSubmission(db, {
+  const submission = await contactRepo.insertContactSubmission(db, {
     name: singleLine(from.name || "") || from.address,
     email: from.address.toLowerCase(),
     organization: null,
@@ -345,5 +347,21 @@ export async function receiveEmail(input: unknown): Promise<boolean> {
     source: "email",
     messageId: messageId || null,
   });
+
+  // The designed version, when there is one. Losing it only costs the
+  // formatting (the text is stored), so it never fails the delivery.
+  const cleanHtml = html?.trim();
+  if (cleanHtml && cleanHtml.length <= INBOUND_MAX_HTML) {
+    try {
+      await contactRepo.insertEmailHtml(db, submission.id, cleanHtml);
+    } catch (err: unknown) {
+      if (!isMissingTableError(err)) console.error("receiveEmail: HTML not stored:", err);
+    }
+  }
   return true;
+}
+
+/** The email's original HTML, or null (form messages, older emails). */
+export async function getEmailHtml(submissionId: string) {
+  return contactRepo.findEmailHtml(db, submissionId);
 }
