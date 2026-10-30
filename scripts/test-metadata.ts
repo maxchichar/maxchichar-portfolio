@@ -102,18 +102,34 @@ describe("Base Metadata helper logic (Level 9.1)", () => {
       assert.deepStrictEqual(meta.robots, {
         index: true,
         follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+          "max-video-preview": -1,
+        },
       });
 
       // Includes base metadata fields and Level 9.4/9.5 Open Graph, Twitter, and Alternates additions
       const keys = Object.keys(meta).sort();
       assert.deepStrictEqual(keys, [
         "alternates",
+        "appleWebApp",
+        "applicationName",
+        "authors",
+        "category",
+        "creator",
         "description",
+        "formatDetection",
+        "keywords",
         "metadataBase",
         "openGraph",
+        "publisher",
         "robots",
         "title",
         "twitter",
+        "verification",
       ]);
       assert.deepStrictEqual(meta.alternates, {
         canonical: "/",

@@ -10,6 +10,7 @@ import { parseRichTextField, tiptapDocToPlainText } from "@/lib/validation/proje
 import { articleDraftUpdateSchema } from "@/lib/validation/article";
 import * as aiService from "@/server/services/ai";
 import * as articlesService from "@/server/services/articles";
+import { announceToSearchEngines } from "@/server/services/indexnow";
 
 // Every action re-checks auth() itself, server-side — the route-group
 // layout protects page navigation, not individual mutations, matching
@@ -109,6 +110,10 @@ export async function publishArticleForm(formData: FormData): Promise<void> {
   revalidatePath(`/admin/articles/${articleId}`);
   revalidatePath("/admin/articles");
   revalidatePath("/", "layout");
+  announceToSearchEngines(async () => {
+    const state = await articlesService.getArticleFullState(articleId);
+    return state ? [`/writing/${state.article.slug}`, "/writing", "/"] : [];
+  });
   redirect(`/admin/articles/${articleId}`);
 }
 

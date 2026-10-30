@@ -5,7 +5,12 @@ import {
   DEFAULT_SITE_DESCRIPTION,
   DEFAULT_SITE_TITLE,
   resolveCanonicalUrl,
+  SITE_ALTERNATE_NAME,
+  SITE_AUTHOR,
+  toPersonName,
 } from "./metadata";
+
+export { toPersonName };
 
 export interface WebSiteJsonLdOptions {
   siteName?: string | null;
@@ -18,12 +23,13 @@ export interface PersonJsonLdOptions {
   jobTitle?: string | null;
   siteUrl?: string | null;
   socialLinks?: Array<string | null | undefined> | null;
-}
-
-export interface ProfilePageJsonLdOptions extends PersonJsonLdOptions {
   description?: string | null;
   image?: string | null;
+  /** Subjects the person demonstrably publishes about (e.g. content tags). */
+  knowsAbout?: string[] | null;
 }
+
+export type ProfilePageJsonLdOptions = PersonJsonLdOptions;
 
 export interface WorkJsonLdOptions {
   title: string;
@@ -59,6 +65,59 @@ export interface ArticleJsonLdOptions {
 export interface BreadcrumbItem {
   name: string;
   url: string;
+}
+
+function isCanonicalPerson(name: string): boolean {
+  return name.toLowerCase() === SITE_AUTHOR.toLowerCase();
+}
+
+/**
+ * The subjects someone's published work is most often tagged with, most
+ * frequent first: evidence-backed `knowsAbout` values, never invented ones.
+ */
+export function topTopics(
+  items: Array<{ tags: Array<{ name: string }> }>,
+  limit = 12,
+): string[] {
+  const counts = new Map<string, number>();
+  for (const item of items)
+    for (const tag of item.tags) {
+      const name = tag.name.trim();
+      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+    }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit)
+    .map(([name]) => name);
+}
+
+/** A reference to the site's Person node, for author/publisher fields. */
+function personRef(siteUrl: string, authorName: string): Record<string, unknown> {
+  return {
+    "@type": "Person",
+    "@id": `${siteUrl}/#person`,
+    name: toPersonName(authorName),
+    url: `${siteUrl}/`,
+  };
+}
+
+/** Fields shared by every content page that lives on this site. */
+function contentPageFields(
+  siteUrl: string,
+  canonicalUrl: string,
+  authorName?: string | null,
+): Record<string, unknown> {
+  return {
+    mainEntityOfPage: canonicalUrl,
+    inLanguage: "en",
+    isPartOf: { "@id": `${siteUrl}/#website` },
+    ...(authorName
+      ? {
+          author: personRef(siteUrl, authorName),
+          publisher: { "@id": `${siteUrl}/#person` },
+        }
+      : {}),
+  };
 }
 
 /**
@@ -120,7 +179,7 @@ export function buildWebSiteJsonLd(
     /\/+$/,
     "",
   );
-  const name = options?.siteName?.trim() || DEFAULT_SITE_TITLE;
+  const name = toPersonName(options?.siteName?.trim() || DEFAULT_SITE_TITLE);
   const description = options?.siteDescription?.trim() || DEFAULT_SITE_DESCRIPTION;
 
   return {
@@ -128,8 +187,10 @@ export function buildWebSiteJsonLd(
     "@type": "WebSite",
     "@id": `${siteUrl}/#website`,
     name,
+    ...(isCanonicalPerson(name) ? { alternateName: SITE_ALTERNATE_NAME } : {}),
     url: `${siteUrl}/`,
     description,
+    inLanguage: "en",
     publisher: {
       "@id": `${siteUrl}/#person`,
     },
@@ -144,15 +205,20 @@ export function buildWebSiteJsonLd(
 export function buildPersonJsonLd(
   options?: PersonJsonLdOptions,
 ): Record<string, unknown> | null {
-  const name = options?.name?.trim();
-  if (!name) return null;
+  const rawName = options?.name?.trim();
+  if (!rawName) return null;
+  const name = toPersonName(rawName);
 
   const siteUrl = (options?.siteUrl?.trim() || resolveCanonicalUrl("/")).replace(
     /\/+$/,
     "",
   );
   const jobTitle = options?.jobTitle?.trim() || "AI Engineer";
-  const isCanonicalPerson = name.toLowerCase() === "chibueze maxwell";
+  const description = options?.description?.trim();
+  const image = options?.image?.trim();
+  const knowsAbout = [
+    ...new Set((options?.knowsAbout || []).map((t) => t.trim()).filter(Boolean)),
+  ];
 
   const sameAs = (options?.socialLinks || [])
     .filter(
@@ -168,9 +234,13 @@ export function buildPersonJsonLd(
     "@type": "Person",
     "@id": `${siteUrl}/#person`,
     name,
-    ...(isCanonicalPerson ? { alternateName: "MAXCHICHAR" } : {}),
+    ...(isCanonicalPerson(name) ? { alternateName: SITE_ALTERNATE_NAME } : {}),
     url: `${siteUrl}/`,
+    mainEntityOfPage: `${siteUrl}/about`,
     jobTitle,
+    ...(description ? { description } : {}),
+    ...(image ? { image } : {}),
+    ...(knowsAbout.length > 0 ? { knowsAbout } : {}),
     ...(sameAs.length > 0 ? { sameAs } : {}),
   };
 }
@@ -193,11 +263,10 @@ export function buildProfilePageJsonLd(
     "@type": "ProfilePage",
     "@id": `${siteUrl}/about#profile`,
     url: `${siteUrl}/about`,
-    mainEntity: {
-      ...person,
-      ...(options.description?.trim() ? { description: options.description.trim() } : {}),
-      ...(options.image?.trim() ? { image: options.image.trim() } : {}),
-    },
+    name: `About ${person.name as string}`,
+    inLanguage: "en",
+    isPartOf: { "@id": `${siteUrl}/#website` },
+    mainEntity: person,
   };
 }
 
@@ -224,16 +293,7 @@ export function buildWorkJsonLd(options: WorkJsonLdOptions): Record<string, unkn
     image,
     ...(datePublished ? { datePublished } : {}),
     ...(dateModified ? { dateModified } : {}),
-    ...(options.authorName
-      ? {
-          author: {
-            "@type": "Person",
-            "@id": `${siteUrl}/#person`,
-            name: options.authorName,
-            url: `${siteUrl}/`,
-          },
-        }
-      : {}),
+    ...contentPageFields(siteUrl, canonicalUrl, options.authorName),
     ...(isSoftware && options.category ? { applicationCategory: options.category } : {}),
   };
 }
@@ -261,16 +321,7 @@ export function buildResearchJsonLd(
     image,
     ...(datePublished ? { datePublished } : {}),
     ...(dateModified ? { dateModified } : {}),
-    ...(options.authorName
-      ? {
-          author: {
-            "@type": "Person",
-            "@id": `${siteUrl}/#person`,
-            name: options.authorName,
-            url: `${siteUrl}/`,
-          },
-        }
-      : {}),
+    ...contentPageFields(siteUrl, canonicalUrl, options.authorName),
   };
 }
 
@@ -297,16 +348,7 @@ export function buildArticleJsonLd(
     image,
     ...(datePublished ? { datePublished } : {}),
     ...(dateModified ? { dateModified } : {}),
-    ...(options.authorName
-      ? {
-          author: {
-            "@type": "Person",
-            "@id": `${siteUrl}/#person`,
-            name: options.authorName,
-            url: `${siteUrl}/`,
-          },
-        }
-      : {}),
+    ...contentPageFields(siteUrl, canonicalUrl, options.authorName),
   };
 }
 

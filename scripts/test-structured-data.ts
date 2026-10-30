@@ -59,7 +59,7 @@ describe("JSON-LD Structured Data (Level 9.6)", () => {
 
       assert.strictEqual(site["@context"], "https://schema.org");
       assert.strictEqual(site["@type"], "WebSite");
-      assert.strictEqual(site.name, "CHIBUEZE MAXWELL");
+      assert.strictEqual(site.name, "Chibueze Maxwell");
       assert.strictEqual(site.url, "http://localhost:3000/");
       assert.strictEqual(site.description, "Super Intelligence Engineer & Entrepreneur");
       assert.ok(site["@id"]);
@@ -94,7 +94,7 @@ describe("JSON-LD Structured Data (Level 9.6)", () => {
       assert.ok(person);
       assert.strictEqual(person["@context"], "https://schema.org");
       assert.strictEqual(person["@type"], "Person");
-      assert.strictEqual(person.name, "CHIBUEZE MAXWELL");
+      assert.strictEqual(person.name, "Chibueze Maxwell");
       assert.strictEqual(person.url, "http://localhost:3000/");
       assert.strictEqual(person.jobTitle, "Super Intelligence Engineer & Entrepreneur");
       assert.strictEqual(
@@ -233,7 +233,7 @@ describe("JSON-LD Structured Data (Level 9.6)", () => {
       assert.deepStrictEqual(research.author, {
         "@type": "Person",
         "@id": "http://localhost:3000/#person",
-        name: "CHIBUEZE MAXWELL",
+        name: "Chibueze Maxwell",
         url: "http://localhost:3000/",
       });
     });

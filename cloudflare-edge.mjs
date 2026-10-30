@@ -2,8 +2,10 @@ import PostalMime from "postal-mime";
 
 import { routeVercelAdmin } from "./src/lib/cloudflare-admin.ts";
 
+// Every public GET route must be listed here, or visitors and crawlers get a
+// 404 from this Worker before the request ever reaches the site.
 const READ_PATH =
-  /^\/(?:$|(?:work|research|writing|topics)(?:\/[^/]+)?\/?$|(?:about|now|contact)\/?$|api\/search$|(?:sitemap\.xml|robots\.txt|feed\.xml|favicon\.ico|og-default\.png|email-logo\.png)$|_next\/|(?:work|research|writing|topics|about|now|contact)(?:\/[^/]+)?\/opengraph-image$|opengraph-image$)/;
+  /^\/(?:$|(?:work|research|writing|topics)(?:\/[^/]+)?\/?$|(?:about|now|contact|cv)\/?$|api\/search$|(?:sitemap\.xml|robots\.txt|feed\.xml|llms\.txt|llms-full\.txt|manifest\.webmanifest|indexnow\.txt|favicon\.ico|icon\.svg|apple-icon\.png|og-default\.png|email-logo\.png)$|_next\/|(?:work|research|writing|topics|about|now|contact)(?:\/[^/]+)?\/opengraph-image$|opengraph-image$)/;
 const WRITE_PATHS = new Set(["/contact", "/api/analytics/collect", "/api/errors"]);
 const FORWARDED_HEADERS = [
   "accept",

@@ -15,6 +15,7 @@ import {
   researchDraftUpdateSchema,
 } from "@/lib/validation/research";
 import * as researchService from "@/server/services/research";
+import { announceToSearchEngines } from "@/server/services/indexnow";
 
 // Every action re-checks auth() itself, server-side — the route-group
 // layout protects page navigation, not individual mutations, matching
@@ -103,6 +104,10 @@ export async function publishResearchForm(formData: FormData): Promise<void> {
   const researchId = requireField(formData, "researchId");
   await researchService.publishResearch(researchId, actor);
   revalidatePublicResearch();
+  announceToSearchEngines(async () => {
+    const state = await researchService.getResearchFullState(researchId);
+    return state ? [`/research/${state.research.slug}`, "/research", "/"] : [];
+  });
   revalidatePath(`/admin/research/${researchId}`);
   revalidatePath("/admin/research");
   redirect(`/admin/research/${researchId}`);

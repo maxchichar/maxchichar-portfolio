@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 // Self-hosted variable fonts (Fontsource) — no runtime dependency on a
 // third-party font CDN. Locked typefaces: FINAL LOCKED SPECIFICATION §D.10.
@@ -15,9 +15,11 @@ import { CommandPalette } from "@/components/search/command-palette";
 import { ErrorListener } from "@/components/error-listener";
 import { RevealObserver } from "@/components/motion/reveal-observer";
 import { SmoothScroll } from "@/components/motion/smooth-scroll";
-import { constructBaseMetadata } from "@/lib/metadata";
+import { constructBaseMetadata, SITE_VIEWPORT } from "@/lib/metadata";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { getPublicSiteSettings } from "@/server/services/settings";
+
+export const viewport: Viewport = SITE_VIEWPORT;
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getPublicSiteSettings();
