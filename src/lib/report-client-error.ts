@@ -1,4 +1,5 @@
 import { isBenignClientError } from "@/lib/benign-errors";
+import { reloadIfStaleDeploy } from "@/lib/stale-deploy";
 
 /**
  * Sends a browser-side crash to /api/errors (best effort, never throws).
@@ -13,7 +14,10 @@ const seenMessages = new Set<string>();
 
 export function reportClientError(error: unknown) {
   try {
-    if (typeof window === "undefined" || sent >= 3) return;
+    if (typeof window === "undefined") return;
+    // A tab left open across a deploy: reload rather than log it.
+    if (reloadIfStaleDeploy(error)) return;
+    if (sent >= 3) return;
     const err = error as { message?: unknown; stack?: unknown; digest?: unknown };
     if (typeof err?.digest === "string" && err.digest) return;
     if (isBenignClientError(error)) return;
