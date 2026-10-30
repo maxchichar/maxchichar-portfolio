@@ -21,7 +21,7 @@ export default async function TestimonialsPage({
   const notice = saved ? "Testimonial saved." : deleted ? "Testimonial deleted." : null;
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10 md:py-12">
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 md:py-12">
       <AdminPageHeader
         title="Testimonials"
         description="Quotes from clients and collaborators. Featured ones appear on the homepage; ones linked to a project appear on its case study."
@@ -29,7 +29,7 @@ export default async function TestimonialsPage({
           available ? (
             <Link
               href="/admin/testimonials/new"
-              className="rounded-card bg-accent text-bg px-4 py-2 font-sans text-sm font-medium transition-opacity hover:opacity-90"
+              className="rounded-card bg-accent text-bg px-4 py-2.5 font-sans text-sm font-medium whitespace-nowrap transition-opacity hover:opacity-90 sm:py-2"
             >
               + New testimonial
             </Link>
@@ -62,7 +62,7 @@ export default async function TestimonialsPage({
       ) : null}
 
       {available && items.length === 0 ? (
-        <div className="rounded-panel border-border border border-dashed p-12 text-center">
+        <div className="rounded-panel border-border border border-dashed px-6 py-12 text-center">
           <p className="text-text font-sans text-sm font-medium">No testimonials yet.</p>
           <p className="text-text-muted mx-auto mt-2 max-w-md font-serif text-sm">
             A few words from people you&apos;ve worked with do more for trust than
@@ -73,7 +73,7 @@ export default async function TestimonialsPage({
       ) : null}
 
       {items.length > 0 ? (
-        <ul className="rounded-panel border-border divide-border divide-y border">
+        <ul className="rounded-panel border-border bg-surface divide-border divide-y overflow-hidden border">
           {items.map((t) => {
             const byline = [t.authorRole, t.authorCompany].filter(Boolean).join(", ");
             const project = t.projectId ? projectTitle.get(t.projectId) : null;
@@ -81,31 +81,45 @@ export default async function TestimonialsPage({
               <li key={t.id}>
                 <Link
                   href={`/admin/testimonials/${t.id}`}
-                  className="hover:bg-surface grid gap-3 px-5 py-4 transition-colors md:grid-cols-[1fr_auto] md:items-center md:gap-8"
+                  className="hover:bg-surface-2 flex items-start gap-3 px-4 py-4 transition-colors sm:px-5 md:items-center md:gap-8"
                 >
-                  <div className="min-w-0">
-                    <p className="text-text line-clamp-2 font-serif text-base leading-snug">
-                      &ldquo;{t.quote}&rdquo;
-                    </p>
-                    <p className="text-text-muted mt-1.5 font-sans text-xs">
-                      <span className="text-text font-medium">{t.authorName}</span>
-                      {byline ? ` · ${byline}` : ""}
-                      {project ? ` · on ${project}` : ""}
-                    </p>
+                  <div className="flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:items-center md:gap-8">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-text line-clamp-3 font-serif text-[15px] leading-snug [overflow-wrap:anywhere] sm:line-clamp-2 sm:text-base">
+                        &ldquo;{t.quote}&rdquo;
+                      </p>
+                      <p className="text-text-muted mt-1.5 font-sans text-xs [overflow-wrap:anywhere]">
+                        <span className="text-text font-medium">{t.authorName}</span>
+                        {byline ? ` · ${byline}` : ""}
+                        {project ? ` · on ${project}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap items-center gap-2 font-mono text-[11px]">
+                      {t.featured ? (
+                        <span className="border-accent text-accent rounded-full border px-2 py-0.5">
+                          Home
+                        </span>
+                      ) : null}
+                      {!t.visible ? (
+                        <span className="border-border text-text-muted rounded-full border px-2 py-0.5">
+                          Hidden
+                        </span>
+                      ) : null}
+                      <span className="text-text-muted">#{t.sortOrder}</span>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-                    {t.featured ? (
-                      <span className="border-accent text-accent rounded-full border px-2 py-0.5">
-                        Home
-                      </span>
-                    ) : null}
-                    {!t.visible ? (
-                      <span className="border-border text-text-muted rounded-full border px-2 py-0.5">
-                        Hidden
-                      </span>
-                    ) : null}
-                    <span className="text-text-muted">#{t.sortOrder}</span>
-                  </div>
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-text-muted mt-0.5 h-4 w-4 shrink-0 md:mt-0"
+                  >
+                    <path d="M8 5l5 5-5 5" />
+                  </svg>
                 </Link>
               </li>
             );

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AdminPageHeader } from "@/components/admin/page-header";
@@ -29,7 +30,25 @@ export default async function EditTestimonialPage({
   ]);
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12 md:py-16">
+    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12 md:py-16">
+      <Link
+        href="/admin/testimonials"
+        className="text-text-muted hover:text-text mb-4 inline-flex items-center gap-1.5 py-1 font-sans text-sm transition-colors"
+      >
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M12 15l-5-5 5-5" />
+        </svg>
+        Testimonials
+      </Link>
       <AdminPageHeader
         title="Edit testimonial"
         description={`From ${testimonial.authorName}`}
