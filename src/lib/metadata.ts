@@ -10,9 +10,14 @@ export const DEFAULT_SITE_DESCRIPTION =
 /** The person behind the site, as search engines should attribute it. */
 export const SITE_AUTHOR = "Chibueze Maxwell";
 export const SITE_ALTERNATE_NAME = "MAXCHICHAR";
+/** The person's full name, confirmed by them for public use. */
+export const SITE_AUTHOR_FULL_NAME = "Chibueze Charles Maxwell";
+/** Every other name the person is publicly known by (Person.alternateName). */
+export const SITE_AUTHOR_ALTERNATE_NAMES = [SITE_ALTERNATE_NAME, SITE_AUTHOR_FULL_NAME];
 
 export const SITE_KEYWORDS = [
   "Chibueze Maxwell",
+  "Chibueze Charles Maxwell",
   "MAXCHICHAR",
   "AI engineer",
   "artificial intelligence",

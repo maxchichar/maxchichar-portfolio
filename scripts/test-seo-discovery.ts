@@ -132,7 +132,10 @@ describe("Person entity", () => {
       image: "https://cdn.example/me.jpg",
       knowsAbout: ["AI", "AI", " "],
     })!;
-    assert.strictEqual(person.alternateName, "MAXCHICHAR");
+    assert.deepStrictEqual(person.alternateName, [
+      "MAXCHICHAR",
+      "Chibueze Charles Maxwell",
+    ]);
     assert.strictEqual(person.description, "AI engineer");
     assert.strictEqual(person.image, "https://cdn.example/me.jpg");
     assert.deepStrictEqual(person.knowsAbout, ["AI"]);
