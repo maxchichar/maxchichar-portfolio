@@ -32,8 +32,8 @@ export function StatTile({
     }
   }
   return (
-    <div className="rounded-panel border-border bg-surface border p-5">
-      <p className="text-text-muted flex items-center gap-2 font-sans text-sm">
+    <div className="rounded-panel border-border bg-surface min-w-0 border p-4 sm:p-5">
+      <p className="text-text-muted flex items-center gap-2 font-sans text-xs sm:text-sm">
         {live ? (
           <span className="relative flex h-2 w-2">
             <span className="bg-accent absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" />
@@ -42,10 +42,10 @@ export function StatTile({
         ) : null}
         {label}
       </p>
-      <p className="text-text mt-3 font-sans text-4xl font-semibold tracking-tight">
+      <p className="text-text mt-2 font-sans text-3xl font-semibold tracking-tight tabular-nums sm:mt-3 sm:text-4xl">
         {format(value)}
       </p>
-      <p className="text-text-muted mt-2 font-mono text-xs">
+      <p className="text-text-muted mt-2 font-mono text-[11px] leading-snug sm:text-xs">
         {delta ? <span className="text-text">{delta}</span> : null}
         {delta && note ? " " : null}
         {note}
