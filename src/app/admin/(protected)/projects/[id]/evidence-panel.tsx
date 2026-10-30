@@ -26,7 +26,7 @@ export function EvidencePanel({
   libraryMedia: MediaPickerItem[];
 }) {
   return (
-    <section className="rounded-panel border-border bg-surface border p-6">
+    <section className="rounded-panel border-border bg-surface border p-4 sm:p-6">
       <h2 className="text-text font-sans text-sm font-semibold">Evidence</h2>
 
       <div className="mt-3 space-y-2">
@@ -36,13 +36,15 @@ export function EvidencePanel({
           evidence.map((e) => (
             <div
               key={e.id}
-              className="rounded-card border-border bg-bg flex items-start justify-between border px-4 py-2.5"
+              className="rounded-card border-border bg-bg flex items-start justify-between gap-3 border px-3 py-2.5 sm:px-4"
             >
-              <div>
+              <div className="min-w-0">
                 <span className="text-text-muted font-mono text-xs">{e.type}</span>
-                <span className="text-text ml-2 font-sans text-sm">{e.label}</span>
+                <span className="text-text ml-2 font-sans text-sm [overflow-wrap:anywhere]">
+                  {e.label}
+                </span>
                 {e.data ? (
-                  <p className="text-text-muted mt-0.5 font-mono text-xs">
+                  <p className="text-text-muted mt-0.5 font-mono text-xs [overflow-wrap:anywhere]">
                     {JSON.stringify(e.data)}
                   </p>
                 ) : null}
@@ -52,7 +54,7 @@ export function EvidencePanel({
                 <input type="hidden" name="evidenceId" value={e.id} />
                 <button
                   type="submit"
-                  className="text-text-muted hover:text-text font-sans text-xs"
+                  className="text-text-muted hover:text-text -my-1 shrink-0 py-1 font-sans text-xs"
                 >
                   Remove
                 </button>
@@ -64,14 +66,14 @@ export function EvidencePanel({
 
       <EvidenceForm
         action={addEvidenceForm}
-        className="rounded-panel border-border bg-bg mt-4 space-y-3 border p-4"
+        className="rounded-panel border-border bg-bg mt-4 space-y-3 border p-3 sm:p-4"
       >
         <input type="hidden" name="projectId" value={projectId} />
         <div className="grid grid-cols-2 gap-3">
           <select
             name="type"
             defaultValue="repository"
-            className="rounded-card border-border bg-bg text-text focus-visible:border-accent border px-3 py-2 font-sans text-sm outline-none"
+            className="rounded-card border-border bg-bg text-text focus-visible:border-accent min-w-0 border px-3 py-2.5 font-sans text-sm outline-none max-sm:text-base sm:py-2"
           >
             {EVIDENCE_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -83,18 +85,18 @@ export function EvidencePanel({
             name="label"
             placeholder="Label"
             required
-            className="rounded-card border-border bg-bg text-text focus-visible:border-accent border px-3 py-2 font-sans text-sm outline-none"
+            className="rounded-card border-border bg-bg text-text focus-visible:border-accent min-w-0 border px-3 py-2.5 font-sans text-sm outline-none max-sm:text-base sm:py-2"
           />
         </div>
         <input
           name="description"
           placeholder="Description (optional)"
-          className="rounded-card border-border bg-bg text-text focus-visible:border-accent w-full border px-3 py-2 font-sans text-sm outline-none"
+          className="rounded-card border-border bg-bg text-text focus-visible:border-accent w-full border px-3 py-2.5 font-sans text-sm outline-none max-sm:text-base sm:py-2"
         />
         <input
           name="url"
           placeholder="URL (optional)"
-          className="rounded-card border-border bg-bg text-text focus-visible:border-accent w-full border px-3 py-2 font-sans text-sm outline-none"
+          className="rounded-card border-border bg-bg text-text focus-visible:border-accent w-full border px-3 py-2.5 font-sans text-sm outline-none max-sm:text-base sm:py-2"
         />
         <ImageField
           name="mediaId"
@@ -106,32 +108,33 @@ export function EvidencePanel({
         />
         {/* metric/before/after/unit only matter for measurement/before_after types;
             harmless to always render them — the action ignores extras for other types. */}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <input
             name="metric"
             placeholder="Metric (measurement/before-after only)"
-            className="rounded-card border-border bg-bg text-text focus-visible:border-accent border px-3 py-2 font-sans text-sm outline-none"
+            title="Metric (measurement/before-after only)"
+            className="rounded-card border-border bg-bg text-text focus-visible:border-accent col-span-2 min-w-0 border px-3 py-2.5 font-sans text-sm outline-none max-sm:text-base sm:col-span-1 sm:py-2"
           />
           <input
             name="before"
             placeholder="Before"
-            className="rounded-card border-border bg-bg text-text focus-visible:border-accent border px-3 py-2 font-sans text-sm outline-none"
+            className="rounded-card border-border bg-bg text-text focus-visible:border-accent min-w-0 border px-3 py-2.5 font-sans text-sm outline-none max-sm:text-base sm:py-2"
           />
           <input
             name="after"
             placeholder="After"
-            className="rounded-card border-border bg-bg text-text focus-visible:border-accent border px-3 py-2 font-sans text-sm outline-none"
+            className="rounded-card border-border bg-bg text-text focus-visible:border-accent min-w-0 border px-3 py-2.5 font-sans text-sm outline-none max-sm:text-base sm:py-2"
           />
           <input
             name="unit"
             placeholder="Unit"
-            className="rounded-card border-border bg-bg text-text focus-visible:border-accent border px-3 py-2 font-sans text-sm outline-none"
+            className="rounded-card border-border bg-bg text-text focus-visible:border-accent col-span-2 min-w-0 border px-3 py-2.5 font-sans text-sm outline-none max-sm:text-base sm:col-span-1 sm:py-2"
           />
         </div>
         {error && <p className="text-text font-sans text-sm">{error}</p>}
         <button
           type="submit"
-          className="rounded-card border-border text-text hover:border-accent border px-4 py-2 font-sans text-sm transition-colors"
+          className="rounded-card border-border text-text hover:border-accent w-full border px-4 py-2.5 font-sans text-sm transition-colors sm:w-auto sm:py-2"
         >
           Add evidence
         </button>
