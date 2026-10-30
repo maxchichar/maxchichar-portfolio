@@ -198,10 +198,26 @@ export function SettingsForm({
   const name = values.siteName.trim() || DEFAULT_SITE_SETTINGS.siteName;
   const tagline = values.siteDescription.trim() || DEFAULT_SITE_SETTINGS.siteDescription;
   const socials = SOCIALS.filter(({ key }) => values[key].trim().length > 0);
+  const statusText = isPending
+    ? "Saving…"
+    : dirty
+      ? "Unsaved changes"
+      : state.success
+        ? "Saved. The site is up to date."
+        : "No unsaved changes";
+  const statusDot = (
+    <span
+      aria-hidden="true"
+      className={`h-1.5 w-1.5 shrink-0 rounded-full ${dirty ? "bg-accent animate-pulse" : "bg-text-muted/50"}`}
+    />
+  );
 
   return (
-    <form action={formAction} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-      <div className="order-2 min-w-0 space-y-6 lg:order-1">
+    <form
+      action={formAction}
+      className="grid gap-4 pb-24 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:pb-0"
+    >
+      <div className="min-w-0 space-y-4 sm:space-y-6">
         <EditorSection
           title="Identity"
           description="How the site names and describes you. Text changes go live when you save."
@@ -316,25 +332,17 @@ export function SettingsForm({
         </EditorSection>
       </div>
 
-      <aside className="order-1 lg:order-2">
+      <aside className="min-w-0">
         <div className="space-y-4 lg:sticky lg:top-6">
-          <section className="rounded-panel border-border bg-surface border p-5">
+          {/* Phones use the fixed save bar below instead. */}
+          <section className="rounded-panel border-border bg-surface hidden border p-5 lg:block">
             <h2 className="text-text font-sans text-sm font-semibold">Save</h2>
             <p
               role="status"
               className="text-text-muted mt-3 flex items-center gap-2 font-sans text-xs"
             >
-              <span
-                aria-hidden="true"
-                className={`h-1.5 w-1.5 rounded-full ${dirty ? "bg-accent animate-pulse" : "bg-text-muted/50"}`}
-              />
-              {isPending
-                ? "Saving…"
-                : dirty
-                  ? "Unsaved changes"
-                  : state.success
-                    ? "Saved. The site is up to date."
-                    : "No unsaved changes"}
+              {statusDot}
+              {statusText}
             </p>
             {state.error ? (
               <p role="alert" className="text-accent mt-2 font-sans text-xs">
@@ -355,7 +363,7 @@ export function SettingsForm({
 
           <section
             aria-label="Footer preview"
-            className="rounded-panel border-border bg-surface border p-5"
+            className="rounded-panel border-border bg-surface border p-4 sm:p-5"
           >
             <h2 className="text-text font-sans text-sm font-semibold">Footer preview</h2>
             <div className="border-border bg-bg rounded-card mt-4 space-y-3 border p-4">
@@ -365,15 +373,15 @@ export function SettingsForm({
                 </p>
               ) : null}
               {socials.length > 0 ? (
-                <p className="text-text font-sans text-xs">
+                <p className="text-text font-sans text-xs [overflow-wrap:anywhere]">
                   {socials.map(({ label }) => label).join(" · ")}
                 </p>
               ) : null}
-              <p className="text-text-muted border-border border-t pt-3 font-mono text-[11px] leading-relaxed">
+              <p className="text-text-muted border-border border-t pt-3 font-mono text-[11px] leading-relaxed [overflow-wrap:anywhere]">
                 &copy; {new Date().getFullYear()} {name}. {tagline}
               </p>
               {values.footerText.trim() ? (
-                <p className="text-text-muted font-mono text-[11px]">
+                <p className="text-text-muted font-mono text-[11px] [overflow-wrap:anywhere]">
                   {values.footerText.trim()}
                 </p>
               ) : null}
@@ -381,6 +389,35 @@ export function SettingsForm({
           </section>
         </div>
       </aside>
+
+      <div className="border-border bg-bg/95 fixed inset-x-0 bottom-0 z-30 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
+        {state.error ? (
+          <p role="alert" className="text-accent mb-2 font-sans text-xs">
+            {state.error}
+          </p>
+        ) : null}
+        <div className="flex items-center gap-3">
+          <p className="text-text-muted flex min-w-0 flex-1 items-center gap-2 font-sans text-xs">
+            {statusDot}
+            <span className="truncate">
+              {isPending
+                ? "Saving…"
+                : dirty
+                  ? "Unsaved changes"
+                  : state.success
+                    ? "Saved"
+                    : "Up to date"}
+            </span>
+          </p>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="rounded-card bg-accent text-bg shrink-0 px-5 py-2.5 font-sans text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {isPending ? "Saving…" : "Save settings"}
+          </button>
+        </div>
+      </div>
     </form>
   );
 }
