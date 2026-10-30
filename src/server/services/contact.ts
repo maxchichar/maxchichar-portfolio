@@ -12,13 +12,21 @@ import { db } from "@/lib/db";
 import {
   contactSubmissionSchema,
   RATE_LIMIT_MAX_COUNT,
+  INBOUND_MAX_TEXT,
+  inboundEmailSchema,
   RATE_LIMIT_WINDOW_MS,
   type ContactSubmissionInput,
 } from "@/lib/validation/contact";
 
 import * as contactRepo from "../repositories/contact";
-import { isEmailConfigured, replySender, replyToAddress, sendEmail } from "./email";
-import { replyEmail, sendContactEmails } from "./contact-email";
+import {
+  isEmailConfigured,
+  replySender,
+  replyToAddress,
+  sendEmail,
+  singleLine,
+} from "./email";
+import { replyEmail, sendContactEmails, senderName } from "./contact-email";
 import { verifyTurnstile } from "./turnstile";
 
 export class ContactServiceError extends Error {}
@@ -255,7 +263,16 @@ export async function sendReply(input: unknown) {
     from,
     subject,
     ...(replyTo ? { replyTo } : {}),
-    ...replyEmail(submission, body),
+    // Threads the reply under their email in their mail app.
+    ...(submission.messageId
+      ? {
+          headers: {
+            "In-Reply-To": submission.messageId,
+            References: submission.messageId,
+          },
+        }
+      : {}),
+    ...replyEmail(submission, body, senderName(from)),
   });
   if (!sent) {
     throw new ContactServiceError(
@@ -285,4 +302,48 @@ export async function sendReply(input: unknown) {
   } catch (err: unknown) {
     console.error("sendReply: reply sent but not recorded:", err);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Email received at hello@ (posted by the Cloudflare email worker)
+// ---------------------------------------------------------------------------
+
+/**
+ * Stores an email sent to hello@ as an inbox message. Returns false for a
+ * message already stored (a redelivery), so the worker can treat both as done.
+ */
+export async function receiveEmail(input: unknown): Promise<boolean> {
+  const parsed = inboundEmailSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new ContactServiceError(parsed.error.issues[0]?.message ?? "Invalid email.");
+  }
+  const { from, subject, text, messageId, attachments } = parsed.data;
+
+  if (messageId && (await contactRepo.findSubmissionByMessageId(db, messageId))) {
+    return false;
+  }
+
+  let message = text.replace(/\r\n/g, "\n").trim();
+  if (message.length > INBOUND_MAX_TEXT) {
+    message = `${message.slice(0, INBOUND_MAX_TEXT)}\n\n[Message shortened. The full email is in your mailbox.]`;
+  }
+  if (attachments) {
+    const note = `[${attachments} attachment${attachments === 1 ? "" : "s"}, see the email in your mailbox.]`;
+    message = message ? `${message}\n\n${note}` : note;
+  }
+
+  await contactRepo.insertContactSubmission(db, {
+    name: singleLine(from.name || "") || from.address,
+    email: from.address.toLowerCase(),
+    organization: null,
+    reason: null,
+    subject: subject ? singleLine(subject) : null,
+    message: message || "(No text in this email.)",
+    honeypot: null,
+    ipHash: null,
+    status: "NEW",
+    source: "email",
+    messageId: messageId || null,
+  });
+  return true;
 }

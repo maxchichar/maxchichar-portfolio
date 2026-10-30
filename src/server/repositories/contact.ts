@@ -131,3 +131,12 @@ export async function countReplies(tx: Tx) {
   const [result] = await tx.select({ count: count() }).from(schema.contactReplies);
   return Number(result?.count ?? 0);
 }
+
+export async function findSubmissionByMessageId(tx: Tx, messageId: string) {
+  const [row] = await tx
+    .select({ id: schema.contactSubmissions.id })
+    .from(schema.contactSubmissions)
+    .where(eq(schema.contactSubmissions.messageId, messageId))
+    .limit(1);
+  return row ?? null;
+}

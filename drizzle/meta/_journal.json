@@ -57,6 +57,13 @@
       "when": 1793279827132,
       "tag": "0007_contact_replies",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793348017121,
+      "tag": "0008_inbound_email",
+      "breakpoints": true
     }
   ]
 }

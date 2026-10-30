@@ -143,6 +143,28 @@ Cloudflare does not proxy admin requests or receive Vercel session cookies.
 `.dev.vars` and `.env.local` are ignored. Use only test secrets locally. Never put
 credentials in Git, a PR, or chat.
 
+## Email to hello@ in the admin inbox
+
+Mail for `hello@chibuezemaxwell.com` already arrives through Cloudflare Email
+Routing. The edge worker's `email` handler (`cloudflare-edge.mjs`) saves each
+message to the admin inbox via `ADMIN_ORIGIN/api/inbound-email` and forwards a
+copy to `EMAIL_FORWARD_TO`, so the mailbox keeps working if the dashboard is
+down. It bounces a message only when it reached neither place.
+
+1. Apply migration `drizzle/0008_inbound_email.sql` **before** deploying the
+   app (the inbox reads the new columns).
+2. Generate a secret (`openssl rand -hex 32`) and set it as
+   `INBOUND_EMAIL_SECRET` on Vercel, then redeploy.
+3. Set the worker secrets and deploy it:
+   `npx wrangler secret put INBOUND_EMAIL_SECRET --config wrangler.edge.jsonc`
+   (same value), `npx wrangler secret put EMAIL_FORWARD_TO --config wrangler.edge.jsonc`
+   (your personal mailbox, already a verified destination), `npm run deploy:edge`.
+4. In Cloudflare: Email > Email Routing > Routing rules, edit the `hello@`
+   rule's action to **Send to a Worker** and pick `maxchichar-portfolio-edge`.
+
+Replies sent from the inbox to an email carry `In-Reply-To`, so they thread
+under the original message in the sender's mail app.
+
 ## Validation and deployment
 
 Launch preflight (19 October 2026): the OpenNext deployment on

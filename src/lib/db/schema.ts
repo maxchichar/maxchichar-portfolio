@@ -674,10 +674,18 @@ export const contactSubmissions = pgTable(
     honeypot: text("honeypot"),
     ipHash: text("ip_hash"),
     status: text("status").notNull().default("NEW"),
+    // 'form' = the contact form; 'email' = mail sent to hello@, saved by the
+    // Cloudflare email worker. Email rows carry the subject and Message-ID
+    // (for threading replies and ignoring a redelivered message).
+    source: text("source").notNull().default("form"),
+    subject: text("subject"),
+    messageId: text("message_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("contact_submissions_created_at_idx").on(table.createdAt),
+    uniqueIndex("contact_submissions_message_id_idx").on(table.messageId),
+    check("contact_submissions_source_check", sql`${table.source} IN ('form','email')`),
     // Backs the rate-limit count (recent rows for the same ip_hash) — §D.5.
     index("contact_submissions_ip_hash_created_at_idx").on(table.ipHash, table.createdAt),
     check(
