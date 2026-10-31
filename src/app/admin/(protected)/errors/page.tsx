@@ -6,6 +6,7 @@ import { isEmailConfigured } from "@/server/services/email";
 import { listErrors } from "@/server/services/errors";
 
 import { deleteErrorForm, resolveErrorForm } from "./actions";
+import { CopyErrorButton } from "./copy-error-button";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,25 @@ function ago(date: Date) {
   const hours = Math.round(mins / 60);
   if (hours < 48) return `${hours}h ago`;
   return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+type ErrorItem = Awaited<ReturnType<typeof listErrors>>["items"][number];
+
+/** Everything known about an error as plain text, for pasting elsewhere. */
+function errorReport(e: ErrorItem) {
+  const iso = (date: Date) => new Date(date).toISOString();
+  return [
+    `Error: ${e.message}`,
+    `Source: ${e.source === "server" ? "Server" : "Browser"}`,
+    `Page: ${e.method ? `${e.method} ` : ""}${e.lastPath ?? e.route ?? "unknown"}`,
+    e.route && e.route !== e.lastPath ? `Route: ${e.route}` : null,
+    `Occurrences: ${e.count} (first ${iso(e.firstSeen)}, last ${iso(e.lastSeen)})`,
+    e.digest ? `Reference: ${e.digest}` : null,
+    `Status: ${e.resolvedAt ? `Resolved ${iso(e.resolvedAt)}` : "Open"}`,
+    e.stack ? `\nStack:\n${e.stack}` : null,
+  ]
+    .filter((line) => line !== null)
+    .join("\n");
 }
 
 export default async function ErrorsPage({
@@ -196,6 +216,7 @@ export default async function ErrorsPage({
                       {e.resolvedAt ? "Reopen" : "Mark resolved"}
                     </button>
                   </form>
+                  <CopyErrorButton report={errorReport(e)} />
                   <ConfirmForm
                     action={deleteErrorForm}
                     title="Delete error log?"
