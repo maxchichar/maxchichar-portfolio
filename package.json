@@ -33,6 +33,7 @@
     "deploy:cloudflare": "opennextjs-cloudflare deploy",
     "check:cloudflare": "wrangler deploy --dry-run --outdir .cloudflare-dry-run",
     "setup:admin": "tsx scripts/setup-admin.ts",
+    "predeploy:edge": "bash scripts/predeploy-edge.sh",
     "deploy:edge": "wrangler deploy --config wrangler.edge.jsonc",
     "check:edge": "wrangler deploy --config wrangler.edge.jsonc --dry-run"
   },
