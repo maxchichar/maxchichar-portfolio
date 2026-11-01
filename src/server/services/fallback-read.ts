@@ -2,6 +2,7 @@ import "server-only";
 
 import { after } from "next/server";
 
+import { errorMessageWithCause } from "@/lib/error-fingerprint";
 import { withFallback } from "@/lib/with-fallback";
 
 import { recordError } from "./errors";
@@ -23,7 +24,7 @@ export function readOrFallback<T>(
     after(() =>
       recordError({
         source: "server",
-        message: err instanceof Error ? err.message : err,
+        message: errorMessageWithCause(err),
         stack: err instanceof Error ? (err.stack ?? null) : null,
         route,
         path: route,

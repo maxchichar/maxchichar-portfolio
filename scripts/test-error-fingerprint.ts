@@ -1,7 +1,11 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { cleanErrorMessage, errorFingerprint } from "../src/lib/error-fingerprint";
+import {
+  cleanErrorMessage,
+  errorFingerprint,
+  errorMessageWithCause,
+} from "../src/lib/error-fingerprint";
 
 describe("error grouping", () => {
   it("groups the same error with different ids or numbers", () => {
@@ -32,5 +36,17 @@ describe("error grouping", () => {
     assert.strictEqual(cleanErrorMessage("  a\n  b\t c "), "a b c");
     assert.strictEqual(cleanErrorMessage("x".repeat(900)).length, 500);
     assert.strictEqual(cleanErrorMessage(undefined), "Unknown error");
+  });
+
+  it("adds the underlying cause of a failed query", () => {
+    const err = new Error('Failed query: select count(*) from "contact_replies"', {
+      cause: new Error('relation "contact_replies" does not exist'),
+    });
+    assert.strictEqual(
+      errorMessageWithCause(err),
+      'Failed query: select count(*) from "contact_replies" (cause: relation "contact_replies" does not exist)',
+    );
+    assert.strictEqual(errorMessageWithCause(new Error("boom")), "boom");
+    assert.strictEqual(errorMessageWithCause("plain"), "plain");
   });
 });
