@@ -35,7 +35,10 @@ complete removal of Vercel.
   Preserve all mail DNS records. No paid product is provisioned. The approved `www`
   hostname redirects to the apex with HTTP 308, preserving the path and query.
 
-Commands: `npm run check:edge`, then `npm run deploy:edge`. No Next.js build or
+Commands: `npm run check:edge`, then `npm run deploy:edge`. `deploy:edge` first
+runs `scripts/predeploy-edge.sh`, which requires the `main` branch, refuses
+uncommitted edits to the edge Worker, and pulls the latest `origin/main`, since
+wrangler uploads whatever is on disk. No Next.js build or
 Cloudflare database secret is needed for the edge Worker. Custom-domain binding
 is a separately approved action; do not accidentally deploy the experimental
 OpenNext Worker as production. Rollback: detach the custom domain from the edge
