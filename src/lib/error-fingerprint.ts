@@ -7,6 +7,21 @@ export function cleanErrorMessage(message: unknown): string {
 }
 
 /**
+ * An error's message plus its underlying cause. Drizzle reports a failed
+ * query as just "Failed query: <sql>" and keeps the database's reason
+ * (e.g. 'relation "x" does not exist') in `cause`, so without it the log
+ * can't say what went wrong.
+ */
+export function errorMessageWithCause(err: unknown): unknown {
+  const e = err as { message?: unknown; cause?: { message?: unknown } } | null;
+  if (typeof e?.message !== "string") return err;
+  const cause = e.cause?.message;
+  return typeof cause === "string" && cause && !e.message.includes(cause)
+    ? `${e.message} (cause: ${cause})`
+    : e.message;
+}
+
+/**
  * Groups repeats of the same problem: same source, same route, same message
  * once volatile parts (ids, numbers, hashes) are masked. So "Post 123 not
  * found" and "Post 456 not found" on the same route are one entry.

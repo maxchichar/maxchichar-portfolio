@@ -13,10 +13,11 @@ export const onRequestError: Instrumentation.onRequestError = async (
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
   try {
     const { recordError } = await import("./server/services/errors");
+    const { errorMessageWithCause } = await import("./lib/error-fingerprint");
     const err = error as { message?: unknown; digest?: unknown; stack?: unknown };
     await recordError({
       source: "server",
-      message: err?.message ?? error,
+      message: errorMessageWithCause(error),
       route: context.routePath,
       path: request.path,
       method: request.method,
