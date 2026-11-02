@@ -68,12 +68,25 @@ export function Hero({
     // low-key studio photography (subject on black), and light scrims over it
     // turned the black into grey and put dark text on a dark image. Without a
     // photo it follows the page theme.
+    //
+    // Phones: a full-bleed landscape photo behind the copy crops the subject
+    // to a sliver and buries the face under the headline. Below md the photo
+    // gets its own portrait frame at the top instead, sized so the whole
+    // subject shows, and the copy follows beneath it. md and up is unchanged.
     <section
       data-theme={image ? "dark" : undefined}
-      className="bg-bg text-text relative isolate flex min-h-[100svh] flex-col overflow-hidden"
+      className={`bg-bg text-text relative isolate flex flex-col overflow-hidden ${
+        image ? "md:min-h-[100svh]" : "min-h-[100svh]"
+      }`}
     >
       {/* Backdrop: the landscape photo, or an atmospheric wash until one is set. */}
-      <div className="grain absolute inset-0 -z-10">
+      <div
+        className={`grain -z-10 ${
+          image
+            ? "relative aspect-[5/6] max-h-[78svh] w-full overflow-hidden md:absolute md:inset-0 md:aspect-auto md:max-h-none md:overflow-visible"
+            : "absolute inset-0"
+        }`}
+      >
         <div className="parallax absolute inset-0">
           {image ? (
             <MediaImage
@@ -83,21 +96,32 @@ export function Hero({
               sizes="100vw"
               loading="eager"
               fetchPriority="high"
-              className="animate-slow-zoom object-cover"
+              className="animate-slow-zoom object-cover object-[47%_22%] md:object-center"
             />
           ) : (
             <div aria-hidden="true" className="hero-wash h-full w-full" />
           )}
         </div>
         {/* Legibility scrims: bottom fade into the page, and a left fade
-            under the copy. */}
+            under the copy. On a framed phone photo only the bottom edge
+            fades, so the face stays clear. */}
+        {image ? (
+          <div
+            aria-hidden="true"
+            className="from-bg via-bg/60 absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t to-transparent md:hidden"
+          />
+        ) : null}
         <div
           aria-hidden="true"
-          className="from-bg via-bg/55 absolute inset-0 bg-gradient-to-t to-transparent"
+          className={`from-bg via-bg/55 absolute inset-0 bg-gradient-to-t to-transparent ${
+            image ? "hidden md:block" : ""
+          }`}
         />
         <div
           aria-hidden="true"
-          className="from-bg/70 absolute inset-0 bg-gradient-to-r via-transparent to-transparent"
+          className={`from-bg/70 absolute inset-0 bg-gradient-to-r via-transparent to-transparent ${
+            image ? "hidden md:block" : ""
+          }`}
         />
         <div
           aria-hidden="true"
@@ -105,32 +129,42 @@ export function Hero({
         />
       </div>
 
-      <div className="container-site flex flex-1 flex-col justify-end pt-32 pb-12 md:pb-16">
+      <div
+        className={`container-site flex flex-1 flex-col justify-end ${
+          image
+            ? "relative -mt-14 pb-10 md:mt-0 md:pt-32 md:pb-16"
+            : "pt-32 pb-12 md:pb-16"
+        }`}
+      >
         <p
-          className="animate-rise text-text/80 flex items-center gap-3 font-mono text-[11px] tracking-[0.2em] uppercase"
+          className="animate-rise text-text/80 flex items-center gap-3 font-mono text-[10px] tracking-[0.16em] uppercase md:text-[11px] md:tracking-[0.2em]"
           style={{ animationDelay: "100ms" }}
         >
-          <span aria-hidden="true" className="bg-accent-purple h-px w-8" />
+          <span
+            aria-hidden="true"
+            className="bg-accent-purple h-px w-6 shrink-0 md:w-8"
+          />
           {hero.eyebrow}
         </p>
 
-        <h1 className="text-display text-text mt-6 max-w-6xl font-sans font-semibold text-balance">
+        <h1 className="text-display text-text mt-5 max-w-6xl font-sans font-semibold text-balance md:mt-6">
           <Headline text={hero.headline} />
         </h1>
 
         <div
-          className="animate-rise mt-10 grid gap-8 md:grid-cols-12 md:items-end"
+          className="animate-rise mt-7 grid gap-8 md:mt-10 md:grid-cols-12 md:items-end"
           style={{ animationDelay: "650ms" }}
         >
           <p className="text-lede text-text/80 max-w-xl font-serif md:col-span-6">
             {hero.body}
           </p>
 
-          <div className="flex flex-wrap gap-3 md:col-span-6 md:justify-end">
+          {/* Phones: full-width, equal buttons; md+: pills aligned right. */}
+          <div className="grid gap-3 md:col-span-6 md:flex md:flex-wrap md:justify-end">
             <Magnetic>
               <Link
                 href={hero.primaryCta.href}
-                className="group bg-text text-bg hover:bg-accent inline-flex items-center gap-2 rounded-full px-6 py-3.5 font-sans text-sm font-medium transition-colors"
+                className="group bg-text text-bg hover:bg-accent inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 font-sans text-sm font-medium transition-colors md:w-auto md:justify-start"
               >
                 {hero.primaryCta.label}
                 <span
@@ -144,7 +178,7 @@ export function Hero({
             <Magnetic>
               <Link
                 href={hero.secondaryCta.href}
-                className="border-text/25 text-text hover:border-accent hover:text-accent bg-bg/20 inline-flex items-center rounded-full border px-6 py-3.5 font-sans text-sm font-medium backdrop-blur-md transition-colors"
+                className="border-text/25 text-text hover:border-accent hover:text-accent bg-bg/20 inline-flex w-full items-center justify-center rounded-full border px-6 py-3.5 font-sans text-sm font-medium backdrop-blur-md transition-colors md:w-auto md:justify-start"
               >
                 {hero.secondaryCta.label}
               </Link>
@@ -153,7 +187,7 @@ export function Hero({
         </div>
 
         <div
-          className="animate-rise border-text/15 text-text-muted mt-14 flex items-center justify-between border-t pt-5 font-mono text-[11px] tracking-[0.18em] uppercase"
+          className="animate-rise border-text/15 text-text-muted mt-10 flex items-center justify-between border-t pt-5 font-mono text-[11px] tracking-[0.18em] uppercase md:mt-14"
           style={{ animationDelay: "800ms" }}
         >
           <span>{name}</span>
