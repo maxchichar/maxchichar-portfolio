@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MediaImage } from "@/components/media-image";
+import { FittedImage } from "@/components/fitted-image";
 
 type ResearchCardProps = {
   slug: string;
@@ -33,12 +33,11 @@ export function ResearchCard({
     >
       <div className="border-border bg-surface relative aspect-[16/10] overflow-hidden rounded-sm border">
         {coverUrl ? (
-          <MediaImage
+          <FittedImage
             src={coverUrl}
             alt=""
-            fill
             sizes={sizes}
-            className="object-cover motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:scale-[1.03]"
+            backdropClassName="motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:scale-[1.18]"
           />
         ) : (
           <div

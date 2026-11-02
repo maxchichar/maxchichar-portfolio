@@ -1,6 +1,6 @@
 import { readEvidenceData } from "@/lib/evidence-display";
 import type { schema } from "@/lib/db";
-import { MediaImage } from "@/components/media-image";
+import { FittedImage } from "@/components/fitted-image";
 
 type EvidenceRow = typeof schema.evidence.$inferSelect & { mediaUrl?: string | null };
 
@@ -66,16 +66,15 @@ export function EvidenceWall({
             <>
               {item.mediaUrl ? (
                 <div className="border-border bg-bg relative -mx-6 -mt-6 mb-6 aspect-video overflow-hidden border-b">
-                  <MediaImage
+                  <FittedImage
                     src={item.mediaUrl}
                     alt={item.label}
-                    fill
                     sizes={
                       isWide
                         ? "(min-width: 768px) 66vw, 100vw"
                         : "(min-width: 768px) 33vw, 100vw"
                     }
-                    className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                    backdropClassName="transition-transform duration-700 group-hover:scale-[1.18]"
                   />
                 </div>
               ) : null}

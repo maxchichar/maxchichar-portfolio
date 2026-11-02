@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { MediaImage } from "@/components/media-image";
+import { FittedImage } from "@/components/fitted-image";
 
 /** End-of-page link to the next item — keeps visitors moving through the work. */
 export function NextUp({
@@ -47,12 +47,11 @@ export function NextUp({
         </div>
         <div className="relative min-h-56 overflow-hidden md:col-span-5">
           {coverUrl ? (
-            <MediaImage
+            <FittedImage
               src={coverUrl}
               alt=""
-              fill
               sizes="(min-width: 768px) 42vw, 100vw"
-              className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
+              backdropClassName="transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.2]"
             />
           ) : (
             <div aria-hidden="true" className="hero-wash absolute inset-0" />

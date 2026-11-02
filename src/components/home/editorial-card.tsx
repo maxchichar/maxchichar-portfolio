@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ViewTransition } from "react";
-import { MediaImage } from "@/components/media-image";
+import { FittedImage } from "@/components/fitted-image";
 
 type HomeEditorialCardProps = {
   href: string;
@@ -37,12 +37,11 @@ export function HomeEditorialCard({
       <ViewTransition name={transitionName} share="morph" default="none">
         <div className="border-border bg-surface relative aspect-[16/10] overflow-hidden rounded-sm border">
           {coverUrl ? (
-            <MediaImage
+            <FittedImage
               src={coverUrl}
               alt=""
-              fill
               sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-              className="object-cover motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:scale-[1.03]"
+              backdropClassName="motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:scale-[1.18]"
             />
           ) : (
             <div
