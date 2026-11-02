@@ -52,6 +52,20 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # Fails when the database is missing a table, column or index this
+      # deploy's code expects: a migration in drizzle/ that wasn't applied.
+      # What's missing is listed on the admin Errors page (and emailed).
+      - name: Check database migrations
+        if: steps.reach.outputs.skip != 'true'
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 \
+            -H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET}" "$SMOKE_BASE_URL/api/health")
+          echo "HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::The database is missing a migration (or couldn't be checked). See the admin Errors page for what's missing, then apply the matching file in drizzle/."
+            exit 1
+          fi
+
       - name: Install Chromium
         if: steps.reach.outputs.skip != 'true'
         run: npx playwright install --with-deps chromium
