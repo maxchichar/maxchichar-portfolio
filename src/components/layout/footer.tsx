@@ -28,10 +28,10 @@ export async function Footer() {
   ].filter((s): s is { label: string; href: string } => Boolean(s.href));
 
   return (
-    <footer className="border-border relative mt-24 overflow-hidden border-t">
-      <div className="container-site pt-20 pb-12 md:pt-28">
-        <div className="grid gap-14 md:grid-cols-12">
-          <div className="md:col-span-6">
+    <footer className="border-border relative mt-16 overflow-hidden border-t md:mt-24">
+      <div className="container-site pt-16 pb-12 md:pt-28">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-12 md:gap-14">
+          <div className="col-span-2 md:col-span-6">
             <p className="index-label">
               <span aria-hidden="true" className="h-px w-6 bg-current" />
               <span>Have a project in mind?</span>
@@ -110,7 +110,7 @@ export async function Footer() {
           ) : null}
         </div>
 
-        <div className="border-border text-text-muted mt-20 flex flex-col gap-3 border-t pt-6 font-mono text-xs md:flex-row md:items-center md:justify-between">
+        <div className="border-border text-text-muted mt-14 flex flex-col gap-3 border-t pt-6 font-mono text-xs md:mt-20 md:flex-row md:items-center md:justify-between">
           <p>
             &copy; {year} {settings.siteName}
             {settings.siteDescription ? `. ${settings.siteDescription}` : ""}

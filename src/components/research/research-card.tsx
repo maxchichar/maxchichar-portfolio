@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MediaImage } from "@/components/media-image";
+import { FittedImage } from "@/components/fitted-image";
 
 type ResearchCardProps = {
   slug: string;
@@ -33,12 +33,11 @@ export function ResearchCard({
     >
       <div className="border-border bg-surface relative aspect-[16/10] overflow-hidden rounded-sm border">
         {coverUrl ? (
-          <MediaImage
+          <FittedImage
             src={coverUrl}
             alt=""
-            fill
             sizes={sizes}
-            className="object-cover motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:scale-[1.03]"
+            backdropClassName="motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:scale-[1.18]"
           />
         ) : (
           <div
@@ -56,12 +55,12 @@ export function ResearchCard({
         )}
         <span
           aria-hidden="true"
-          className="bg-bg text-text absolute right-4 bottom-4 flex h-10 w-10 items-center justify-center rounded-full border border-current/15 text-xl"
+          className="bg-bg text-text absolute right-3 bottom-3 flex h-9 w-9 items-center justify-center rounded-full border border-current/15 text-lg md:right-4 md:bottom-4 md:h-10 md:w-10 md:text-xl"
         >
           ↗
         </span>
       </div>
-      <div className="text-text-muted mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] tracking-wider uppercase">
+      <div className="text-text-muted mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[11px] tracking-wider uppercase md:mt-5 md:gap-y-2">
         <span className="text-accent-purple">{published.type}</span>
         {published.category ? <span>{published.category}</span> : null}
         {date ? <time dateTime={date.toISOString()}>{date.getUTCFullYear()}</time> : null}
