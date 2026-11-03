@@ -11,7 +11,7 @@ import { buildCollectionPageJsonLd, JsonLdScript } from "@/lib/structured-data";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { listPublicWorkOverview } from "@/server/services/projects";
 import { PageTransition } from "@/components/motion/page-transition";
-import { MediaImage } from "@/components/media-image";
+import { FittedImage } from "@/components/fitted-image";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -115,10 +115,9 @@ export default async function WorkListingPage({ searchParams }: PageProps<"/work
                           }`}
                         >
                           {coverUrl ? (
-                            <MediaImage
+                            <FittedImage
                               src={coverUrl}
                               alt=""
-                              fill
                               sizes={lead ? "100vw" : "(min-width: 768px) 50vw, 100vw"}
                               {...(lead
                                 ? {
@@ -126,7 +125,7 @@ export default async function WorkListingPage({ searchParams }: PageProps<"/work
                                     fetchPriority: "high" as const,
                                   }
                                 : {})}
-                              className="object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                              backdropClassName="transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.2]"
                             />
                           ) : (
                             <div

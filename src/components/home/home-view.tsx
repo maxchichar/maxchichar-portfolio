@@ -162,7 +162,7 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
             viewAllLabel="All work"
             hasItems={homepageWork.length > 0}
           >
-            <div className="grid gap-x-6 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-x-6 gap-y-14 md:grid-cols-2 md:gap-y-12 lg:grid-cols-3">
               {homepageWork.map(({ project, published, coverUrl }, i) => (
                 <HomeEditorialCard
                   key={project.id}
@@ -182,7 +182,7 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
           </HomeSection>
 
           {testimonials.length > 0 ? (
-            <section className="container-site py-20 md:py-28">
+            <section className="container-site py-16 md:py-28">
               <div className="reveal mb-10 grid gap-6 md:mb-4 md:grid-cols-12">
                 <p className="index-label md:col-span-3 md:pt-3">
                   <span>{indexOf("words")}</span>
@@ -202,7 +202,7 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
             viewAllLabel="All research"
             hasItems={homepageResearch.length > 0}
           >
-            <ul className="grid gap-x-6 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid gap-x-6 gap-y-14 md:grid-cols-2 md:gap-y-12 lg:grid-cols-3">
               {homepageResearch.map(({ research, published, coverUrl }, i) => (
                 <li key={research.id}>
                   <ResearchCard
@@ -219,8 +219,8 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
           </HomeSection>
 
           {home ? (
-            <section className="container-site py-20 md:py-28">
-              <div className="reveal rounded-panel border-border bg-surface relative overflow-hidden border p-8 md:p-14">
+            <section className="container-site py-16 md:py-28">
+              <div className="reveal rounded-panel border-border bg-surface relative overflow-hidden border p-6 md:p-14">
                 <div
                   aria-hidden="true"
                   className="hero-wash absolute inset-0 opacity-60"
@@ -248,7 +248,7 @@ export async function HomeView({ content }: { content?: HomePageContent | null }
             viewAllLabel="All writing"
             hasItems={latestWriting.length > 0}
           >
-            <ul className="grid gap-x-6 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid gap-x-6 gap-y-14 md:grid-cols-2 md:gap-y-12 lg:grid-cols-3">
               {latestWriting.map(({ article, published, coverUrl }, i) => (
                 <li key={article.id}>
                   <HomeEditorialCard
@@ -305,8 +305,8 @@ function HomeSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="container-site py-20 md:py-28">
-      <div className="reveal mb-12 grid gap-6 md:grid-cols-12 md:items-end">
+    <section className="container-site py-16 md:py-28">
+      <div className="reveal mb-10 grid gap-5 md:mb-12 md:grid-cols-12 md:items-end md:gap-6">
         <p className="index-label md:col-span-3 md:self-start md:pt-3">
           <span>{index}</span>
           <span>{eyebrow}</span>

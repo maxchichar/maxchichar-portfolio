@@ -28,7 +28,7 @@ export async function Footer() {
   ].filter((s): s is { label: string; href: string } => Boolean(s.href));
 
   return (
-    <footer className="border-border relative mt-24 overflow-hidden border-t">
+    <footer className="border-border relative mt-16 overflow-hidden border-t md:mt-24">
       <div className="container-site pt-16 pb-10 sm:pt-20 sm:pb-12 md:pt-28">
         <div className="grid grid-cols-2 gap-x-6 gap-y-12 sm:gap-x-10 md:grid-cols-12 md:gap-14">
           <div className="col-span-2 md:col-span-6">
