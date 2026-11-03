@@ -9,8 +9,18 @@
  *   skipped"). The page itself loads normally.
  * - "ResizeObserver loop …" is a browser notice that layout settled over
  *   more than one frame; nothing breaks.
+ * - A request that never reached the server: the visitor's connection
+ *   dropped, or they left the page mid-load. Safari says "Load failed",
+ *   Chrome "Failed to fetch", Firefox "NetworkError when attempting to
+ *   fetch resource." A server error returns a response, so isn't one of these.
  */
-const BENIGN = [/^Transition was (?:aborted|skipped)\b/i, /^ResizeObserver loop\b/i];
+const BENIGN = [
+  /^Transition was (?:aborted|skipped)\b/i,
+  /^ResizeObserver loop\b/i,
+  /^Load failed$/i,
+  /^Failed to fetch\b/i,
+  /^NetworkError when attempting to fetch resource\.?$/i,
+];
 
 export function isBenignClientError(error: unknown): boolean {
   const message =
