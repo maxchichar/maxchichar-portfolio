@@ -28,10 +28,10 @@ export async function Footer() {
   ].filter((s): s is { label: string; href: string } => Boolean(s.href));
 
   return (
-    <footer className="border-border relative mt-24 overflow-hidden border-t">
-      <div className="container-site pt-20 pb-12 md:pt-28">
-        <div className="grid gap-14 md:grid-cols-12">
-          <div className="md:col-span-6">
+    <footer className="border-border relative mt-16 overflow-hidden border-t md:mt-24">
+      <div className="container-site pt-16 pb-10 sm:pt-20 sm:pb-12 md:pt-28">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-12 sm:gap-x-10 md:grid-cols-12 md:gap-14">
+          <div className="col-span-2 md:col-span-6">
             <p className="index-label">
               <span aria-hidden="true" className="h-px w-6 bg-current" />
               <span>Have a project in mind?</span>
@@ -42,10 +42,10 @@ export async function Footer() {
                 that matters.
               </span>
             </h2>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
+            <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:flex-wrap sm:items-center">
               <Link
                 href="/contact"
-                className="group bg-text text-bg hover:bg-accent inline-flex items-center gap-2 rounded-full px-6 py-3 font-sans text-sm font-medium transition-colors"
+                className="group bg-text text-bg hover:bg-accent inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full px-6 py-3 font-sans text-sm font-medium transition-colors sm:w-auto"
               >
                 Start a conversation
                 <span
@@ -58,7 +58,7 @@ export async function Footer() {
               {settings.primaryEmail ? (
                 <a
                   href={`mailto:${settings.primaryEmail}`}
-                  className="text-text-muted hover:text-accent font-sans text-sm underline-offset-4 transition-colors hover:underline"
+                  className="text-text-muted hover:text-accent max-w-full py-2 font-sans text-sm [overflow-wrap:anywhere] underline-offset-4 transition-colors hover:underline sm:py-0"
                 >
                   {settings.primaryEmail}
                 </a>
@@ -66,16 +66,27 @@ export async function Footer() {
             </div>
           </div>
 
-          <nav aria-label="Footer" className="md:col-span-3 md:col-start-8">
+          <nav
+            aria-label="Footer"
+            className={`min-w-0 md:col-span-3 md:col-start-8 ${
+              socialLinks.length > 0 ? "" : "col-span-2"
+            }`}
+          >
             <p className="text-text-muted font-mono text-[11px] tracking-[0.18em] uppercase">
               Index
             </p>
-            <ul className="mt-5 space-y-3">
+            <ul
+              className={`mt-3 md:mt-5 md:block md:space-y-3 ${
+                socialLinks.length > 0
+                  ? "space-y-1"
+                  : "grid grid-cols-2 gap-x-6 sm:grid-cols-3"
+              }`}
+            >
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-text hover:text-accent font-sans text-sm transition-colors"
+                    className="text-text hover:text-accent inline-block py-2 font-sans text-sm transition-colors md:py-0"
                   >
                     {link.label}
                   </Link>
@@ -85,18 +96,18 @@ export async function Footer() {
           </nav>
 
           {socialLinks.length > 0 ? (
-            <div className="md:col-span-2">
+            <div className="min-w-0 md:col-span-2">
               <p className="text-text-muted font-mono text-[11px] tracking-[0.18em] uppercase">
                 Elsewhere
               </p>
-              <ul className="mt-5 space-y-3">
+              <ul className="mt-3 space-y-1 md:mt-5 md:space-y-3">
                 {socialLinks.map((link) => (
                   <li key={link.label}>
                     <a
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-text hover:text-accent inline-flex items-center gap-1 font-sans text-sm transition-colors"
+                      className="text-text hover:text-accent inline-flex items-center gap-1 py-2 font-sans text-sm transition-colors md:py-0"
                     >
                       {link.label}
                       <span aria-hidden="true" className="text-text-muted text-xs">
@@ -110,16 +121,16 @@ export async function Footer() {
           ) : null}
         </div>
 
-        <div className="border-border text-text-muted mt-20 flex flex-col gap-3 border-t pt-6 font-mono text-xs md:flex-row md:items-center md:justify-between">
-          <p>
+        <div className="border-border text-text-muted mt-16 flex flex-col gap-3 border-t pt-6 font-mono text-xs md:mt-20 md:flex-row md:items-center md:justify-between md:gap-6">
+          <p className="[overflow-wrap:anywhere]">
             &copy; {year} {settings.siteName}
             {settings.siteDescription ? `. ${settings.siteDescription}` : ""}
           </p>
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             {settings.footerText ? <p>{settings.footerText}</p> : null}
             <a
               href="/feed.xml"
-              className="hover:text-text inline-flex items-center gap-1.5 transition-colors"
+              className="hover:text-text inline-flex items-center gap-1.5 py-2 transition-colors md:py-0"
             >
               <svg
                 aria-hidden="true"

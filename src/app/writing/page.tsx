@@ -11,7 +11,7 @@ import { buildCollectionPageJsonLd, JsonLdScript } from "@/lib/structured-data";
 import { readOrFallback } from "@/server/services/fallback-read";
 import { listPublicArticlesOverview } from "@/server/services/articles";
 import { PageTransition } from "@/components/motion/page-transition";
-import { MediaImage } from "@/components/media-image";
+import { FittedImage } from "@/components/fitted-image";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -128,13 +128,12 @@ export default async function WritingListingPage({
               >
                 <div className="rounded-panel border-border bg-surface relative aspect-[4/3] overflow-hidden border md:col-span-7">
                   {featured.coverUrl ? (
-                    <MediaImage
+                    <FittedImage
                       src={featured.coverUrl}
                       alt=""
-                      fill
                       sizes="(min-width: 768px) 58vw, 100vw"
                       loading="eager"
-                      className="object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                      backdropClassName="transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.2]"
                     />
                   ) : (
                     <div aria-hidden="true" className="hero-wash h-full w-full" />

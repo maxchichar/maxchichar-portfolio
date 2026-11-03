@@ -57,7 +57,7 @@ export function AboutView({
             className="animate-rise lg:col-span-5"
             style={{ animationDelay: "250ms" }}
           >
-            <div className="rounded-panel border-border bg-surface grain relative aspect-[4/5] overflow-hidden border">
+            <div className="rounded-panel border-border bg-surface grain relative aspect-[5/6] overflow-hidden border md:aspect-[4/5]">
               {image ? (
                 <MediaImage
                   src={image.url}
@@ -65,7 +65,7 @@ export function AboutView({
                   fill
                   sizes="(min-width: 1024px) 40vw, 100vw"
                   loading="eager"
-                  className="object-cover"
+                  className="object-cover object-[50%_30%] md:object-center"
                 />
               ) : (
                 <div aria-hidden="true" className="hero-wash h-full w-full" />
