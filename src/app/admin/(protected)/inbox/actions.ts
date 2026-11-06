@@ -8,6 +8,7 @@ import { INBOX_STATUSES, type InboxStatus } from "@/server/repositories/contact"
 import {
   ContactServiceError,
   deleteSubmission,
+  deleteSubmissions,
   sendReply,
   setSubmissionStatus,
 } from "@/server/services/contact";
@@ -51,6 +52,32 @@ export async function deleteInboxMessageForm(
   if (view === "SENT" || INBOX_STATUSES.includes(view as InboxStatus)) {
     query.set("view", view);
   }
+  redirect(`/admin/inbox?${query}`);
+}
+
+export async function deleteInboxMessagesForm(
+  _previous: { error: string },
+  formData: FormData,
+): Promise<{ error: string }> {
+  if (formData.get("confirmDelete") !== "delete") {
+    return { error: "Confirm deletion before continuing." };
+  }
+  let count: number;
+  try {
+    count = await deleteSubmissions(formData.getAll("ids"));
+  } catch (error) {
+    return {
+      error:
+        error instanceof ContactServiceError
+          ? error.message
+          : "Unable to delete these messages. Please try again.",
+    };
+  }
+  revalidatePath("/admin/inbox");
+  revalidatePath("/admin");
+  const view = String(formData.get("view") ?? "");
+  const query = new URLSearchParams({ deleted: String(count) });
+  if (INBOX_STATUSES.includes(view as InboxStatus)) query.set("view", view);
   redirect(`/admin/inbox?${query}`);
 }
 

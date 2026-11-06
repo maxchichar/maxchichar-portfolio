@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, count, desc, eq, gte, ne } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, ne } from "drizzle-orm";
 import type { NeonDatabase } from "drizzle-orm/neon-serverless";
 
 import { schema } from "@/lib/db";
@@ -84,6 +84,14 @@ export async function deleteSubmission(tx: Tx, id: string) {
     .where(eq(schema.contactSubmissions.id, id))
     .returning({ id: schema.contactSubmissions.id });
   return row ?? null;
+}
+
+export async function deleteSubmissions(tx: Tx, ids: string[]) {
+  if (ids.length === 0) return [];
+  return tx
+    .delete(schema.contactSubmissions)
+    .where(inArray(schema.contactSubmissions.id, ids))
+    .returning({ id: schema.contactSubmissions.id });
 }
 
 export type ContactReplyRow = typeof schema.contactReplies.$inferSelect;

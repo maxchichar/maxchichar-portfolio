@@ -7,6 +7,7 @@ let role: string | undefined;
 let exists: boolean;
 let failAudit: boolean;
 let committed: string[];
+let existing: string[];
 let service: typeof import("../src/server/services/contact");
 
 function stub(path: string, exports: unknown) {
@@ -26,7 +27,7 @@ before(async () => {
   stub("../src/lib/db", {
     schema,
     db: {
-      transaction: async (callback: (tx: unknown) => Promise<void>) => {
+      transaction: async (callback: (tx: unknown) => Promise<unknown>) => {
         const staged: string[] = [];
         const tx = {
           select: () => ({
@@ -38,21 +39,29 @@ before(async () => {
             where: () => ({
               returning: async () => {
                 staged.push("delete");
-                return exists ? [{ id }] : [];
+                return exists ? existing.map((rowId) => ({ id: rowId })) : [];
               },
             }),
           }),
           insert: () => ({
-            values: async (entry: { resourceId: string; action: string }) => {
-              assert.equal(entry.resourceId, id);
-              assert.equal(entry.action, "contact.deleted");
+            values: async (
+              value:
+                | { resourceId: string; action: string }
+                | { resourceId: string; action: string }[],
+            ) => {
+              const entries = Array.isArray(value) ? value : [value];
+              for (const entry of entries) {
+                assert.ok(existing.includes(entry.resourceId));
+                assert.equal(entry.action, "contact.deleted");
+              }
               if (failAudit) throw new Error("private database details");
-              staged.push("audit");
+              staged.push(...entries.map(() => "audit"));
             },
           }),
         };
-        await callback(tx);
+        const result = await callback(tx);
         committed.push(...staged);
+        return result;
       },
     },
   });
@@ -65,6 +74,7 @@ beforeEach(() => {
   exists = true;
   failAudit = false;
   committed = [];
+  existing = [id];
 });
 
 describe("Inbox deletion authorization and transaction", () => {
@@ -96,6 +106,50 @@ describe("Inbox deletion authorization and transaction", () => {
   it("does not commit when audit logging fails", async () => {
     failAudit = true;
     await assert.rejects(service.deleteSubmission(id), /private database details/);
+    assert.deepEqual(committed, []);
+  });
+});
+
+const id2 = "22345678-1234-4234-8234-123456789012";
+
+describe("Bulk inbox deletion", () => {
+  it("deletes several messages with one audit entry each, in one transaction", async () => {
+    existing = [id, id2];
+    assert.equal(await service.deleteSubmissions([id, id2, id]), 2);
+    assert.deepEqual(committed, ["delete", "audit", "audit"]);
+  });
+  it("rejects unauthenticated requests", async () => {
+    session = null;
+    await assert.rejects(service.deleteSubmissions([id]), /sign in/);
+    assert.deepEqual(committed, []);
+  });
+  it("rejects non-admins", async () => {
+    role = "EDITOR";
+    await assert.rejects(service.deleteSubmissions([id]), /Only admins/);
+    assert.deepEqual(committed, []);
+  });
+  it("rejects an empty selection, malformed IDs and oversized batches", async () => {
+    await assert.rejects(service.deleteSubmissions([]), /Select messages/);
+    await assert.rejects(service.deleteSubmissions([id, "invalid"]), /Invalid message/);
+    const many = Array.from(
+      { length: service.MAX_BULK_DELETE + 1 },
+      (_, i) => `${String(i).padStart(8, "0")}-1234-4234-8234-123456789012`,
+    );
+    await assert.rejects(service.deleteSubmissions(many), /at most/);
+    assert.deepEqual(committed, []);
+  });
+  it("counts messages already gone as nothing deleted, without audit", async () => {
+    exists = false;
+    assert.equal(await service.deleteSubmissions([id]), 0);
+    assert.deepEqual(committed, ["delete"]);
+  });
+  it("does not commit when audit logging fails", async () => {
+    existing = [id, id2];
+    failAudit = true;
+    await assert.rejects(
+      service.deleteSubmissions([id, id2]),
+      /private database details/,
+    );
     assert.deepEqual(committed, []);
   });
 });
