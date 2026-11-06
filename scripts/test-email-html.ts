@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { cleanEmailHtml, emailDocument } from "../src/lib/email-html";
+import { cleanEmailHtml, emailDocument, proxyRemoteImages } from "../src/lib/email-html";
 
 describe("cleanEmailHtml", () => {
   it("removes scripts, embeds, forms and event handlers", () => {
@@ -74,8 +74,43 @@ describe("emailDocument", () => {
     assert.match(emailDocument("<p>x</p>", { loadImages: false }), /img-src data: cid:;/);
     assert.match(
       emailDocument("<p>x</p>", { loadImages: true }),
-      /img-src data: cid: https: http:;/,
+      /img-src 'self' data: cid:;/,
     );
+    assert.doesNotMatch(emailDocument("<p>x</p>", { loadImages: true }), /https?:;/);
     assert.match(emailDocument("<p>x</p>", { loadImages: false }), /default-src 'none'/);
+  });
+});
+
+describe("proxyRemoteImages", () => {
+  const proxy = (url: string) =>
+    `/admin/inbox/image?url=${encodeURIComponent(url).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)}`;
+
+  it("points remote img, background and CSS url() images at the proxy", () => {
+    const html = proxyRemoteImages(
+      `<img src="https://h1.co/logo.png?a=1&amp;b=2" alt="x">` +
+        `<img src='http://t.co/p.gif'><img src=//cdn.co/i.png>` +
+        `<td background="https://bg.co/b.jpg">` +
+        `<div style="background:url(&quot;https://x.co/a(1).png&quot;)">` +
+        `<style>.a{background-image:url('https://y.co/b.png')}</style>`,
+    );
+    assert.ok(html.includes(`src="${proxy("https://h1.co/logo.png?a=1&b=2")}"`), html);
+    assert.ok(html.includes(`src="${proxy("http://t.co/p.gif")}"`), html);
+    assert.ok(html.includes(`src="${proxy("https://cdn.co/i.png")}"`), html);
+    assert.ok(html.includes(`background="${proxy("https://bg.co/b.jpg")}"`), html);
+    assert.ok(html.includes(`url(${proxy("https://x.co/a(1).png")})`), html);
+    assert.ok(html.includes(`url(${proxy("https://y.co/b.png")})`), html);
+    assert.ok(!/https?:\/\//.test(html.replace(/url=[^"')]*/g, "")), html);
+  });
+
+  it("leaves embedded images alone", () => {
+    const html = `<img src="data:image/png;base64,AAAA"><img src="cid:logo">`;
+    assert.strictEqual(proxyRemoteImages(html), html);
+  });
+
+  it("drops srcset, which would bypass the proxied src", () => {
+    const { html } = cleanEmailHtml(
+      `<img src="https://a.co/1.png" srcset="https://a.co/2.png 2x">`,
+    );
+    assert.ok(!html.includes("srcset"), html);
   });
 });
