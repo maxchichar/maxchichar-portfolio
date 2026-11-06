@@ -14,6 +14,7 @@ import {
 import { readOrFallback } from "@/server/services/fallback-read";
 import { isEmailConfigured, replySender } from "@/server/services/email";
 
+import { BulkSelect, BulkToolbar, SelectBox } from "./bulk-select";
 import { DeleteMessageButton } from "./delete-message-button";
 import { EmailContent } from "./email-content";
 import { Avatar, EmailBody } from "./email-view";
@@ -125,6 +126,7 @@ export default async function InboxPage({
   const hrefFor = (itemId: string) =>
     `/admin/inbox?${[viewParam, `id=${itemId}`].filter(Boolean).join("&")}`;
   const back = `/admin/inbox${viewParam ? `?${viewParam}` : ""}`;
+  const deletedCount = Math.max(0, Math.min(Number(deleted) || 0, 10_000));
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 md:py-12">
@@ -140,9 +142,9 @@ export default async function InboxPage({
         />
       </div>
 
-      {deleted === "1" ? (
+      {deletedCount > 0 ? (
         <p role="status" className="text-text mb-6 font-sans text-sm">
-          Message deleted.
+          {deletedCount === 1 ? "Message deleted." : `${deletedCount} messages deleted.`}
         </p>
       ) : null}
 
@@ -189,94 +191,103 @@ export default async function InboxPage({
       </nav>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <ul
-          className={`rounded-panel border-border bg-surface divide-border divide-y overflow-hidden border lg:max-h-[70vh] lg:overflow-y-auto ${
-            selected || id ? "hidden lg:block" : ""
-          }`}
-        >
-          {isSent ? (
-            sent.items.length === 0 ? (
+        <BulkSelect ids={isSent ? [] : items.map((m) => m.id)}>
+          <ul
+            className={`rounded-panel border-border bg-surface divide-border divide-y overflow-hidden border lg:max-h-[70vh] lg:overflow-y-auto ${
+              selected || id ? "hidden lg:block" : ""
+            }`}
+          >
+            {isSent ? (
+              sent.items.length === 0 ? (
+                <li className="text-text-muted px-6 py-16 text-center font-serif text-sm">
+                  No replies sent yet.
+                </li>
+              ) : (
+                sent.items.map((r) => (
+                  <li key={r.id}>
+                    <Link
+                      href={hrefFor(r.submissionId)}
+                      aria-current={selected?.id === r.submissionId ? "true" : undefined}
+                      className={`block px-4 py-4 transition-colors sm:px-5 ${
+                        selected?.id === r.submissionId
+                          ? "bg-surface-2"
+                          : "hover:bg-surface-2"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-text truncate font-sans text-sm">
+                          <span className="text-text-muted">To:</span> {r.name}
+                        </p>
+                        <span className="text-text-muted shrink-0 font-mono text-[11px]">
+                          {when(r.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-text-muted mt-0.5 truncate font-sans text-xs">
+                        {r.subject}
+                      </p>
+                      <p className="text-text-muted mt-1.5 line-clamp-2 font-serif text-sm">
+                        {r.body}
+                      </p>
+                    </Link>
+                  </li>
+                ))
+              )
+            ) : items.length === 0 ? (
               <li className="text-text-muted px-6 py-16 text-center font-serif text-sm">
-                No replies sent yet.
+                Nothing here.
               </li>
             ) : (
-              sent.items.map((r) => (
-                <li key={r.id}>
-                  <Link
-                    href={hrefFor(r.submissionId)}
-                    aria-current={selected?.id === r.submissionId ? "true" : undefined}
-                    className={`block px-4 py-4 transition-colors sm:px-5 ${
-                      selected?.id === r.submissionId
-                        ? "bg-surface-2"
-                        : "hover:bg-surface-2"
+              <>
+                <BulkToolbar view={status ?? ""} />
+                {items.map((m) => (
+                  <li
+                    key={m.id}
+                    className={`flex transition-colors ${
+                      selected?.id === m.id ? "bg-surface-2" : "hover:bg-surface-2"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-text truncate font-sans text-sm">
-                        <span className="text-text-muted">To:</span> {r.name}
-                      </p>
-                      <span className="text-text-muted shrink-0 font-mono text-[11px]">
-                        {when(r.createdAt)}
-                      </span>
-                    </div>
-                    <p className="text-text-muted mt-0.5 truncate font-sans text-xs">
-                      {r.subject}
-                    </p>
-                    <p className="text-text-muted mt-1.5 line-clamp-2 font-serif text-sm">
-                      {r.body}
-                    </p>
-                  </Link>
-                </li>
-              ))
-            )
-          ) : items.length === 0 ? (
-            <li className="text-text-muted px-6 py-16 text-center font-serif text-sm">
-              Nothing here.
-            </li>
-          ) : (
-            items.map((m) => (
-              <li key={m.id}>
-                <Link
-                  href={hrefFor(m.id)}
-                  aria-current={selected?.id === m.id ? "true" : undefined}
-                  className={`flex gap-3 px-4 py-4 transition-colors sm:px-5 ${
-                    selected?.id === m.id ? "bg-surface-2" : "hover:bg-surface-2"
-                  }`}
-                >
-                  <Avatar name={m.name} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-3">
-                      <p
-                        className={`truncate font-sans text-sm ${
-                          m.status === "NEW" ? "text-text font-semibold" : "text-text"
-                        }`}
-                      >
-                        {m.status === "NEW" ? (
-                          <span
-                            aria-label="Unread"
-                            className="bg-accent mr-2 inline-block h-1.5 w-1.5 rounded-full align-middle"
-                          />
-                        ) : null}
-                        {m.name}
-                      </p>
-                      <span className="text-text-muted shrink-0 font-mono text-[11px]">
-                        {when(m.createdAt)}
-                      </span>
-                    </div>
-                    <p className="text-text-muted mt-0.5 truncate font-sans text-xs">
-                      {m.source === "email" ? <EmailTag /> : null}
-                      {topic(m)}
-                      {m.organization ? ` · ${m.organization}` : ""}
-                    </p>
-                    <p className="text-text-muted mt-1.5 line-clamp-2 font-sans text-[13px] leading-5 [overflow-wrap:anywhere]">
-                      {preview(m.message)}
-                    </p>
-                  </div>
-                </Link>
-              </li>
-            ))
-          )}
-        </ul>
+                    <SelectBox id={m.id} label={m.name} />
+                    <Link
+                      href={hrefFor(m.id)}
+                      aria-current={selected?.id === m.id ? "true" : undefined}
+                      className="flex min-w-0 flex-1 gap-3 py-4 pr-4 pl-2 sm:pr-5"
+                    >
+                      <Avatar name={m.name} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-3">
+                          <p
+                            className={`truncate font-sans text-sm ${
+                              m.status === "NEW" ? "text-text font-semibold" : "text-text"
+                            }`}
+                          >
+                            {m.status === "NEW" ? (
+                              <span
+                                aria-label="Unread"
+                                className="bg-accent mr-2 inline-block h-1.5 w-1.5 rounded-full align-middle"
+                              />
+                            ) : null}
+                            {m.name}
+                          </p>
+                          <span className="text-text-muted shrink-0 font-mono text-[11px]">
+                            {when(m.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-text-muted mt-0.5 truncate font-sans text-xs">
+                          {m.source === "email" ? <EmailTag /> : null}
+                          {topic(m)}
+                          {m.organization ? ` · ${m.organization}` : ""}
+                        </p>
+                        <p className="text-text-muted mt-1.5 line-clamp-2 font-sans text-[13px] leading-5 [overflow-wrap:anywhere]">
+                          {preview(m.message)}
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </>
+            )}
+          </ul>
+        </BulkSelect>
 
         <section
           aria-label="Message"
