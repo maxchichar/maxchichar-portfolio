@@ -11,8 +11,9 @@ const ACTIVE_ELEMENTS =
 const VOID_ACTIVE =
   /<\/?(?:script|iframe|frame|frameset|object|embed|applet|base|meta|link|form|input|button|select|option|textarea|noscript|template|portal)\b[^>]*>/gi;
 const EVENT_ATTR = /\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
+// srcset goes too: a browser prefers it over src, and only src is proxied.
 const TARGET_ATTR =
-  /\s+(?:target|formaction|srcdoc|ping)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
+  /\s+(?:target|formaction|srcdoc|ping|srcset)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
 const URL_ATTR =
   /(\s(?:href|src|background|action|poster|xlink:href)\s*=\s*)(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
 const REMOTE_IMAGE =
@@ -80,13 +81,67 @@ export function cleanEmailHtml(raw: string): CleanEmailHtml {
   return { html, remoteImages: REMOTE_IMAGE.test(html) };
 }
 
+/** Where remote email images are fetched from, on our own server. */
+export const EMAIL_IMAGE_PROXY_PATH = "/admin/inbox/image";
+
+/** What an attribute value means once the browser has decoded it. */
+function attributeValue(value: string) {
+  return decodeEntities(value)
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;|&#39;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&amp;/gi, "&")
+    .trim();
+}
+
+/** The proxy URL for a remote image, or null when the value isn't one. */
+function proxied(raw: string): string | null {
+  const url = attributeValue(raw).replace(CONTROL_OR_SPACE, "");
+  if (!/^(?:https?:)?\/\//i.test(url)) return null;
+  const absolute = url.startsWith("//") ? `https:${url}` : url;
+  // encodeURIComponent leaves ! ' ( ) * alone; escaped too, the result is
+  // safe inside a quoted attribute and an unquoted CSS url().
+  const encoded = encodeURIComponent(absolute).replace(
+    /[!'()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+  return `${EMAIL_IMAGE_PROXY_PATH}?url=${encoded}`;
+}
+
+const IMAGE_ATTR = /(\s(?:src|background)\s*=\s*)(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
+const CSS_URL =
+  /url\(\s*(?:"([^"]*)"|'([^']*)'|&quot;([\s\S]*?)&quot;|([^)'"\s]*))\s*\)/gi;
+
+/**
+ * Points every remote image (img src, background attributes, CSS url())
+ * at our image proxy, so the sender's servers never see the admin's
+ * browser: no IP address, no cookies, and nothing for them to block.
+ */
+export function proxyRemoteImages(html: string): string {
+  return html
+    .replace(
+      IMAGE_ATTR,
+      (match, prefix: string, dq?: string, sq?: string, bare?: string) => {
+        const url = proxied(dq ?? sq ?? bare ?? "");
+        return url ? `${prefix}"${url}"` : match;
+      },
+    )
+    .replace(CSS_URL, (match, dq?: string, sq?: string, ent?: string, bare?: string) => {
+      const url = proxied(dq ?? sq ?? ent ?? bare ?? "");
+      return url ? `url(${url})` : match;
+    });
+}
+
 /**
  * The complete document for the iframe's srcdoc. Its CSP blocks everything
- * except inline styles and embedded images, plus remote images once the
- * admin chooses to load them.
+ * except inline styles and embedded images. Once the admin chooses to load
+ * images, remote ones are rewritten to our own proxy, which is the only
+ * other place images may come from ('self'): never the sender's servers.
  */
 export function emailDocument(html: string, { loadImages }: { loadImages: boolean }) {
-  const images = loadImages ? "data: cid: https: http:" : "data: cid:";
+  if (loadImages) html = proxyRemoteImages(html);
+  const images = loadImages ? "'self' data: cid:" : "data: cid:";
   const csp = [
     "default-src 'none'",
     "style-src 'unsafe-inline'",

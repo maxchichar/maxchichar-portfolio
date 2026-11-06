@@ -23,7 +23,7 @@ describe("Defensive HTTP Security Headers (Level 9.7)", () => {
       assert.ok(typeof nextConfig.headers === "function");
       const rules = await nextConfig.headers();
       assert.ok(Array.isArray(rules));
-      assert.strictEqual(rules.length, 2);
+      assert.strictEqual(rules.length, 1);
       const [firstRule] = rules;
       assert.ok(firstRule, "Expected first header rule to exist");
       assert.strictEqual(firstRule.source, "/:path*");
@@ -31,22 +31,15 @@ describe("Defensive HTTP Security Headers (Level 9.7)", () => {
       assert.ok(firstRule.headers.length >= 7);
     });
 
-    it("only admin pages let remote https images through (opened emails)", async () => {
+    it("no route lets remote images through (emails use the image proxy)", async () => {
       assert.ok(nextConfig.headers);
       const rules = await nextConfig.headers();
-      const csp = (source: string) =>
-        rules
-          .find((r) => r.source === source)
-          ?.headers.find((h) => h.key === "Content-Security-Policy")?.value ?? "";
-      const imgSrc = (value: string) => /img-src ([^;]*)/.exec(value)?.[1] ?? "";
-      assert.ok(!imgSrc(csp("/:path*")).split(" ").includes("https:"));
-      assert.ok(imgSrc(csp("/admin/:path*")).split(" ").includes("https:"));
-      // Everything else is the same strict policy.
-      assert.strictEqual(
-        csp("/admin/:path*").replace(/img-src [^;]*/, ""),
-        csp("/:path*").replace(/img-src [^;]*/, ""),
-      );
-      assert.strictEqual(rules.at(-1)?.source, "/admin/:path*", "must come last to win");
+      for (const rule of rules) {
+        const csp =
+          rule.headers.find((h) => h.key === "Content-Security-Policy")?.value ?? "";
+        const imgSrc = /img-src ([^;]*)/.exec(csp)?.[1] ?? "";
+        assert.ok(!/(^| )https?:( |$)/.test(imgSrc), `${rule.source}: ${imgSrc}`);
+      }
     });
   });
 
