@@ -40,8 +40,12 @@ const nextConfig: NextConfig = {
       },
       {
         // Same headers; the CSP also lets opened emails show remote images.
-        // Listed last so it replaces the global CSP for this path.
-        source: "/admin/inbox",
+        // Every admin page, not just /admin/inbox: the admin navigates
+        // client-side, and a document keeps the CSP of the page it was first
+        // loaded as, which the email frame inherits. The frame's own policy
+        // still holds images back until "Load images".
+        // Listed last so it replaces the global CSP for these paths.
+        source: "/admin/:path*",
         headers: buildSecurityHeaders({ emailImages: true }),
       },
     ];
