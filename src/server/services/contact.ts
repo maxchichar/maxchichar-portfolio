@@ -199,8 +199,54 @@ export async function deleteSubmission(id: string) {
   });
 }
 
-/** The most messages one bulk delete may remove. */
+/** The most messages one bulk action may touch. */
 export const MAX_BULK_DELETE = 500;
+
+/** Shared checks for bulk actions: signed in, and a sane list of IDs. */
+async function bulkRequest(ids: unknown[]) {
+  const session = await auth();
+  if (!session?.user?.id) throw new ContactServiceError("Please sign in again.");
+  const unique = [...new Set(ids.map((id) => String(id)))];
+  if (unique.length === 0) throw new ContactServiceError("Select some messages first.");
+  if (unique.length > MAX_BULK_DELETE) {
+    throw new ContactServiceError(
+      `Select at most ${MAX_BULK_DELETE} messages at a time.`,
+    );
+  }
+  if (!unique.every((id) => z.uuid().safeParse(id).success)) {
+    throw new ContactServiceError("Invalid message.");
+  }
+  return { userId: session.user.id, ids: unique };
+}
+
+/**
+ * Moves several messages to one status (read, unread, archived, spam) in
+ * one transaction, auditing each one that changed. Returns how many did.
+ */
+export async function setSubmissionsStatus(
+  ids: unknown[],
+  status: unknown,
+): Promise<number> {
+  const request = await bulkRequest(ids);
+  if (!contactRepo.INBOX_STATUSES.includes(status as contactRepo.InboxStatus)) {
+    throw new ContactServiceError("Invalid status.");
+  }
+  const next = status as contactRepo.InboxStatus;
+  return db.transaction(async (tx) => {
+    const changed = await contactRepo.updateSubmissionsStatus(tx, request.ids, next);
+    if (changed.length === 0) return 0;
+    await tx.insert(schema.auditLogs).values(
+      changed.map((row) => ({
+        userId: request.userId,
+        action: "contact.status_updated",
+        resourceType: "contact_submission",
+        resourceId: row.id,
+        metadata: { status: next },
+      })),
+    );
+    return changed.length;
+  });
+}
 
 /**
  * Deletes several messages at once, with one audit entry per message, all
@@ -208,23 +254,12 @@ export const MAX_BULK_DELETE = 500;
  * don't count and aren't an error).
  */
 export async function deleteSubmissions(ids: unknown[]): Promise<number> {
-  const session = await auth();
-  if (!session?.user?.id) throw new ContactServiceError("Please sign in again.");
-  const unique = [...new Set(ids.map((id) => String(id)))];
-  if (unique.length === 0) throw new ContactServiceError("Select messages to delete.");
-  if (unique.length > MAX_BULK_DELETE) {
-    throw new ContactServiceError(
-      `Delete at most ${MAX_BULK_DELETE} messages at a time.`,
-    );
-  }
-  if (!unique.every((id) => z.uuid().safeParse(id).success)) {
-    throw new ContactServiceError("Invalid message.");
-  }
+  const { userId, ids: unique } = await bulkRequest(ids);
   return db.transaction(async (tx) => {
     const [actor] = await tx
       .select({ role: schema.users.role })
       .from(schema.users)
-      .where(eq(schema.users.id, session.user.id))
+      .where(eq(schema.users.id, userId))
       .limit(1);
     if (actor?.role !== "ADMIN") {
       throw new ContactServiceError("Only admins can delete messages.");
@@ -233,7 +268,7 @@ export async function deleteSubmissions(ids: unknown[]): Promise<number> {
     if (deleted.length === 0) return 0;
     await tx.insert(schema.auditLogs).values(
       deleted.map((row) => ({
-        userId: session.user.id,
+        userId: userId,
         action: "contact.deleted",
         resourceType: "contact_submission",
         resourceId: row.id,

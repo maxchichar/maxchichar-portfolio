@@ -9,6 +9,7 @@ import {
   ContactServiceError,
   deleteSubmission,
   deleteSubmissions,
+  setSubmissionsStatus,
   sendReply,
   setSubmissionStatus,
 } from "@/server/services/contact";
@@ -79,6 +80,31 @@ export async function deleteInboxMessagesForm(
   const query = new URLSearchParams({ deleted: String(count) });
   if (INBOX_STATUSES.includes(view as InboxStatus)) query.set("view", view);
   redirect(`/admin/inbox?${query}`);
+}
+
+export interface BulkStatusState {
+  error: string;
+  doneAt: number | null;
+}
+
+export async function setInboxStatusesForm(
+  _previous: BulkStatusState,
+  formData: FormData,
+): Promise<BulkStatusState> {
+  try {
+    await setSubmissionsStatus(formData.getAll("ids"), formData.get("status"));
+  } catch (error) {
+    return {
+      error:
+        error instanceof ContactServiceError
+          ? error.message
+          : "Unable to update these messages. Please try again.",
+      doneAt: null,
+    };
+  }
+  revalidatePath("/admin/inbox");
+  revalidatePath("/admin");
+  return { error: "", doneAt: Date.now() };
 }
 
 export interface ReplyFormState {

@@ -12,7 +12,7 @@ import {
 
 import { ConfirmForm } from "@/components/admin/confirm-form";
 
-import { deleteInboxMessagesForm } from "./actions";
+import { deleteInboxMessagesForm, setInboxStatusesForm } from "./actions";
 
 interface Selection {
   ids: string[];
@@ -72,10 +72,26 @@ export function SelectBox({ id, label }: { id: string; label: string }) {
   );
 }
 
-/** Select all, a count, and "Delete" for what's ticked. */
+const toolButton =
+  "rounded-card border-border text-text hover:border-text/40 border px-3 py-1.5 font-sans text-xs whitespace-nowrap transition-colors disabled:opacity-50";
+
+/** Select all, a count, and actions (read, unread, delete) for what's ticked. */
 export function BulkToolbar({ view }: { view: string }) {
   const { ids, selected, setAll } = useSelection();
   const [state, action] = useActionState(deleteInboxMessagesForm, { error: "" });
+  const [statusState, statusAction, statusPending] = useActionState(
+    setInboxStatusesForm,
+    { error: "", doneAt: null },
+  );
+  // A finished read/unread change clears the selection.
+  useEffect(() => {
+    if (statusState.doneAt) setAll(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusState.doneAt]);
+  const error = state.error || statusState.error;
+  const hidden = [...selected].map((id) => (
+    <input key={id} type="hidden" name="ids" value={id} />
+  ));
   const all = useRef<HTMLInputElement>(null);
   const count = selected.size;
   const every = count > 0 && count === ids.length;
@@ -100,7 +116,7 @@ export function BulkToolbar({ view }: { view: string }) {
           <span aria-live="polite">{count > 0 ? `${count} selected` : "Select all"}</span>
         </label>
         {count > 0 ? (
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => setAll(false)}
@@ -108,6 +124,27 @@ export function BulkToolbar({ view }: { view: string }) {
             >
               Clear
             </button>
+            <form action={statusAction} className="contents">
+              {hidden}
+              <button
+                type="submit"
+                name="status"
+                value="READ"
+                disabled={statusPending}
+                className={toolButton}
+              >
+                Mark read
+              </button>
+              <button
+                type="submit"
+                name="status"
+                value="NEW"
+                disabled={statusPending}
+                className={toolButton}
+              >
+                Mark unread
+              </button>
+            </form>
             <ConfirmForm
               action={action}
               title={count === 1 ? "Delete 1 message?" : `Delete ${count} messages?`}
@@ -116,20 +153,18 @@ export function BulkToolbar({ view }: { view: string }) {
               }? This cannot be undone.`}
               label="Delete"
               confirmLabel={count === 1 ? "Delete message" : `Delete ${count} messages`}
-              buttonClassName="rounded-card border-border text-text hover:border-text/40 border px-3 py-1.5 font-sans text-xs transition-colors disabled:opacity-50"
+              buttonClassName={toolButton}
             >
-              {[...selected].map((id) => (
-                <input key={id} type="hidden" name="ids" value={id} />
-              ))}
+              {hidden}
               <input type="hidden" name="view" value={view} />
               <input type="hidden" name="confirmDelete" value="delete" />
             </ConfirmForm>
           </div>
         ) : null}
       </div>
-      {state.error ? (
+      {error ? (
         <p role="alert" className="text-text-muted px-4 pb-2 font-sans text-xs sm:px-5">
-          {state.error}
+          {error}
         </p>
       ) : null}
     </li>

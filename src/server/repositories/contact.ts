@@ -77,6 +77,24 @@ export async function updateSubmissionStatus(tx: Tx, id: string, status: InboxSt
     .where(eq(schema.contactSubmissions.id, id));
 }
 
+export async function updateSubmissionsStatus(
+  tx: Tx,
+  ids: string[],
+  status: InboxStatus,
+) {
+  if (ids.length === 0) return [];
+  return tx
+    .update(schema.contactSubmissions)
+    .set({ status })
+    .where(
+      and(
+        inArray(schema.contactSubmissions.id, ids),
+        ne(schema.contactSubmissions.status, status),
+      ),
+    )
+    .returning({ id: schema.contactSubmissions.id });
+}
+
 /** Return only the deleted ID; message content never enters the audit log. */
 export async function deleteSubmission(tx: Tx, id: string) {
   const [row] = await tx
