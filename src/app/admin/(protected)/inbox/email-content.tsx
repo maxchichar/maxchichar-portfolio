@@ -7,20 +7,18 @@ import { emailDocument } from "@/lib/email-html";
 /**
  * An email as its sender designed it, in an iframe sandboxed without
  * scripts (same-origin only so the frame can be measured and fitted to the
- * column), with remote images held back until asked for. `children` is the
+ * column). Remote images load straight away, but through our own image
+ * proxy, so senders never see the admin's browser or IP. `children` is the
  * plain-text reading view, a tap away.
  */
 export function EmailContent({
   html,
-  remoteImages,
   children,
 }: {
   html: string;
-  remoteImages: boolean;
   children: React.ReactNode;
 }) {
   const [view, setView] = useState<"original" | "text">("original");
-  const [loadImages, setLoadImages] = useState(false);
   const [height, setHeight] = useState(480);
   const frame = useRef<HTMLIFrameElement>(null);
 
@@ -76,52 +74,21 @@ export function EmailContent({
           {tab("original", "Original")}
           {tab("text", "Text")}
         </div>
-        {view === "original" && remoteImages && !loadImages ? (
-          <button
-            type="button"
-            onClick={() => setLoadImages(true)}
-            className="text-text-muted hover:text-text border-border hover:border-text/30 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-sans text-xs transition-colors"
-          >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-3.5 w-3.5"
-            >
-              <rect x="3" y="4" width="14" height="12" rx="2" />
-              <circle cx="7.5" cy="8.5" r="1.5" />
-              <path d="M17 13l-4-4-7 7" />
-            </svg>
-            Load images
-          </button>
-        ) : null}
       </div>
 
       {view === "original" ? (
-        <>
-          {remoteImages && !loadImages ? (
-            <p className="text-text-muted mb-3 font-sans text-xs">
-              Images are hidden so the sender can&apos;t tell you opened this.
-            </p>
-          ) : null}
-          <div className="rounded-card border-border overflow-hidden border bg-white">
-            <iframe
-              ref={frame}
-              key={loadImages ? "images" : "no-images"}
-              title="Email as sent"
-              sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-              referrerPolicy="no-referrer"
-              srcDoc={emailDocument(html, { loadImages })}
-              onLoad={onLoad}
-              style={{ height }}
-              className="block w-full border-0"
-            />
-          </div>
-        </>
+        <div className="rounded-card border-border overflow-hidden border bg-white">
+          <iframe
+            ref={frame}
+            title="Email as sent"
+            sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+            referrerPolicy="no-referrer"
+            srcDoc={emailDocument(html, { loadImages: true })}
+            onLoad={onLoad}
+            style={{ height }}
+            className="block w-full border-0"
+          />
+        </div>
       ) : (
         children
       )}

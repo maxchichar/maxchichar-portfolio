@@ -8,6 +8,7 @@ let exists: boolean;
 let failAudit: boolean;
 let committed: string[];
 let existing: string[];
+let auditAction: string;
 let service: typeof import("../src/server/services/contact");
 
 function stub(path: string, exports: unknown) {
@@ -43,6 +44,16 @@ before(async () => {
               },
             }),
           }),
+          update: () => ({
+            set: (values: { status: string }) => ({
+              where: () => ({
+                returning: async () => {
+                  staged.push(`update:${values.status}`);
+                  return exists ? existing.map((rowId) => ({ id: rowId })) : [];
+                },
+              }),
+            }),
+          }),
           insert: () => ({
             values: async (
               value:
@@ -52,7 +63,7 @@ before(async () => {
               const entries = Array.isArray(value) ? value : [value];
               for (const entry of entries) {
                 assert.ok(existing.includes(entry.resourceId));
-                assert.equal(entry.action, "contact.deleted");
+                assert.equal(entry.action, auditAction);
               }
               if (failAudit) throw new Error("private database details");
               staged.push(...entries.map(() => "audit"));
@@ -75,6 +86,7 @@ beforeEach(() => {
   failAudit = false;
   committed = [];
   existing = [id];
+  auditAction = "contact.deleted";
 });
 
 describe("Inbox deletion authorization and transaction", () => {
@@ -129,7 +141,7 @@ describe("Bulk inbox deletion", () => {
     assert.deepEqual(committed, []);
   });
   it("rejects an empty selection, malformed IDs and oversized batches", async () => {
-    await assert.rejects(service.deleteSubmissions([]), /Select messages/);
+    await assert.rejects(service.deleteSubmissions([]), /Select some messages/);
     await assert.rejects(service.deleteSubmissions([id, "invalid"]), /Invalid message/);
     const many = Array.from(
       { length: service.MAX_BULK_DELETE + 1 },
@@ -151,5 +163,36 @@ describe("Bulk inbox deletion", () => {
       /private database details/,
     );
     assert.deepEqual(committed, []);
+  });
+});
+
+describe("Bulk status changes", () => {
+  beforeEach(() => {
+    auditAction = "contact.status_updated";
+  });
+  it("marks several messages read with one audit entry each", async () => {
+    existing = [id, id2];
+    assert.equal(await service.setSubmissionsStatus([id, id2], "READ"), 2);
+    assert.deepEqual(committed, ["update:READ", "audit", "audit"]);
+  });
+  it("marks messages unread", async () => {
+    assert.equal(await service.setSubmissionsStatus([id], "NEW"), 1);
+    assert.deepEqual(committed, ["update:NEW", "audit"]);
+  });
+  it("rejects unauthenticated requests, bad statuses and bad IDs", async () => {
+    await assert.rejects(service.setSubmissionsStatus([id], "DELETED"), /Invalid status/);
+    await assert.rejects(
+      service.setSubmissionsStatus(["nope"], "READ"),
+      /Invalid message/,
+    );
+    await assert.rejects(service.setSubmissionsStatus([], "READ"), /Select some/);
+    session = null;
+    await assert.rejects(service.setSubmissionsStatus([id], "READ"), /sign in/);
+    assert.deepEqual(committed, []);
+  });
+  it("audits nothing when nothing changed", async () => {
+    exists = false;
+    assert.equal(await service.setSubmissionsStatus([id], "READ"), 0);
+    assert.deepEqual(committed, ["update:READ"]);
   });
 });

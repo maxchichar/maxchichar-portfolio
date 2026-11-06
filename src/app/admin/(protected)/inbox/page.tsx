@@ -368,11 +368,7 @@ export default async function InboxPage({
               </header>
               <div className="mt-6">
                 {emailHtml ? (
-                  <EmailContent
-                    key={selected.id}
-                    html={emailHtml.html}
-                    remoteImages={emailHtml.remoteImages}
-                  >
+                  <EmailContent key={selected.id} html={emailHtml.html}>
                     <EmailBody text={selected.message} source={selected.source} />
                   </EmailContent>
                 ) : (
