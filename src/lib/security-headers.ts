@@ -8,8 +8,9 @@ export interface SecurityHeaderOptions {
   /** Allow the Cloudflare Turnstile script and iframe (contact form). */
   turnstile?: boolean;
   /**
-   * The admin inbox: allow remote https images, which the sandboxed email
-   * frame inherits. The frame's own policy still blocks them until the
+   * Admin pages: allow remote https images, which the inbox's sandboxed
+   * email frame inherits (on every admin page, since the inbox is often
+   * reached by client-side navigation and keeps the first page's CSP). The frame's own policy still blocks them until the
    * admin chooses "Load images".
    */
   emailImages?: boolean;
