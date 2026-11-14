@@ -151,7 +151,9 @@ export async function listInbox(status: contactRepo.InboxStatus | null) {
   return { items, counts };
 }
 
+/** One message, or null when the id is unknown or isn't a valid id at all. */
 export async function getSubmission(id: string) {
+  if (!z.uuid().safeParse(id).success) return null;
   return contactRepo.findSubmissionById(db, id);
 }
 

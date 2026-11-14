@@ -196,3 +196,9 @@ describe("Bulk status changes", () => {
     assert.deepEqual(committed, ["update:READ"]);
   });
 });
+
+describe("Opening a message", () => {
+  it("treats a malformed id as not found, without querying", async () => {
+    assert.equal(await service.getSubmission("x"), null);
+  });
+});
