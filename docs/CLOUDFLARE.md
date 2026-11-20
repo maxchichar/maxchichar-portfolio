@@ -35,7 +35,18 @@ complete removal of Vercel.
   Preserve all mail DNS records. No paid product is provisioned. The approved `www`
   hostname redirects to the apex with HTTP 308, preserving the path and query.
 
-Commands: `npm run check:edge`, then `npm run deploy:edge`. `deploy:edge` first
+**Deploys run from GitHub.** `.github/workflows/deploy-edge.yml` tests and
+deploys the edge Worker whenever `main` changes a file it bundles
+(`cloudflare-edge.mjs`, `wrangler.edge.jsonc`, `src/lib/cloudflare-admin.ts`,
+`package-lock.json`), and on demand from Actions → Deploy edge worker → Run
+workflow. Afterwards it checks that `/` and `/email/mark.png` answer 200. It needs
+the repository secrets `CLOUDFLARE_API_TOKEN` (the "Edit Cloudflare Workers"
+token template, scoped to the account and the `chibuezemaxwell.com` zone) and
+`CLOUDFLARE_ACCOUNT_ID`. Worker secrets set with `wrangler secret put` stay on
+Cloudflare and are kept across deploys.
+
+Deploying from a laptop still works as a fallback. Commands: `npm run check:edge`,
+then `npm run deploy:edge`. `deploy:edge` first
 runs `scripts/predeploy-edge.sh`, which requires the `main` branch, refuses
 uncommitted edits to the edge Worker, and pulls the latest `origin/main`, since
 wrangler uploads whatever is on disk. No Next.js build or

@@ -1,0 +1,83 @@
+name: Deploy edge worker
+
+# Deploys the Cloudflare edge worker (cloudflare-edge.mjs, wrangler.edge.jsonc)
+# from GitHub instead of a laptop, whenever main changes something it bundles.
+# It can also be run by hand: Actions > Deploy edge worker > Run workflow.
+#
+# Needs two repository secrets (Settings > Secrets and variables > Actions):
+#   CLOUDFLARE_API_TOKEN   token from the "Edit Cloudflare Workers" template,
+#                          scoped to your account and the chibuezemaxwell.com zone
+#   CLOUDFLARE_ACCOUNT_ID  the account ID shown on the Workers dashboard
+# Worker secrets (INBOUND_EMAIL_SECRET, EMAIL_FORWARD_TO) live on Cloudflare
+# and are not touched by a deploy.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - cloudflare-edge.mjs
+      - wrangler.edge.jsonc
+      - src/lib/cloudflare-admin.ts
+      # postal-mime and wrangler versions come from the lockfile.
+      - package-lock.json
+      - .github/workflows/deploy-edge.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time; a newer push waits rather than cancelling a deploy
+# halfway through.
+concurrency:
+  group: deploy-edge
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Test and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Check the secrets are set
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as repository secrets (see the top of this workflow)."
+            exit 1
+          fi
+
+      # The worker's own tests, so a broken worker never goes live.
+      - name: Test the worker
+        run: >-
+          npx tsx --conditions=react-server --test
+          scripts/test-cloudflare-edge.ts scripts/test-inbound-email.ts
+
+      - name: Deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_SEND_METRICS: "false"
+        run: npx wrangler deploy --config wrangler.edge.jsonc
+
+      # Proves the new worker is serving: the site, and a path only this
+      # version allows (the email logo).
+      - name: Smoke test
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            site=$(curl -s -o /dev/null -w '%{http_code}' https://chibuezemaxwell.com/)
+            mark=$(curl -s -o /dev/null -w '%{http_code} %{content_type}' https://chibuezemaxwell.com/email/mark.png)
+            echo "attempt $attempt: / -> $site, /email/mark.png -> $mark"
+            if [ "$site" = "200" ] && [ "${mark%% *}" = "200" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "::error::The site or /email/mark.png isn't answering 200 after the deploy."
+          exit 1

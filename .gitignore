@@ -49,3 +49,7 @@ next-env.d.ts
 .wrangler/
 .cloudflare-dry-run/
 .dev.vars*
+
+# Python bytecode
+__pycache__/
+*.pyc
