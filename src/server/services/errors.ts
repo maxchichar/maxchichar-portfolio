@@ -6,7 +6,17 @@ import { cleanErrorMessage, errorFingerprint } from "@/lib/error-fingerprint";
 import { getSiteUrl } from "@/lib/metadata";
 
 import * as repo from "../repositories/errors";
-import { escapeHtml, isEmailConfigured, sendEmail } from "./email";
+import { profileFrom } from "./contact-email";
+import { escapeHtml, isEmailConfigured, replySender, sendEmail } from "./email";
+import {
+  button,
+  cardEmail,
+  code,
+  details,
+  eyebrow,
+  heading,
+  small,
+} from "./email-design";
 import { getPublicSiteSettings } from "./settings";
 
 const ALERT_COOLDOWN_MS = 6 * 60 * 60 * 1000; // same error re-alerts after 6h
@@ -138,20 +148,21 @@ async function sendAlert(e: {
     "You won't get another email for this error for 6 hours.",
   ].join("\n");
 
-  const html = `<!doctype html><html><body style="margin:0;background:#f5f4f0;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#141416;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#fff;border:1px solid #e4e2dc;border-radius:12px;"><tr><td style="padding:28px;">
-<p style="margin:0 0 4px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#b42318;">Site error</p>
-<h1 style="margin:0 0 20px;font-size:19px;line-height:1.35;font-family:Menlo,Consolas,monospace;font-weight:600;">${escapeHtml(e.message)}</h1>
-<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;margin-bottom:20px;">${rows
-    .map(
-      ([k, v]) =>
-        `<tr><td style="padding:3px 16px 3px 0;color:#6b6a66;vertical-align:top;white-space:nowrap;">${k}</td><td style="padding:3px 0;">${escapeHtml(v)}</td></tr>`,
-    )
-    .join("")}</table>
-${e.stack ? `<pre style="margin:0 0 20px;padding:12px;background:#f5f4f0;border-radius:8px;font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;">${escapeHtml(e.stack.split("\n").slice(0, 8).join("\n"))}</pre>` : ""}
-${e.stored ? `<p style="margin:0 0 12px;"><a href="${escapeHtml(adminUrl)}" style="display:inline-block;background:#141416;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px;font-size:14px;">Open the Errors page</a></p>` : `<p style="margin:0 0 12px;font-size:13px;color:#6b6a66;">${escapeHtml(note)}</p>`}
-<p style="margin:0;font-size:12px;color:#6b6a66;">You won't get another email for this error for 6 hours.</p>
-</td></tr></table></body></html>`;
+  const html = cardEmail(
+    profileFrom(settings, replySender()),
+    `${eyebrow("Site error", "danger")}
+${heading(escapeHtml(e.message), { mono: true })}
+${details(rows)}
+${e.stack ? code(e.stack.split("\n").slice(0, 8).join("\n")) : ""}
+${e.stored ? button("Open the Errors page", adminUrl) : small(escapeHtml(note))}
+${small("You won't get another email for this error for 6 hours.")}`,
+    {
+      title: "Site error",
+      preheader: e.message,
+      label: "Error alert",
+      footnote: "Sent to you because error alerts are on for your site.",
+    },
+  );
 
   await sendEmail({
     to,

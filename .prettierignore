@@ -7,3 +7,6 @@ package-lock.json
 .wrangler/
 .cloudflare-dry-run/
 .dev.vars*
+
+# Vendored agent skill, kept byte-identical to its source repository
+.claude/skills/rpi-production-engineering/

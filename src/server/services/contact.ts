@@ -28,7 +28,7 @@ import {
   sendEmail,
   singleLine,
 } from "./email";
-import { replyEmail, sendContactEmails, senderName } from "./contact-email";
+import { emailProfile, replyEmail, sendContactEmails } from "./contact-email";
 import { verifyTurnstile } from "./turnstile";
 
 export class ContactServiceError extends Error {}
@@ -355,7 +355,7 @@ export async function sendReply(input: unknown) {
           },
         }
       : {}),
-    ...replyEmail(submission, body, senderName(from)),
+    ...replyEmail(submission, body, await emailProfile(from)),
   });
   if (!sent) {
     throw new ContactServiceError(

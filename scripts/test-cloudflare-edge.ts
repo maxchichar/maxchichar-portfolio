@@ -209,11 +209,18 @@ test("serves every public crawler and browser file, and nothing private", async 
     "/favicon.ico",
     "/icon.svg",
     "/apple-icon.png",
+    "/email-logo.png",
+    "/email/mark.png",
     "/cv",
     "/topics",
     "/topics/ai",
   ])
     assert.equal(await status(path), 200, path);
-  for (const path of ["/api/auth/session", "/llms.txt.bak", "/cv/old"])
+  for (const path of [
+    "/api/auth/session",
+    "/llms.txt.bak",
+    "/cv/old",
+    "/email/other.png",
+  ])
     assert.equal(await status(path), 404, path);
 });

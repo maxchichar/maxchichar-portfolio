@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "phases": ["research", "plan", "implement", "release"],
+  "tiers": ["patch", "standard", "critical"],
+  "checks": [
+    {"id":"R-01", "phase":"research", "label":"Problem, scope, expected behavior and success criterion documented", "tiers":["patch","standard","critical"], "waivable":false},
+    {"id":"R-02", "phase":"research", "label":"Existing relevant behavior and repository baseline observed", "tiers":["patch","standard","critical"], "waivable":false},
+    {"id":"R-03", "phase":"research", "label":"Constraints, data flow and uncertainties recorded", "tiers":["standard","critical"], "waivable":true},
+    {"id":"R-04", "phase":"research", "label":"Alternatives, tradeoffs and smallest viable change compared", "tiers":["standard","critical"], "waivable":true},
+    {"id":"R-05", "phase":"research", "label":"Sensitive assets, trust boundaries and threat exposure identified", "tiers":["critical"], "waivable":false},
+    {"id":"P-01", "phase":"plan", "label":"Design and testable acceptance criteria approved for implementation", "tiers":["patch","standard","critical"], "waivable":false},
+    {"id":"P-02", "phase":"plan", "label":"Contracts, state, invariants and compatibility captured", "tiers":["standard","critical"], "waivable":true},
+    {"id":"P-03", "phase":"plan", "label":"Verification matrix with failure and boundary scenarios", "tiers":["standard","critical"], "waivable":false},
+    {"id":"P-04", "phase":"plan", "label":"Rollout, reversibility, rollback and operational impacts planned", "tiers":["standard","critical"], "waivable":false},
+    {"id":"P-05", "phase":"plan", "label":"Threat controls, privacy and least privilege reviewed", "tiers":["critical"], "waivable":false},
+    {"id":"P-06", "phase":"plan", "label":"Authorized human approval recorded for critical high-impact work", "tiers":["critical"], "waivable":false},
+    {"id":"I-01", "phase":"implement", "label":"Change matches intended scope and respects existing work", "tiers":["patch","standard","critical"], "waivable":false},
+    {"id":"I-02", "phase":"implement", "label":"Relevant checks executed and actual results recorded", "tiers":["patch","standard","critical"], "waivable":false},
+    {"id":"I-03", "phase":"implement", "label":"Negative, permission and regression tests exercised", "tiers":["standard","critical"], "waivable":false},
+    {"id":"I-04", "phase":"implement", "label":"Security/peer review outcomes and remaining issues recorded", "tiers":["critical"], "waivable":false},
+    {"id":"I-05", "phase":"implement", "label":"Observability, performance and failure mode evidence captured", "tiers":["critical"], "waivable":false},
+    {"id":"I-06", "phase":"implement", "label":"Delivery report, unresolved risks and skipped checks disclosed", "tiers":["patch","standard","critical"], "waivable":false},
+    {"id":"D-01", "phase":"release", "label":"Pre-release requirements and change authorization confirmed", "tiers":["standard","critical"], "waivable":false},
+    {"id":"D-02", "phase":"release", "label":"Rollback, monitoring, ownership and stop conditions verified", "tiers":["standard","critical"], "waivable":false},
+    {"id":"D-03", "phase":"release", "label":"Actual release state and post-release evidence reported", "tiers":["standard","critical"], "waivable":false}
+  ]
+}
