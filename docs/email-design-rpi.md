@@ -98,3 +98,94 @@ Constraints in mail clients:
 Deploy the site, then redeploy the edge worker (`npm run deploy:edge`) so
 `https://chibuezemaxwell.com/email/mark.png` is served. Until then, the mark
 in new emails shows as a broken image.
+
+---
+
+# Pass 2: profile photo, measured accessibility, privacy
+
+Tier: **standard**. These are UI and email changes. Risk promoter: a personal
+photo sent to strangers, so exposure was checked. Done with the
+`rpi-production-engineering` skill.
+
+## Research
+
+- **Where the photo comes from.** Settings → Profile photo (the `avatar` site
+  document) is described as a square photo. It is empty in production, so the
+  site falls back to the About portrait. Observed live on 2026-11-20: a
+  4000×6000 JPEG of 3,386,079 bytes, full-body with the face in the upper
+  third.
+- **Mail clients can't crop.** Gmail and Outlook ignore `object-fit`, so a
+  portrait in a circle is squashed, and an uncropped portrait at 50px shows a
+  tiny face.
+- **Size.** Observed live: the site's resizer
+  (`https://chibuezemaxwell.com/_next/image?url=…&w=256&q=75`, already allowed
+  by the edge worker's `_next/` rule) returns a 6,951-byte JPEG to clients
+  that don't accept WebP and a 3,386-byte WebP to those that do. 256 is the
+  smallest width `next.config.ts` allows.
+- **Privacy defect.** The visitor receipt set `Reply-To` to
+  `CONTACT_NOTIFY_EMAIL` or the primary email, a private address the visitor
+  would see when replying. `hello@` now receives mail, so it isn't needed.
+- **Accessibility was never measured.** Computed WCAG contrast for every
+  text/background pair. All light pairs pass. Two dark-mode pairs fail: the
+  violet eyebrow at 2.94:1 and the red error eyebrow at 2.85:1. The signature
+  separators were 1.27:1.
+- **Alternatives considered.**
+  1. Use the About portrait with CSS cropping. Rejected: clients don't support
+     it, so it renders squashed.
+  2. Crop images on the server. Rejected: it needs a new image dependency for
+     a single image.
+  3. Commit a cropped photo to the repo. Rejected: it bypasses the CMS and
+     goes stale when the photo changes.
+  4. Chosen: use the Settings profile photo when it is roughly square, through
+     the existing resizer; otherwise the brand mark. A square headshot cropped
+     from the portrait is handed to the owner to upload.
+
+## Plan: acceptance criteria → evidence
+
+| #   | Criterion                                                                                                                                            | Evidence                                                                                                |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| A1  | With a square profile photo, the receipt header and signature and the reply signature show it in a circle next to the name, via the resizer at w=256 | `test-email-design`: "shows the photo…", "uses a square upload…" and renders                            |
+| A2  | A portrait, unknown size, foreign host or query-string URL falls back to the brand mark: never squashed, never megabytes                             | "falls back to the brand mark…"                                                                         |
+| A3  | Alerts to the owner keep the brand mark in the header                                                                                                | "shows the photo…" (alert header assertion)                                                             |
+| A4  | Every text color is at least 4.5:1, light and dark                                                                                                   | "meets WCAG AA…"                                                                                        |
+| A5  | The receipt never exposes the private notify address                                                                                                 | Code: `replyTo` is now `REPLY_TO_EMAIL` or unset (no unit test: `sendContactEmails` reads the database) |
+| A6  | Emails stay well under Gmail's 102 KB clip, even with long input                                                                                     | "stays far below…" (< 60 KB)                                                                            |
+| A7  | A dark photo stays visible on dark backgrounds                                                                                                       | 1px ring with a dark-mode color, confirmed in renders                                                   |
+
+## Implementation
+
+- `email-design.ts`: `EmailProfile.photoUrl`; `avatar()` (photo in a ringed
+  circle, or the mark); signature at 52px; `cardEmail({ header: "photo" })`.
+  Eyebrows use `e-link`/`e-danger` classes with AA dark colors. A `DARK`
+  palette is shared by the head styles and the tests. Separators use the muted
+  color and are `aria-hidden`.
+- `contact-email.ts`: `emailPhotoUrl()` (square check 0.9–1.1, R2-only,
+  resizer URL); `profileFrom(…, photo)`; `emailProfile(sender)` loads Settings
+  and the photo. The receipt uses the photo header and the new `Reply-To`.
+- `documents.ts`: `SiteDocument` exposes the image `width`/`height`
+  (additive).
+- `contact.ts`: replies sign with `emailProfile(from)`, which includes the
+  photo.
+
+## Verification (run 2026-11-20 on this branch)
+
+- `npm test`: 345 pass, 0 fail. `scripts/test-email-design.ts`: 13 pass.
+- `npm run typecheck`, `npx eslint .` and `npm run format:check` are clean.
+  `npm run build` and `npm run check:edge` succeed.
+- Renders of the receipt, alert, reply and error alert in light, dark, phone
+  and Gmail (head styles stripped), with a test headshot, all inspected.
+- **Not verified:** real Outlook for Windows or the Gmail apps, and the photo
+  in production (no profile photo is uploaded yet).
+
+## Release
+
+Not deployed. NOT RELEASE READY until merged and these owner actions are done:
+
+1. Merge, then `npm run deploy:edge` (serves `/email/mark.png`).
+2. Upload a square headshot in Admin → Settings → Profile photo. Until then
+   the brand mark shows. This also replaces the full-body portrait as the
+   author photo on articles.
+3. Send a test contact message and a reply. Check the photo, name and dark
+   mode in Gmail and Apple Mail.
+
+Rollback: revert the merge commit. There are no schema or data changes.

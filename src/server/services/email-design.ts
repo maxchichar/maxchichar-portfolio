@@ -25,6 +25,18 @@ export const TOKENS = {
   danger: "#b42318",
 } as const;
 
+/** Dark-mode palette (applied by the head styles in clients that support it). */
+export const DARK = {
+  canvas: "#0a0a0b",
+  card: "#121214",
+  quote: "#19191c",
+  text: "#f2f1ed",
+  body: "#d9d8d3",
+  muted: "#8c8b92",
+  link: "#a48bff",
+  danger: "#ff8a7a",
+} as const;
+
 const SANS = "'Inter Tight','Helvetica Neue',Helvetica,Arial,sans-serif";
 const SERIF = "Newsreader,Georgia,'Times New Roman',serif";
 const MONO = "'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace";
@@ -38,6 +50,8 @@ export interface EmailProfile {
   siteUrl: string;
   /** Social profiles that are set, in display order. */
   links: { label: string; url: string }[];
+  /** Small square photo of the person (already resized), or null for the brand mark. */
+  photoUrl: string | null;
 }
 
 const bare = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
@@ -52,12 +66,22 @@ function mark(profile: Pick<EmailProfile, "siteUrl">, size: number) {
   return `<img src="${escapeHtml(markUrl(profile.siteUrl))}" width="${size}" height="${size}" alt="" style="display:block;border:0;outline:none;width:${size}px;height:${size}px;border-radius:${Math.round(size * 0.22)}px;">`;
 }
 
+/**
+ * The person's photo in a circle when there is one, else the brand mark.
+ * Outlook for Windows ignores the radius and shows it square, which is fine.
+ */
+function avatar(profile: EmailProfile, size: number) {
+  if (!profile.photoUrl) return mark(profile, size);
+  // The ring keeps a dark photo's edge visible on a dark background.
+  return `<img class="e-ring" src="${escapeHtml(profile.photoUrl)}" width="${size}" height="${size}" alt="" style="display:block;outline:none;width:${size}px;height:${size}px;border:1px solid ${TOKENS.rule};border-radius:50%;object-fit:cover;">`;
+}
+
 // ---------------------------------------------------------------------------
 // Content blocks
 // ---------------------------------------------------------------------------
 
 export const eyebrow = (label: string, tone: "brand" | "danger" = "brand") =>
-  `<p style="margin:0 0 14px;font-family:${MONO};font-size:11px;line-height:1.4;letter-spacing:.14em;text-transform:uppercase;color:${tone === "danger" ? TOKENS.danger : TOKENS.violet};">${escapeHtml(label)}</p>`;
+  `<p class="${tone === "danger" ? "e-danger" : "e-link"}" style="margin:0 0 14px;font-family:${MONO};font-size:11px;line-height:1.4;letter-spacing:.14em;text-transform:uppercase;color:${tone === "danger" ? TOKENS.danger : TOKENS.violet};">${escapeHtml(label)}</p>`;
 
 export const heading = (html: string, options: { mono?: boolean } = {}) =>
   `<h1 class="e-text" style="margin:0 0 20px;font-family:${options.mono ? MONO : SANS};font-size:${options.mono ? 19 : 30}px;line-height:${options.mono ? 1.45 : 1.15};font-weight:600;letter-spacing:${options.mono ? 0 : "-0.02em"};color:${TOKENS.ink};mso-line-height-rule:exactly;">${html}</h1>`;
@@ -114,11 +138,11 @@ export function signature(profile: EmailProfile) {
         `<a class="e-link" href="${escapeHtml(l.url)}" style="color:${TOKENS.violet};text-decoration:none;">${escapeHtml(l.label)}</a>`,
     )
     .join(
-      `<span class="e-muted" style="color:${TOKENS.rule};">&nbsp;&nbsp;/&nbsp;&nbsp;</span>`,
+      `<span class="e-muted" aria-hidden="true" style="color:${TOKENS.muted};">&nbsp;&nbsp;/&nbsp;&nbsp;</span>`,
     );
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:36px 0 0;"><tr><td class="e-rule" style="border-top:1px solid ${TOKENS.rule};padding-top:24px;">
 <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-<td style="vertical-align:top;padding-right:16px;">${mark(profile, 44)}</td>
+<td style="vertical-align:top;padding-right:16px;">${avatar(profile, 52)}</td>
 <td style="vertical-align:top;">
 <p class="e-text" style="margin:0;font-family:${SANS};font-size:16px;line-height:1.35;font-weight:600;letter-spacing:-0.01em;color:${TOKENS.ink};">${escapeHtml(profile.name)}</p>
 ${profile.role ? `<p class="e-muted" style="margin:3px 0 0;font-family:${SANS};font-size:13px;line-height:1.5;color:${TOKENS.muted};">${escapeHtml(profile.role)}</p>` : ""}
@@ -159,19 +183,22 @@ a{text-decoration:none;}
   .e-hide-sm{display:none!important;}
 }
 @media (prefers-color-scheme:dark){
-  .e-canvas,body{background:#0a0a0b!important;}
-  .e-card{background:#121214!important;border-color:#26262b!important;}
-  .e-text,h1{color:#f2f1ed!important;}
-  .e-body{color:#d9d8d3!important;}
-  .e-muted{color:#8c8b92!important;}
-  .e-quote{background:#19191c!important;}
+  .e-canvas,body{background:${DARK.canvas}!important;}
+  .e-card{background:${DARK.card}!important;border-color:#26262b!important;}
+  .e-text,h1{color:${DARK.text}!important;}
+  .e-body{color:${DARK.body}!important;}
+  .e-muted{color:${DARK.muted}!important;}
+  .e-quote{background:${DARK.quote}!important;}
   .e-rule{border-color:#26262b!important;}
-  .e-link{color:#a48bff!important;}
+  .e-ring{border-color:#3a3a41!important;}
+  .e-link{color:${DARK.link}!important;}
+  .e-danger{color:${DARK.danger}!important;}
 }
-[data-ogsc] .e-text,[data-ogsc] h1{color:#f2f1ed!important;}
-[data-ogsc] .e-body{color:#d9d8d3!important;}
-[data-ogsc] .e-muted{color:#8c8b92!important;}
-[data-ogsc] .e-link{color:#a48bff!important;}
+[data-ogsc] .e-text,[data-ogsc] h1{color:${DARK.text}!important;}
+[data-ogsc] .e-body{color:${DARK.body}!important;}
+[data-ogsc] .e-muted{color:${DARK.muted}!important;}
+[data-ogsc] .e-link{color:${DARK.link}!important;}
+[data-ogsc] .e-danger{color:${DARK.danger}!important;}
 </style>`;
 }
 
@@ -208,6 +235,8 @@ export function cardEmail(
     footnote?: string;
     /** Extra links in the footer, e.g. sections of the site. */
     footerLinks?: { label: string; url: string }[];
+    /** "photo" puts the person's photo by the name at the top (emails to visitors). */
+    header?: "mark" | "photo";
   },
 ) {
   const year = new Date().getUTCFullYear();
@@ -229,7 +258,7 @@ ${column(`
 <tr><td class="e-pad" style="padding:0 8px 22px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
 <td style="vertical-align:middle;"><a href="${escapeHtml(profile.siteUrl)}" style="text-decoration:none;"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
-<td style="vertical-align:middle;padding-right:12px;">${mark(profile, 32)}</td>
+<td style="vertical-align:middle;padding-right:12px;">${options.header === "photo" ? avatar(profile, 36) : mark(profile, 32)}</td>
 <td class="e-text" style="vertical-align:middle;font-family:${SANS};font-size:16px;font-weight:600;letter-spacing:-0.01em;color:${TOKENS.ink};">${escapeHtml(profile.name)}</td>
 </tr></table></a></td>
 ${options.label ? `<td align="right" class="e-muted e-hide-sm" style="vertical-align:middle;font-family:${MONO};font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:${TOKENS.muted};">${escapeHtml(options.label)}</td>` : ""}

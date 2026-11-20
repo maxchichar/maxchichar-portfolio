@@ -9,6 +9,7 @@ const profile = {
   role: "AI Engineer",
   siteUrl: "https://chibuezemaxwell.com",
   links: [],
+  photoUrl: null,
 };
 
 const original = {

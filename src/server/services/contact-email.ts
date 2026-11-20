@@ -2,12 +2,15 @@ import "server-only";
 
 import { getSiteUrl } from "@/lib/metadata";
 
+import { isOptimizableImage } from "@/lib/storage/image";
 import type { PublicSiteSettings } from "@/lib/validation/settings";
 
+import { getSiteDocument } from "./documents";
 import {
   configuredSender,
   escapeHtml,
   replySender,
+  replyToAddress,
   sendEmail,
   singleLine,
 } from "./email";
@@ -53,10 +56,34 @@ type ProfileSettings = Pick<
   "siteName" | "siteDescription" | "socialLinkedin" | "socialGithub" | "socialX"
 >;
 
+export interface ProfilePhoto {
+  url: string;
+  width: number | null;
+  height: number | null;
+}
+
+/**
+ * The Settings profile photo as a small email image, or null. Mail clients
+ * can't crop, so only a roughly square photo is used (anything else would be
+ * squashed in the circle), and it goes through the site's image resizer: the
+ * originals are camera-sized (megabytes) and the resizer serves ~10 KB.
+ */
+export function emailPhotoUrl(
+  siteUrl: string,
+  photo: ProfilePhoto | null,
+): string | null {
+  if (!photo?.width || !photo.height || !isOptimizableImage(photo.url)) return null;
+  const ratio = photo.width / photo.height;
+  if (ratio < 0.9 || ratio > 1.1) return null;
+  // 256 is the smallest width next.config.ts allows; shown at 36-52px (retina-safe).
+  return `${siteUrl}/_next/image?url=${encodeURIComponent(photo.url)}&w=256&q=75`;
+}
+
 /** Who the emails are from, built from Settings and the configured sender. */
 export function profileFrom(
   settings: ProfileSettings,
   sender: string | null,
+  photo: ProfilePhoto | null = null,
 ): EmailProfile {
   const links = (
     [
@@ -67,16 +94,23 @@ export function profileFrom(
   )
     .filter(([, url]) => Boolean(url))
     .map(([label, url]) => ({ label, url: url as string }));
+  const siteUrl = getSiteUrl().replace(/\/$/, "");
   return {
     name: (sender && senderName(sender)) || titleCase(settings.siteName),
     role: settings.siteDescription || null,
-    siteUrl: getSiteUrl().replace(/\/$/, ""),
+    siteUrl,
     links,
+    photoUrl: emailPhotoUrl(siteUrl, photo),
   };
 }
 
-export async function emailProfile(): Promise<EmailProfile> {
-  return profileFrom(await getPublicSiteSettings(), replySender());
+/** The profile for emails people read: Settings, sender name and profile photo. */
+export async function emailProfile(sender = replySender()): Promise<EmailProfile> {
+  const [settings, photo] = await Promise.all([
+    getPublicSiteSettings(),
+    getSiteDocument("avatar"),
+  ]);
+  return profileFrom(settings, sender, photo);
 }
 
 const firstName = (name: string) => singleLine(name).split(/\s+/)[0] || "there";
@@ -160,6 +194,7 @@ ${signature(profile)}`,
       preheader: "Your message has arrived. I usually reply within two working days.",
       footnote: `You're receiving this because you wrote to me through ${site.replace(/^https?:\/\//, "")}.`,
       footerLinks: sections,
+      header: "photo",
     },
   );
   return { subject: `Thanks for your message, ${first}`, text, html };
@@ -171,8 +206,10 @@ ${signature(profile)}`,
  */
 export async function sendContactEmails(s: NewSubmission): Promise<void> {
   try {
-    const settings = await getPublicSiteSettings();
-    const profile = profileFrom(settings, replySender());
+    const [settings, profile] = await Promise.all([
+      getPublicSiteSettings(),
+      emailProfile(),
+    ]);
     const ownerAddress =
       process.env.CONTACT_NOTIFY_EMAIL?.trim() || settings.primaryEmail || null;
     const jobs: Promise<boolean>[] = [];
@@ -195,10 +232,14 @@ export async function sendContactEmails(s: NewSubmission): Promise<void> {
     // The visitor receipt needs a sender on a domain verified in Resend; the
     // shared test sender can only deliver to the account owner.
     if (configuredSender() && process.env.CONTACT_AUTO_REPLY !== "false") {
+      const replyTo = replyToAddress();
       jobs.push(
         sendEmail({
           to: s.email,
-          ...(ownerAddress ? { replyTo: ownerAddress } : {}),
+          // Replies go to the sender address (hello@, which reaches the
+          // inbox) or REPLY_TO_EMAIL; never the private notify address,
+          // which the visitor would see.
+          ...(replyTo ? { replyTo } : {}),
           ...visitorEmail(s, profile),
         }),
       );

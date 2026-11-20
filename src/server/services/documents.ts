@@ -16,6 +16,9 @@ export interface SiteDocument {
   storageKey: string;
   url: string;
   sizeBytes: number;
+  /** Pixel size for images, when known. */
+  width: number | null;
+  height: number | null;
   updatedAt: Date;
 }
 
@@ -55,6 +58,8 @@ export async function getSiteDocument(
       storageKey: row.media.storageKey,
       url: publicUrlFor(row.media.storageKey),
       sizeBytes: row.media.sizeBytes,
+      width: row.media.width,
+      height: row.media.height,
       updatedAt: row.updatedAt,
     };
   } catch (err) {
