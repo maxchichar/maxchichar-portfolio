@@ -4,6 +4,13 @@ import { afterEach, describe, it } from "node:test";
 import { replyEmail } from "../src/server/services/contact-email";
 import { replySender } from "../src/server/services/email";
 
+const profile = {
+  name: "Chibueze Maxwell",
+  role: "AI Engineer",
+  siteUrl: "https://chibuezemaxwell.com",
+  links: [],
+};
+
 const original = {
   name: "Ada <script>",
   message: "First line\nSecond <b>line</b>",
@@ -12,7 +19,7 @@ const original = {
 
 describe("Inbox reply email", () => {
   it("puts the reply first and quotes the original message in plain text", () => {
-    const { text } = replyEmail(original, "Thanks, Ada.");
+    const { text } = replyEmail(original, "Thanks, Ada.", profile);
     assert.ok(text.startsWith("Thanks, Ada.\n"));
     assert.match(text, /Ada <script> wrote:/);
     assert.match(text, /^> First line$/m);
@@ -20,7 +27,7 @@ describe("Inbox reply email", () => {
   });
 
   it("escapes the reply and the quoted message in HTML", () => {
-    const { html } = replyEmail(original, "See <a href=x>this</a>");
+    const { html } = replyEmail(original, "See <a href=x>this</a>", profile);
     assert.ok(!html.includes("<script>"));
     assert.ok(!html.includes("<a href=x>"));
     assert.ok(html.includes("&lt;b&gt;line&lt;/b&gt;"));
