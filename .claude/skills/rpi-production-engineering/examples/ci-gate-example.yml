@@ -1,0 +1,33 @@
+# Example for a repository using .agents/skills/rpi-production-engineering.
+# Install deliberately as .github/workflows/rpi-evidence.yml if the team wants
+# to enforce a specific approved change's documentation gate. Customize the
+# record path to the actual task; there is no valid universal active task.
+name: RPI Evidence Gate (example)
+on:
+  workflow_dispatch:
+    inputs:
+      record:
+        description: 'Path to docs/rpi/<task>/evidence.json'
+        required: true
+        type: string
+      phase:
+        description: 'Last required gate'
+        required: true
+        type: choice
+        options: [research, plan, implement, release]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate RPI evidence (metadata + local file presence only)
+        env:
+          RPI_RECORD: ${{ inputs.record }}
+          RPI_PHASE: ${{ inputs.phase }}
+        run: |
+          python3 .agents/skills/rpi-production-engineering/scripts/rpi.py validate \
+            --record "$RPI_RECORD" --phase "$RPI_PHASE"
+# This CI workflow does not run app tests or prove any approval is genuine.
+# In production, pair it with your repo's real test, review and release gates.
